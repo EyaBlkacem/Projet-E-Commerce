@@ -1,0 +1,276 @@
+﻿<!-- ── NAVBAR ─────────────────────────────────────────────── -->
+<nav class="navbar navbar-expand-lg bg-white shadow-sm sticky-top py-2">
+  <div class="container">
+    <a routerLink="/landing" class="navbar-brand d-flex align-items-center gap-2">
+      <div style="width:34px;height:34px;background:linear-gradient(135deg,#405189,#0ab39c);border-radius:8px;display:flex;align-items:center;justify-content:center">
+        <i class="ri-shopping-bag-3-fill text-white fs-16"></i>
+      </div>
+      <span class="fw-bold fs-20" style="color:#405189">Tijara</span>
+    </a>
+    <div class="d-flex gap-2">
+      <button class="btn btn-outline-secondary btn-sm rounded-pill" (click)="goBack()">
+        <i class="ri-arrow-left-line me-1"></i>Retour boutique
+      </button>
+      @if (!isLoggedIn()) {
+        <a routerLink="/auth/login" class="btn btn-primary btn-sm rounded-pill px-3">Se connecter</a>
+      }
+    </div>
+  </div>
+</nav>
+
+<div class="container py-4">
+
+  <!-- Chargement -->
+  @if (loading) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" style="width:3rem;height:3rem"></div>
+    <p class="text-muted mt-3">Chargement…</p>
+  </div>
+  }
+
+  <!-- Erreur -->
+  @if (error && !loading) {
+  <div class="alert alert-danger text-center">
+    <i class="ri-error-warning-line me-2"></i>{{ error }}
+    <div class="mt-2"><button class="btn btn-sm btn-outline-danger" (click)="goBack()">Retour</button></div>
+  </div>
+  }
+
+  <!-- Détail produit -->
+  @if (product && !loading) {
+  <div class="row g-4">
+
+    <!-- Image -->
+    <div class="col-lg-5">
+      <div class="card border-0 shadow-sm" style="border-radius:16px;overflow:hidden">
+        @if (product.image_product) {
+          <img [src]="product.image_product" class="w-100" style="max-height:420px;object-fit:cover" [alt]="product.title_product"
+               onerror="this.src=''">
+        } @else {
+          <div class="d-flex align-items-center justify-content-center"
+               style="height:360px;background:linear-gradient(135deg,#405189,#0ab39c)">
+            <i class="ri-shopping-bag-3-line text-white" style="font-size:80px;opacity:0.3"></i>
+          </div>
+        }
+      </div>
+    </div>
+
+    <!-- Infos -->
+    <div class="col-lg-7">
+      <!-- Breadcrumb -->
+      <nav class="mb-3">
+        <ol class="breadcrumb fs-13">
+          <li class="breadcrumb-item"><a routerLink="/boutique" class="text-decoration-none">Boutique</a></li>
+          @if (product.category_name) {
+          <li class="breadcrumb-item text-muted">{{ product.category_name }}</li>
+          }
+          <li class="breadcrumb-item active text-truncate" style="max-width:200px">{{ product.title_product }}</li>
+        </ol>
+      </nav>
+
+      <h1 class="fw-bold fs-22 mb-2">{{ product.title_product }}</h1>
+
+      <!-- Rating -->
+      @if (product.avg_rating) {
+      <div class="d-flex align-items-center gap-2 mb-3">
+        <div class="d-flex gap-1">
+          @for (s of getStars(product.avg_rating); track $index) {
+            <i class="ri-star-fill text-warning fs-14"></i>
+          }
+          @for (s of getEmptyStars(product.avg_rating); track $index) {
+            <i class="ri-star-line text-muted fs-14"></i>
+          }
+        </div>
+        <span class="fw-semibold fs-14">{{ product.avg_rating | number:'1.1-1' }}</span>
+        <span class="text-muted fs-13">({{ product.review_count || 0 }} avis)</span>
+      </div>
+      }
+
+      <!-- Prix -->
+      <div class="d-flex align-items-baseline gap-3 mb-4">
+        <span class="fw-bold text-primary" style="font-size:2rem">{{ getPrice() }}</span>
+        @if (product.color_product) {
+        <span class="badge bg-light text-muted fs-12 border">{{ product.color_product }}</span>
+        }
+      </div>
+
+      <!-- Stock -->
+      @if (product.quantity_product !== null) {
+      <div class="mb-3">
+        @if (+product.quantity_product > 0) {
+          <span class="badge bg-success-subtle text-success border border-success-subtle">
+            <i class="ri-checkbox-circle-line me-1"></i>En stock ({{ product.quantity_product }})
+          </span>
+        } @else {
+          <span class="badge bg-danger-subtle text-danger border border-danger-subtle">
+            <i class="ri-close-circle-line me-1"></i>Rupture de stock
+          </span>
+        }
+      </div>
+      }
+
+      <!-- Vendeur -->
+      @if (product.vendor_name) {
+      <div class="d-flex align-items-center gap-2 mb-4 p-3 rounded-3 bg-light">
+        <div style="width:40px;height:40px;background:linear-gradient(135deg,#405189,#0ab39c);border-radius:10px;display:flex;align-items:center;justify-content:center">
+          <i class="ri-store-2-fill text-white fs-18"></i>
+        </div>
+        <div>
+          <div class="fw-semibold fs-14">{{ product.vendor_name }}</div>
+          <div class="text-muted fs-12">Vendeur vérifié</div>
+        </div>
+        <span class="badge bg-success-subtle text-success ms-auto">
+          <i class="ri-shield-check-line me-1"></i>Vérifié
+        </span>
+      </div>
+      }
+
+      <!-- Quantité -->
+      <div class="d-flex align-items-center gap-3 mb-4">
+        <label class="fw-medium fs-14">Quantité :</label>
+        <div class="d-flex align-items-center border rounded-3 overflow-hidden">
+          <button class="btn btn-sm px-3 py-2 border-0" (click)="quantity = quantity > 1 ? quantity-1 : 1"
+                  style="background:var(--page-bg)">−</button>
+          <span class="px-3 fw-semibold fs-15">{{ quantity }}</span>
+          <button class="btn btn-sm px-3 py-2 border-0" (click)="quantity = quantity + 1"
+                  style="background:var(--page-bg)">+</button>
+        </div>
+      </div>
+
+      <!-- CTA Commander -->
+      @if (!showOrderForm) {
+      <div class="d-flex gap-2 flex-wrap mb-4">
+        <button class="btn btn-primary btn-lg fw-semibold rounded-pill px-5"
+                (click)="orderNow()"
+                style="background:linear-gradient(135deg,#405189,#0ab39c);border:none">
+          @if (!isLoggedIn()) {
+            <i class="ri-lock-line me-2"></i>Commander (connexion requise)
+          } @else {
+            <i class="ri-shopping-cart-2-line me-2"></i>Commander maintenant
+          }
+        </button>
+      </div>
+      @if (!isLoggedIn()) {
+      <div class="alert alert-warning border-0 fs-13 d-flex align-items-center gap-2 py-2" style="border-radius:10px">
+        <i class="ri-information-line fs-16"></i>
+        <span>Vous devez vous <a routerLink="/auth/login" class="fw-semibold text-warning-emphasis">connecter</a> ou
+        <a routerLink="/auth/register" class="fw-semibold text-warning-emphasis">créer un compte</a> pour passer une commande.</span>
+      </div>
+      }
+      }
+
+      <!-- Formulaire commande -->
+      @if (showOrderForm) {
+      <div class="card border-0 shadow-sm mt-2" style="border-radius:16px">
+        <div class="card-body p-4">
+          <h6 class="fw-bold mb-3"><i class="ri-truck-line me-2 text-primary"></i>Informations de livraison</h6>
+          @if (error) {
+          <div class="alert alert-danger border-0 py-2 fs-13">{{ error }}</div>
+          }
+          <div class="row g-2">
+            <div class="col-6">
+              <input type="text" class="form-control" placeholder="Prénom *" [(ngModel)]="orderForm.firstName">
+            </div>
+            <div class="col-6">
+              <input type="text" class="form-control" placeholder="Nom *" [(ngModel)]="orderForm.lastName">
+            </div>
+            <div class="col-6">
+              <input type="tel" class="form-control" placeholder="Téléphone *" [(ngModel)]="orderForm.phone">
+            </div>
+            <div class="col-6">
+              <input type="email" class="form-control" placeholder="Email" [(ngModel)]="orderForm.email">
+            </div>
+            <!-- ⬇️ NOUVEAU : gouvernorat (requis pour IdState) -->
+            <div class="col-12">
+              <select class="form-select" [(ngModel)]="selectedStateId">
+                <option [ngValue]="null" disabled>Sélectionnez votre gouvernorat *</option>
+                @for (s of states; track s.IdState) {
+                  <option [ngValue]="s.IdState">{{ s.NameFR || s.NameEN || s.name }}</option>
+                }
+              </select>
+            </div>
+            <!-- ⬆️ -->
+            <div class="col-12">
+              <input type="text" class="form-control" placeholder="Adresse de livraison *" [(ngModel)]="orderForm.address">
+            </div>
+          </div>
+          <div class="d-flex gap-2 mt-3">
+            <button class="btn btn-primary fw-semibold px-4 rounded-pill" (click)="submitOrder()" [disabled]="orderLoading">
+              @if(orderLoading){ <span class="spinner-border spinner-border-sm me-1"></span> }
+              Confirmer la commande
+            </button>
+            <button class="btn btn-outline-secondary rounded-pill" (click)="showOrderForm=false">Annuler</button>
+          </div>
+        </div>
+      </div>
+      }
+    </div>
+  </div>
+
+  <!-- Onglets Description / Avis -->
+  <div class="mt-5">
+    <ul class="nav nav-tabs mb-4">
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="selectedTab==='description'" (click)="selectedTab='description'">
+          Description
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link" [class.active]="selectedTab==='reviews'" (click)="selectedTab='reviews'">
+          Avis <span class="badge bg-primary-subtle text-primary ms-1">{{ reviews.length }}</span>
+        </button>
+      </li>
+    </ul>
+
+    @if (selectedTab === 'description') {
+    <div class="card border-0 shadow-sm p-4" style="border-radius:14px">
+      @if (product.description_product) {
+        <p class="text-muted fs-14 lh-lg mb-3">{{ product.description_product }}</p>
+      }
+      @if (product.code_bar_product) {
+        <div class="d-flex gap-2 align-items-center text-muted fs-13">
+          <i class="ri-barcode-line"></i><span>Code-barres : {{ product.code_bar_product }}</span>
+        </div>
+      }
+    </div>
+    }
+
+    @if (selectedTab === 'reviews') {
+    <div>
+      @if (reviews.length === 0) {
+      <div class="text-center py-4 text-muted">
+        <i class="ri-chat-smile-3-line fs-40 mb-2 d-block opacity-40"></i>
+        Aucun avis pour ce produit.
+      </div>
+      }
+      @for (review of reviews; track review.id_rating) {
+      <div class="card border-0 shadow-sm mb-3 p-4" style="border-radius:14px">
+        <div class="d-flex align-items-center gap-3 mb-2">
+          <div class="d-flex align-items-center justify-content-center fw-bold text-white"
+               style="width:38px;height:38px;background:linear-gradient(135deg,#405189,#0ab39c);border-radius:10px;font-size:16px">
+            {{ (review.author_name || 'A').charAt(0).toUpperCase() }}
+          </div>
+          <div>
+            <div class="fw-semibold fs-14">{{ review.author_name || 'Anonyme' }}</div>
+            <div class="d-flex gap-1">
+              @for (s of getStars(review.rating); track $index) {
+                <i class="ri-star-fill text-warning fs-12"></i>
+              }
+              @for (s of getEmptyStars(review.rating); track $index) {
+                <i class="ri-star-line text-muted fs-12"></i>
+              }
+            </div>
+          </div>
+          <span class="text-muted fs-12 ms-auto">{{ review.date }}</span>
+        </div>
+        @if (review.comment_rating) {
+        <p class="text-muted fs-14 mb-0 lh-base">{{ review.comment_rating }}</p>
+        }
+      </div>
+      }
+    </div>
+    }
+  </div>
+  }
+
+</div>

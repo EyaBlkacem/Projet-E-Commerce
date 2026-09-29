@@ -1,0 +1,162 @@
+<app-breadcrumbs [title]="'Profil Client'" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+@if (loading) {
+  <div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem"></div></div>
+} @else if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+} @else {
+
+<!-- Bannière -->
+<div class="card border-0 shadow-sm mb-4 overflow-hidden">
+  <div style="height:130px;background:linear-gradient(135deg,#0ab39c 0%,#405189 100%)"></div>
+  <div class="card-body pt-0">
+    <div class="d-flex align-items-end gap-4 flex-wrap" style="margin-top:-50px">
+      <div class="rounded-circle border border-4 border-white d-flex align-items-center justify-content-center fw-bold text-white fs-3 flex-shrink-0"
+           style="width:88px;height:88px;background:#0ab39c;z-index:1">
+        {{ initials }}
+      </div>
+      <div class="pb-1 flex-fill">
+        <h4 class="fw-bold mb-1">{{ fullName }}</h4>
+        <div class="d-flex flex-wrap gap-3 text-muted fs-13">
+          <span><i class="ri-mail-line me-1 text-primary"></i>{{ user.email }}</span>
+          @if (user.city) {
+            <span><i class="ri-map-pin-2-line me-1 text-primary"></i>{{ user.city }}</span>
+          }
+          <span><i class="ri-calendar-line me-1 text-primary"></i>Membre depuis {{ memberSince }}</span>
+          <span [class]="user.is_active ? 'text-success' : 'text-danger'">
+            <i class="ri-circle-fill me-1" style="font-size:8px;vertical-align:middle"></i>
+            {{ user.is_active ? 'Actif' : 'Bloqué' }}
+          </span>
+        </div>
+      </div>
+      <button class="btn btn-outline-secondary btn-sm" (click)="back()">
+        <i class="ri-arrow-left-line me-1"></i>Retour
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <i class="ri-shopping-bag-3-line fs-24 text-primary mb-1"></i>
+      <h4 class="fw-bold mb-0">{{ stats.total_orders || 0 }}</h4>
+      <small class="text-muted">Commandes</small>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <i class="ri-money-dollar-circle-line fs-24 text-success mb-1"></i>
+      <h4 class="fw-bold mb-0 text-success">{{ stats.total_spent || 0 | number:'1.3-3' }} DT</h4>
+      <small class="text-muted">Total dépensé</small>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <i class="ri-checkbox-circle-line fs-24 text-info mb-1"></i>
+      <h4 class="fw-bold mb-0 text-info">{{ countByStatus('delivered') }}</h4>
+      <small class="text-muted">Livrées</small>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <i class="ri-close-circle-line fs-24 text-danger mb-1"></i>
+      <h4 class="fw-bold mb-0 text-danger">{{ countByStatus('cancelled') }}</h4>
+      <small class="text-muted">Annulées</small>
+    </div>
+  </div>
+</div>
+
+<div class="row g-4">
+  <!-- Infos -->
+  <div class="col-lg-3">
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h6 class="fw-bold mb-3 text-uppercase text-muted" style="font-size:11px;letter-spacing:.5px">Informations</h6>
+        <ul class="list-unstyled mb-0 fs-14">
+          <li class="mb-2">
+            <i class="ri-user-line me-2 text-primary"></i>
+            <span class="text-muted">Nom :</span> {{ fullName }}
+          </li>
+          <li class="mb-2">
+            <i class="ri-mail-line me-2 text-primary"></i>
+            <span class="text-muted">Email :</span> {{ user.email }}
+          </li>
+          @if (user.phone) {
+            <li class="mb-2">
+              <i class="ri-phone-line me-2 text-primary"></i>
+              <span class="text-muted">Tél :</span> {{ user.phone }}
+            </li>
+          }
+          @if (user.city) {
+            <li class="mb-2">
+              <i class="ri-map-pin-2-line me-2 text-primary"></i>
+              <span class="text-muted">Ville :</span> {{ user.city }}
+            </li>
+          }
+          <li class="mb-2">
+            <i class="ri-shield-user-line me-2 text-primary"></i>
+            <span class="text-muted">Rôle :</span>
+            <span class="badge ms-1 bg-info-subtle text-info">{{ user.role }}</span>
+          </li>
+        </ul>
+      </div>
+    </div>
+  </div>
+
+  <!-- Historique commandes -->
+  <div class="col-lg-9">
+    <h5 class="fw-bold mb-3">
+      <i class="ri-shopping-bag-3-line me-2 text-primary"></i>Historique des commandes
+    </h5>
+
+    @if (orders.length === 0) {
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+          <i class="ri-inbox-line display-3 text-muted"></i>
+          <p class="text-muted mt-2">Aucune commande pour ce client.</p>
+        </div>
+      </div>
+    } @else {
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+              <thead class="table-light">
+                <tr>
+                  <th class="ps-3">#</th>
+                  <th>Date</th>
+                  <th>Adresse</th>
+                  <th class="text-center">Montant</th>
+                  <th class="text-center">Statut</th>
+                </tr>
+              </thead>
+              <tbody>
+                @for (o of orders; track o.id) {
+                  <tr>
+                    <td class="ps-3 fw-semibold small text-muted">#{{ o.id }}</td>
+                    <td class="small text-muted">{{ o.created_at | date:'dd MMM yyyy' }}</td>
+                    <td class="small text-muted" style="max-width:200px">
+                      <span class="text-truncate d-block">{{ o.shipping_address || '—' }}</span>
+                    </td>
+                    <td class="text-center fw-bold text-primary small">
+                      {{ o.total_amount | number:'1.3-3' }} DT
+                    </td>
+                    <td class="text-center">
+                      <span class="badge {{ getStatusBadge(o.status) }}">
+                        {{ getStatusLabel(o.status) }}
+                      </span>
+                    </td>
+                  </tr>
+                }
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+</div>
+
+}

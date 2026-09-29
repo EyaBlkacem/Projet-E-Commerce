@@ -1,0 +1,322 @@
+/* You can add global styles to this file, and also import other style files */
+
+/* ─── TIJARA BRAND STYLES ─────────────────────────────────────────────────── */
+
+// Tijara logo
+.tijara-logo {
+  font-family: 'Segoe UI', 'Helvetica Neue', Arial, sans-serif !important;
+  font-weight: 700 !important;
+  font-size: 1.35rem !important;
+  letter-spacing: 0.5px;
+  color: #405189 !important;
+  text-decoration: none !important;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+
+  i {
+    color: #0ab39c !important;
+    font-size: 1.4rem;
+  }
+}
+
+// Sidebar logo area refinement
+.navbar-brand-box .tijara-logo {
+  padding: 0 !important;
+}
+
+// Tijara card enhancements
+.card {
+  border-radius: 10px !important;
+  transition: box-shadow 0.2s ease;
+}
+
+.card:hover {
+  box-shadow: 0 4px 24px rgba(64, 81, 137, 0.10) !important;
+}
+
+// Smooth page transitions
+.page-content {
+  animation: fadeInUp 0.25s ease;
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+// Badge status colors
+.badge-status-attente   { background-color: #f7b84b !important; color: #fff !important; }
+.badge-status-confirmee { background-color: #299cdb !important; color: #fff !important; }
+.badge-status-livree    { background-color: #0ab39c !important; color: #fff !important; }
+.badge-status-annulee   { background-color: #f06548 !important; color: #fff !important; }
+
+// Professional table styles
+.table-hover > tbody > tr:hover > td {
+  background-color: rgba(64, 81, 137, 0.04);
+}
+
+// Tijara primary button glow
+.btn-primary {
+  box-shadow: 0 2px 10px rgba(64, 81, 137, 0.28);
+}
+
+// Soft button variants
+.btn-soft-primary {
+  background-color: rgba(64, 81, 137, 0.12);
+  color: #405189;
+  border: none;
+  &:hover { background-color: #405189; color: #fff; }
+}
+.btn-soft-success {
+  background-color: rgba(10, 179, 156, 0.12);
+  color: #0ab39c;
+  border: none;
+  &:hover { background-color: #0ab39c; color: #fff; }
+}
+.btn-soft-danger {
+  background-color: rgba(240, 101, 72, 0.12);
+  color: #f06548;
+  border: none;
+  &:hover { background-color: #f06548; color: #fff; }
+}
+.btn-soft-warning {
+  background-color: rgba(247, 184, 75, 0.12);
+  color: #f7b84b;
+  border: none;
+  &:hover { background-color: #f7b84b; color: #fff; }
+}
+.btn-soft-info {
+  background-color: rgba(41, 156, 219, 0.12);
+  color: #299cdb;
+  border: none;
+  &:hover { background-color: #299cdb; color: #fff; }
+}
+.btn-soft-secondary {
+  background-color: rgba(116, 120, 141, 0.12);
+  color: #74788d;
+  border: none;
+  &:hover { background-color: #74788d; color: #fff; }
+}
+
+// Stat counter cards
+.stat-card {
+  border-radius: 12px !important;
+  border: none !important;
+  padding: 1.2rem 1.5rem;
+  box-shadow: 0 2px 16px rgba(64, 81, 137, 0.08) !important;
+}
+
+// Input focus color
+.form-control:focus,
+.form-select:focus {
+  border-color: #405189;
+  box-shadow: 0 0 0 0.2rem rgba(64, 81, 137, 0.15);
+}
+
+/* ─────────────────────────────────────────────────────────────────────────── */
+// Swiper
+.coverflowslide .slide {
+    position: relative;
+    transition: transform 0.3s;
+}
+
+.coverflowslide .slick-list {
+    overflow: hidden !important;
+}
+
+.coverflowslide .slick-center {
+    transform: scale(1.2); // Adjust the scale factor for the "Coverflow" effect
+    z-index: 1;
+}
+
+.coverflowslide .carousel {
+    width: 100%;
+    max-width: 600px; // Adjust the carousel width as needed
+    margin: 0 auto;
+}
+
+.space .slick-slide {
+    margin: 10px;
+}
+
+#notificationItemsTabContent {
+    .avatar-title {
+        height: 30px !important;
+        width: 30px !important;
+    }
+}
+
+[data-bs-theme="dark"] {
+    .fc {
+        .fc-multimonth-daygrid {
+            background: #212529 !important;
+
+        }
+
+        .fc-day-disabled {
+            background: #282b2e !important;
+        }
+
+        .fc-multimonth {
+            border-color: #32383e !important;
+        }
+    }
+}
+
+
+#landingnft{
+    .slick-dots{
+        bottom: -36px;
+        z-index: 1;
+        .slick-active{
+            button{
+                background-color: #3577f1 !important;
+            }
+        }
+    }
+    .slick-dots li{
+        height: 7px !important;
+    }
+    .slick-dots li button {
+        width: 22px !important;
+        height: 5px !important;
+        border: none;
+        background-color: rgba(109,98,253,.2) !important;
+        padding: 0px;
+        margin: 0px;
+        transition: all .3s;
+        border-radius: 50px;
+        &::before{
+            display: none;
+        }
+    }
+
+}
+
+/* ─── DARK MODE — MESSAGERIE ───────────────────────────────────────────────
+   Le layout Velzon (admin/vendeur/user) suit déjà data-bs-theme via ses
+   composants componentsAdmin/*.component.ts (chacun a son propre bloc
+   :host-context([data-bs-theme="dark"])). Les composants de messagerie
+   (messages-user, messages-ent) ont été construits avec des couleurs codées
+   en dur (fond blanc, bulles de chat) qui ne réagissaient jamais au
+   changement de thème. Ce bloc comble ce trou.
+   NOTE : le module landing (produits/deals/annonces) est traité directement
+   dans listing.component.scss et public-layout.component.html, pas ici —
+   une première tentative de règles génériques (.container, .landing-page)
+   causait des bandes blanches sur les sections pleine largeur. */
+[data-bs-theme="dark"] {
+
+  // ─── Interface de messagerie (messages-user / messages-ent) ───────────────
+  .chat-wrapper {
+    background-color: #1a1d21 !important;
+    border-color: #32383e !important;
+  }
+
+  .conv-list {
+    background-color: #212529 !important;
+    border-color: #32383e !important;
+  }
+
+  .conv-item {
+    background-color: transparent !important;
+    color: #e9ecef !important;
+    border-bottom-color: #32383e !important;
+
+    &:hover,
+    &.active {
+      background-color: #2a2e33 !important;
+    }
+
+    .conv-name { color: #e9ecef !important; }
+    .conv-preview { color: #9ea5ab !important; }
+  }
+
+  .conv-search input {
+    background-color: #2a2e33 !important;
+    color: #e9ecef !important;
+  }
+
+  .chat-area {
+    background-color: #1a1d21 !important;
+  }
+
+  .chat-header {
+    background-color: #212529 !important;
+    border-bottom-color: #32383e !important;
+    color: #e9ecef !important;
+  }
+
+  .messages-container {
+    background-color: #1a1d21 !important;
+  }
+
+  .msg-bubble .bubble {
+    background-color: #2a2e33 !important;
+    color: #e9ecef !important;
+  }
+
+  .msg-bubble.msg-vendor .bubble {
+    background-color: #405189 !important;
+    color: #fff !important;
+  }
+
+  .msg-time {
+    color: #9ea5ab !important;
+  }
+
+  .chat-input {
+    background-color: #212529 !important;
+    border-top-color: #32383e !important;
+
+    textarea {
+      background-color: #2a2e33 !important;
+      color: #e9ecef !important;
+    }
+  }
+
+  .empty-chat {
+    color: #6c757d !important;
+  }
+}
+// --- TOKENS DE COULEUR — DARK MODE GLOBAL ---
+:root {
+  --surface-color: #ffffff;
+  --page-bg: #f8f9fc;
+  --text-primary: #212529;
+  --text-muted: #6c757d;
+  --border-color: #dee2e6;
+  --border-color-soft: #e9ecef;
+  --cat-pill-bg: #f4f6fb;
+  --cat-pill-color: #4b5675;
+  --cat-pill-hover-bg: #e8edff;
+  --cat-pill-hover-color: #405189;
+}
+
+[data-bs-theme="dark"] {
+  --surface-color: #262a2e;
+  --page-bg: #1a1d21;
+  --text-primary: #e9ecef;
+  --text-muted: #9ea5ab;
+  --border-color: #32383e;
+  --border-color-soft: #3a4045;
+  --cat-pill-bg: #2b3038;
+  --cat-pill-color: #c3c9d4;
+  --cat-pill-hover-bg: #363c46;
+  --cat-pill-hover-color: #ffffff;
+
+  .card, .bg-white, .list-group-item, .form-control, .form-select {
+    background-color: var(--surface-color) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-color) !important;
+  }
+  .bg-light { background-color: var(--border-color-soft) !important; }
+  .text-dark { color: var(--text-primary) !important; }
+  .text-muted { color: var(--text-muted) !important; }
+}

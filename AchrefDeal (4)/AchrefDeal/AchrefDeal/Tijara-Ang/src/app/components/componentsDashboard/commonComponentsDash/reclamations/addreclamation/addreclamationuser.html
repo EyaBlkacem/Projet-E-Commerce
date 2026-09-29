@@ -1,0 +1,64 @@
+<div class="row">
+  <div class="col-12">
+    <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+      <h4 class="mb-sm-0">Nouvelle réclamation</h4>
+      <div class="page-title-right">
+        <ol class="breadcrumb m-0">
+          <li class="breadcrumb-item"><a (click)="cancel()" style="cursor:pointer">Réclamations</a></li>
+          <li class="breadcrumb-item active">Nouvelle</li>
+        </ol>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="row">
+  <div class="col-lg-8 col-xl-6 mx-auto">
+    <div class="card">
+      <div class="card-header">
+        <h4 class="card-title mb-0">Envoyer une réclamation</h4>
+      </div>
+      <div class="card-body">
+
+        <div *ngIf="alertMessage" class="alert alert-danger">
+          {{ alertMessage }}
+        </div>
+        <div *ngIf="successMessage" class="alert alert-success">
+          {{ successMessage }}
+        </div>
+
+        <form [formGroup]="reclamationForm" (ngSubmit)="onSubmit()">
+          <div class="mb-3">
+            <label class="form-label" for="Subject">Sujet</label>
+            <input id="Subject" class="form-control" type="text" formControlName="Subject"
+                   placeholder="Résumez votre problème en quelques mots">
+            <div *ngIf="submitted && f['Subject'].invalid">
+              <div *ngIf="f['Subject'].errors?.['required']" style="color:red">Le sujet est requis.</div>
+              <div *ngIf="f['Subject'].errors?.['minlength']" style="color:red">Le sujet doit contenir au moins 3 caractères.</div>
+            </div>
+          </div>
+
+          <div class="mb-3">
+            <label class="form-label" for="Description">Description</label>
+            <textarea id="Description" class="form-control" rows="5" formControlName="Description"
+                      placeholder="Décrivez votre problème en détail"></textarea>
+            <div *ngIf="submitted && f['Description'].invalid">
+              <div *ngIf="f['Description'].errors?.['required']" style="color:red">La description est requise.</div>
+              <div *ngIf="f['Description'].errors?.['minlength']" style="color:red">La description doit contenir au moins 10 caractères.</div>
+            </div>
+          </div>
+
+          <div class="text-end">
+            <button type="button" class="btn btn-light mx-1" (click)="cancel()" [disabled]="loading">Annuler</button>
+            <button type="button" class="btn btn-danger mx-1" (click)="resetForm()" [disabled]="loading">Réinitialiser</button>
+            <button type="submit" class="btn btn-success mx-1" [disabled]="loading">
+              <span *ngIf="loading" class="spinner-border spinner-border-sm me-1"></span>
+              Envoyer
+            </button>
+          </div>
+        </form>
+
+      </div>
+    </div>
+  </div>
+</div>

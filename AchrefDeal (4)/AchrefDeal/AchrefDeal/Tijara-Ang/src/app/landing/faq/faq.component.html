@@ -1,0 +1,61 @@
+﻿<!-- HERO -->
+<section style="background:linear-gradient(135deg,#405189,#0ab39c);padding:70px 0 50px;color:var(--surface-color)">
+  <div class="container text-center">
+    <i class="ri-question-answer-line fs-48 mb-3 d-block" style="opacity:0.85"></i>
+    <h1 class="fw-bold fs-32 mb-2">Foire aux Questions</h1>
+    <p style="color:rgba(255,255,255,0.8);max-width:500px;margin:0 auto">
+      Retrouvez les réponses aux questions les plus fréquentes. Vous ne trouvez pas votre réponse ?
+      <a routerLink="/landing/contact" style="color:var(--surface-color);font-weight:600">Contactez-nous</a>.
+    </p>
+  </div>
+</section>
+
+<section style="padding:60px 0;background:var(--page-bg)">
+  <div class="container" style="max-width:820px">
+
+    @for (section of sections; track section.category) {
+      <div class="mb-5">
+        <!-- Section header -->
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0"
+               [style.background]="section.color + '20'" style="width:44px;height:44px">
+            <i class="{{ section.icon }} fs-20" [style.color]="section.color"></i>
+          </div>
+          <h4 class="fw-bold mb-0">{{ section.category }}</h4>
+        </div>
+
+        <!-- Accordion -->
+        <div class="d-flex flex-column gap-2">
+          @for (faq of section.faqs; track $index; let gi = $index) {
+            <div class="bg-white rounded-4 shadow-sm overflow-hidden">
+              <button class="w-100 text-start border-0 px-4 py-3 fw-semibold fs-14 d-flex align-items-center justify-content-between"
+                      style="background:transparent;cursor:pointer;color:var(--text-primary)"
+                      (click)="toggle(section.category.charCodeAt(0) * 100 + gi)">
+                <span>{{ faq.q }}</span>
+                <i class="fs-16 flex-shrink-0 ms-3 text-muted"
+                   [class.ri-add-line]="activeId !== (section.category.charCodeAt(0) * 100 + gi)"
+                   [class.ri-subtract-line]="activeId === (section.category.charCodeAt(0) * 100 + gi)"></i>
+              </button>
+              @if (activeId === (section.category.charCodeAt(0) * 100 + gi)) {
+                <div class="px-4 pb-4 text-muted fs-13 lh-lg border-top pt-3">
+                  {{ faq.a }}
+                </div>
+              }
+            </div>
+          }
+        </div>
+      </div>
+    }
+
+    <!-- Still need help -->
+    <div class="text-center mt-5 p-5 bg-white rounded-4 shadow-sm">
+      <i class="ri-customer-service-2-line fs-48 text-primary mb-3 d-block"></i>
+      <h5 class="fw-bold mb-2">Vous n'avez pas trouvé votre réponse ?</h5>
+      <p class="text-muted mb-3">Notre équipe support répond sous 24h ouvrables.</p>
+      <a routerLink="/landing/contact" class="btn btn-primary fw-semibold px-4 py-2 rounded-pill"
+         style="background:linear-gradient(135deg,#405189,#0ab39c);border:none">
+        <i class="ri-mail-send-line me-2"></i>Envoyer un message
+      </a>
+    </div>
+  </div>
+</section>

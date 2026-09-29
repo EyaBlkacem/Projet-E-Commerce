@@ -1,0 +1,385 @@
+﻿<app-breadcrumbs [title]="'Boutique'" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+<div class="row g-4">
+
+  <!-- ─── SIDEBAR FILTRES ──────────────────────────────────────────────────── -->
+  <div class="col-xl-3 col-lg-4">
+
+    <!-- Recherche -->
+    <div class="card border-0 shadow-sm mb-3" style="border-radius:14px">
+      <div class="card-body p-3">
+        <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+          <span class="kpi-icon-sm" style="background:#405189"><i class="ri-search-line text-white fs-13"></i></span>
+          Recherche
+        </h6>
+        <div class="input-group">
+          <span class="input-group-text bg-white border-end-0"><i class="ri-search-line text-muted fs-14"></i></span>
+          <input type="text" class="form-control border-start-0 ps-0 fs-13"
+                 placeholder="Nom, catégorie, vendeur..."
+                 [(ngModel)]="searchTerm" (input)="applyFilters()">
+          @if (searchTerm) {
+            <button class="btn btn-outline-secondary border-start-0" type="button" (click)="searchTerm=''; applyFilters()">
+              <i class="ri-close-line"></i>
+            </button>
+          }
+        </div>
+      </div>
+    </div>
+
+    <!-- Catégories -->
+    <div class="card border-0 shadow-sm mb-3" style="border-radius:14px">
+      <div class="card-body p-3">
+        <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+          <span class="kpi-icon-sm" style="background:#0ab39c"><i class="ri-list-check-2 text-white fs-13"></i></span>
+          Catégories
+        </h6>
+        <ul class="list-unstyled mb-0">
+          @for (cat of categories; track cat) {
+            <li class="mb-1">
+              <button class="btn btn-sm w-100 text-start d-flex align-items-center justify-content-between px-2 py-1 rounded cat-btn"
+                      [class.active]="selectedCategory === cat"
+                      (click)="selectCategory(cat)">
+                <span class="d-flex align-items-center gap-2">
+                  <i class="ri-{{ cat === 'Tous' ? 'apps-line' : 'price-tag-3-line' }} fs-13"></i>
+                  <span class="fs-13">{{ cat }}</span>
+                </span>
+                <span class="badge rounded-pill"
+                      [class.bg-primary]="selectedCategory === cat"
+                      [class.bg-light]="selectedCategory !== cat"
+                      [class.text-dark]="selectedCategory !== cat"
+                      style="font-size:10px">{{ categoryCount(cat) }}</span>
+              </button>
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+
+    <!-- Fourchette de prix -->
+    <div class="card border-0 shadow-sm mb-3" style="border-radius:14px">
+      <div class="card-body p-3">
+        <h6 class="fw-bold mb-3 d-flex align-items-center gap-2">
+          <span class="kpi-icon-sm" style="background:#f7b84b"><i class="ri-money-dollar-circle-line text-white fs-13"></i></span>
+          Fourchette de prix
+        </h6>
+        <div class="row g-2">
+          <div class="col-6">
+            <label class="form-label fs-11 text-muted fw-semibold text-uppercase mb-1">Min (DT)</label>
+            <input type="number" class="form-control form-control-sm fs-13"
+                   placeholder="0" min="0"
+                   [(ngModel)]="priceMin" (change)="applyFilters()">
+          </div>
+          <div class="col-6">
+            <label class="form-label fs-11 text-muted fw-semibold text-uppercase mb-1">Max (DT)</label>
+            <input type="number" class="form-control form-control-sm fs-13"
+                   [placeholder]="maxProductPrice" min="0"
+                   [(ngModel)]="priceMax" (change)="applyFilters()">
+          </div>
+        </div>
+        @if (priceMin || priceMax) {
+          <button class="btn btn-link btn-sm text-muted p-0 mt-2 fs-12" (click)="priceMin=null; priceMax=null; applyFilters()">
+            <i class="ri-refresh-line me-1"></i>Réinitialiser le prix
+          </button>
+        }
+      </div>
+    </div>
+
+    <!-- Réinitialiser tous les filtres -->
+    @if (activeFilterCount > 0) {
+      <button class="btn btn-soft-danger w-100 mb-3 fs-13" (click)="resetFilters()">
+        <i class="ri-filter-off-line me-2"></i>Effacer tous les filtres
+        <span class="badge bg-danger ms-2">{{ activeFilterCount }}</span>
+      </button>
+    }
+
+    <!-- Panier rapide -->
+    <div class="card border-0 shadow-sm text-center" style="border-radius:14px; background:linear-gradient(135deg,#405189,#0ab39c)">
+      <div class="card-body py-4">
+        <div class="cart-bubble mx-auto mb-2">
+          <i class="ri-shopping-cart-2-line fs-22 text-white"></i>
+          @if (cartCount > 0) {
+            <span class="cart-badge">{{ cartCount }}</span>
+          }
+        </div>
+        <h6 class="text-white fw-bold mb-1">Mon Panier</h6>
+        <p class="text-white opacity-75 fs-12 mb-3">{{ cartCount }} article(s)</p>
+        <button class="btn btn-white btn-sm w-100 fw-semibold" style="background:var(--surface-color); color:#405189" (click)="goCart()">
+          <i class="ri-arrow-right-line me-1"></i>Voir le panier
+        </button>
+      </div>
+    </div>
+
+  </div>
+  <!-- /sidebar -->
+
+  <!-- ─── ZONE PRODUITS ────────────────────────────────────────────────────── -->
+  <div class="col-xl-9 col-lg-8">
+
+    <!-- Barre d'outils -->
+    <div class="card border-0 shadow-sm mb-3" style="border-radius:14px">
+      <div class="card-body p-3">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <div>
+            @if (loading) {
+              <span class="text-muted fs-13"><span class="spinner-border spinner-border-sm me-2"></span>Chargement...</span>
+            } @else {
+              <span class="fw-semibold text-dark fs-14">{{ filteredProducts.length }}</span>
+              <span class="text-muted fs-13"> produit(s) trouvé(s)</span>
+              @if (selectedCategory !== 'Tous') {
+                <span class="ms-2 badge bg-primary-subtle text-primary fs-11 rounded-pill">{{ selectedCategory }}</span>
+              }
+              @if (priceMin || priceMax) {
+                <span class="ms-1 badge bg-warning-subtle text-warning fs-11 rounded-pill">
+                  {{ priceMin || 0 }} – {{ priceMax || '∞' }} DT
+                </span>
+              }
+            }
+          </div>
+          <div class="d-flex align-items-center gap-2">
+            <select class="form-select form-select-sm fs-13" style="width:190px" [(ngModel)]="sortBy" (change)="applyFilters()">
+              <option value="default">Trier par défaut</option>
+              <option value="price_asc">Prix croissant</option>
+              <option value="price_desc">Prix décroissant</option>
+              <option value="rating">Mieux notés</option>
+              <option value="newest">Nouveautés</option>
+            </select>
+            <div class="btn-group btn-group-sm">
+              <button type="button" class="btn"
+                      [class.btn-primary]="viewMode==='grid'"
+                      [class.btn-outline-secondary]="viewMode!='grid'"
+                      (click)="viewMode='grid'" title="Grille">
+                <i class="ri-grid-fill"></i>
+              </button>
+              <button type="button" class="btn"
+                      [class.btn-primary]="viewMode==='list'"
+                      [class.btn-outline-secondary]="viewMode!='list'"
+                      (click)="viewMode='list'" title="Liste">
+                <i class="ri-list-unordered"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- ─── CHARGEMENT ─── -->
+    @if (loading) {
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-3">
+        @for (s of [1,2,3,4,5,6]; track s) {
+          <div class="col">
+            <div class="card border-0 shadow-sm skeleton-card" style="border-radius:14px">
+              <div class="skeleton-img"></div>
+              <div class="card-body p-3">
+                <div class="skeleton-line w-50 mb-2"></div>
+                <div class="skeleton-line w-100 mb-1"></div>
+                <div class="skeleton-line w-75 mb-3"></div>
+                <div class="skeleton-line w-40"></div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ─── VUE GRILLE ─── -->
+    @if (!loading && viewMode === 'grid') {
+      <div class="row row-cols-1 row-cols-sm-2 row-cols-xl-3 g-3">
+        @for (product of pagedProducts; track product.id) {
+          <div class="col">
+            <div class="card h-100 border-0 shadow-sm product-card">
+              <div class="product-card-img">
+                @if (product.discount) {
+                  <span class="badge bg-danger position-absolute top-0 end-0 m-2 fs-10">-{{ product.discount }}%</span>
+                }
+                @if (product.badge) {
+                  <span class="badge position-absolute top-0 start-0 m-2 {{ product.badgeClass }} fs-10">{{ product.badge }}</span>
+                }
+                <img [src]="product.image" [alt]="product.name"
+                     class="w-100 h-100 object-fit-contain p-3"
+                     (click)="goDetail(product.id)"
+                     style="cursor:pointer"
+                     onerror="this.src='assets/images/companies/img-1.png'">
+              </div>
+              <div class="card-body d-flex flex-column p-3">
+                <p class="text-muted fs-11 mb-1 text-uppercase fw-semibold">{{ product.category }}</p>
+                <h6 class="mb-1 fw-semibold lh-sm product-title" (click)="goDetail(product.id)">{{ product.name }}</h6>
+                <p class="text-muted fs-12 mb-2">
+                  <i class="ri-store-2-line me-1"></i>{{ product.vendor }}
+                </p>
+                <div class="d-flex align-items-center flex-wrap gap-2 mb-2 text-muted fs-11">
+                  <span><i class="ri-eye-line me-1"></i>{{ product.views ?? 0 }}</span>
+                  <span><i class="ri-heart-line me-1"></i>{{ product.likes ?? 0 }}</span>
+                  @if (product.dealEndsAt) {
+                    <span class="badge rounded-pill {{ getDealBadgeClass(product) }}">
+                      <i class="ri-timer-2-line me-1"></i>{{ getDealCountdown(product) }}
+                    </span>
+                  }
+                </div>
+                <div class="d-flex align-items-center gap-1 mb-3">
+                  @for (star of getStars(product.rating); track star) {
+                    <i class="ri-star-{{ star <= product.rating ? 'fill' : (star - 0.5 <= product.rating ? 'half-fill' : 'line') }} text-warning fs-12"></i>
+                  }
+                  <span class="text-muted fs-11 ms-1">({{ product.reviewCount }})</span>
+                </div>
+                <div class="d-flex align-items-center gap-2 mt-auto mb-3">
+                  <span class="fs-15 fw-bold text-primary">{{ product.price | number:'1.2-3' }} DT</span>
+                  @if (product.oldPrice) {
+                    <span class="text-muted fs-12 text-decoration-line-through">{{ product.oldPrice | number }} DT</span>
+                  }
+                </div>
+                <div class="d-flex gap-2">
+                  <button class="btn btn-soft-primary btn-sm flex-fill" (click)="goDetail(product.id)">
+                    <i class="ri-eye-line me-1"></i>Détails
+                  </button>
+                  <button [id]="'cart-btn-' + product.id"
+                          class="btn btn-sm"
+                          [class.btn-success]="isInCart(product.id)"
+                          [class.btn-primary]="!isInCart(product.id)"
+                          (click)="addToCart(product)"
+                          title="Ajouter au panier">
+                    <i class="{{ isInCart(product.id) ? 'ri-check-line' : 'ri-shopping-cart-line' }}"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+        @if (pagedProducts.length === 0) {
+          <div class="col-12 text-center py-5">
+            <i class="ri-search-eye-line display-3 text-muted opacity-25"></i>
+            <h5 class="mt-3 fw-semibold">Aucun produit trouvé</h5>
+            <p class="text-muted fs-13">Essayez une autre catégorie, un autre mot-clé ou ajustez la fourchette de prix.</p>
+            <button class="btn btn-primary mt-2" (click)="resetFilters()">
+              <i class="ri-refresh-line me-1"></i>Réinitialiser les filtres
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- ─── VUE LISTE ─── -->
+    @if (!loading && viewMode === 'list') {
+      <div class="d-flex flex-column gap-3">
+        @for (product of pagedProducts; track product.id) {
+          <div class="card border-0 shadow-sm" style="border-radius:14px">
+            <div class="card-body p-3">
+              <div class="d-flex gap-3 align-items-center">
+                <div class="flex-shrink-0 rounded overflow-hidden"
+                     style="width:110px; height:110px; background:#f8f9fa; cursor:pointer; border-radius:10px"
+                     (click)="goDetail(product.id)">
+                  <img [src]="product.image" [alt]="product.name"
+                       class="w-100 h-100 object-fit-contain p-2"
+                       onerror="this.src='assets/images/companies/img-1.png'">
+                </div>
+                <div class="flex-grow-1 min-w-0">
+                  <p class="text-muted fs-11 mb-0 text-uppercase fw-semibold">{{ product.category }}</p>
+                  <h6 class="fw-semibold mb-1 product-title" style="cursor:pointer" (click)="goDetail(product.id)">{{ product.name }}</h6>
+                  <p class="text-muted fs-12 mb-1"><i class="ri-store-2-line me-1"></i>{{ product.vendor }}</p>
+                  <div class="d-flex align-items-center flex-wrap gap-2 text-muted fs-11 mb-2">
+                    <span><i class="ri-eye-line me-1"></i>{{ product.views ?? 0 }}</span>
+                    <span><i class="ri-heart-line me-1"></i>{{ product.likes ?? 0 }}</span>
+                    @if (product.dealEndsAt) {
+                      <span class="badge rounded-pill {{ getDealBadgeClass(product) }}">
+                        <i class="ri-timer-2-line me-1"></i>{{ getDealCountdown(product) }}
+                      </span>
+                    }
+                  </div>
+                  <div class="d-flex align-items-center gap-1">
+                    @for (star of getStars(product.rating); track star) {
+                      <i class="ri-star-{{ star <= product.rating ? 'fill' : 'line' }} text-warning fs-11"></i>
+                    }
+                    <span class="text-muted fs-11 ms-1">({{ product.reviewCount }})</span>
+                  </div>
+                </div>
+                <div class="text-end flex-shrink-0">
+                  @if (product.badge) {
+                    <span class="badge {{ product.badgeClass }} mb-2 d-block fs-10">{{ product.badge }}</span>
+                  }
+                  <div class="fs-15 fw-bold text-primary">{{ product.price | number:'1.2-3' }} DT</div>
+                  @if (product.oldPrice) {
+                    <div class="text-muted fs-12 text-decoration-line-through">{{ product.oldPrice | number }} DT</div>
+                  }
+                  <div class="d-flex gap-2 mt-2 justify-content-end">
+                    <button class="btn btn-soft-primary btn-sm" (click)="goDetail(product.id)">
+                      <i class="ri-eye-line me-1"></i>Détails
+                    </button>
+                    <button class="btn btn-primary btn-sm" (click)="addToCart(product)">
+                      <i class="ri-shopping-cart-line"></i>
+                    </button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+        @if (pagedProducts.length === 0) {
+          <div class="text-center py-5">
+            <i class="ri-search-eye-line display-3 text-muted opacity-25"></i>
+            <h5 class="mt-3 fw-semibold">Aucun produit trouvé</h5>
+            <button class="btn btn-primary mt-2" (click)="resetFilters()">
+              <i class="ri-refresh-line me-1"></i>Réinitialiser les filtres
+            </button>
+          </div>
+        }
+      </div>
+    }
+
+    <!-- Pagination -->
+    @if (!loading && totalPages > 1) {
+      <div class="d-flex justify-content-center mt-4">
+        <ngb-pagination
+          [(page)]="currentPage"
+          [pageSize]="itemsPerPage"
+          [collectionSize]="filteredProducts.length"
+          [maxSize]="5"
+          [boundaryLinks]="true">
+        </ngb-pagination>
+      </div>
+    }
+
+  </div>
+</div>
+
+<style>
+.kpi-icon-sm {
+  width: 28px; height: 28px; border-radius: 8px;
+  display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+}
+.cat-btn {
+  border: none; background: transparent; color: #495057; transition: all .15s;
+}
+.cat-btn:hover { background: #f8f9fa; color: #405189; }
+.cat-btn.active { background: #e8ecf5; color: #405189; font-weight: 600; }
+.cart-bubble {
+  width: 52px; height: 52px; border-radius: 50%;
+  background: rgba(255,255,255,.2);
+  display: flex; align-items: center; justify-content: center;
+  position: relative;
+}
+.cart-badge {
+  position: absolute; top: -4px; right: -4px;
+  background: #f06548; color: var(--surface-color); border-radius: 50%;
+  width: 18px; height: 18px; font-size: 10px; font-weight: 700;
+  display: flex; align-items: center; justify-content: center;
+}
+.product-card {
+  border-radius: 14px; transition: box-shadow .2s, transform .2s;
+}
+.product-card:hover { box-shadow: 0 8px 25px rgba(0,0,0,.13) !important; transform: translateY(-3px); }
+.product-card-img {
+  height: 190px; overflow: hidden;
+  border-radius: 14px 14px 0 0; background: #f8f9fa; position: relative;
+}
+.product-title {
+  cursor: pointer;
+  display: -webkit-box; -webkit-line-clamp: 2; -webkit-box-orient: vertical; overflow: hidden;
+}
+/* Skeleton loading */
+.skeleton-card { border-radius: 14px; overflow: hidden; }
+.skeleton-img { height: 190px; background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+.skeleton-line { height: 12px; border-radius: 6px; background: linear-gradient(90deg,#f0f0f0 25%,#e0e0e0 50%,#f0f0f0 75%); background-size: 200% 100%; animation: shimmer 1.4s infinite; }
+.skeleton-line.w-50 { width: 50%; }
+.skeleton-line.w-75 { width: 75%; }
+.skeleton-line.w-40 { width: 40%; }
+@keyframes shimmer { 0%{background-position:200% 0} 100%{background-position:-200% 0} }
+</style>

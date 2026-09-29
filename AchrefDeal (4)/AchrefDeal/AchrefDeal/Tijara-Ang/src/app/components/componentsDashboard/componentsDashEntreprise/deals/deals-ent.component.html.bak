@@ -1,0 +1,385 @@
+<style>
+.deal-flip-timer {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  background: linear-gradient(135deg, #1e2749, #2d3a6b);
+  border-radius: 10px;
+  padding: 7px 10px;
+  box-shadow: 0 3px 10px rgba(30, 39, 73, 0.3);
+}
+.deal-flip-timer.is-urgent {
+  background: linear-gradient(135deg, #7a1f14, #b8341f);
+  animation: deal-urgent-pulse 1.4s ease-in-out infinite;
+}
+.deal-flip-timer.is-expired {
+  background: #eef0f5;
+  box-shadow: none;
+  padding: 8px 12px;
+}
+.deal-flip-timer.is-urgent .deal-timer-icon { color: #ffe0d9; }
+.deal-timer-icon { color: #b9c4f0; font-size: 0.9rem; }
+.deal-timer-expired { color: #74788d; font-size: 0.85rem; font-weight: 500; }
+.flip-unit {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  line-height: 1;
+}
+.flip-value {
+  background: rgba(255,255,255,0.15);
+  color: #fff;
+  font-weight: 700;
+  font-size: 0.85rem;
+  min-width: 24px;
+  text-align: center;
+  border-radius: 4px;
+  padding: 2px 4px;
+}
+.flip-label { color: #b9c4f0; font-size: 0.55rem; margin-top: 2px; }
+.flip-sep { color: #b9c4f0; font-size: 0.8rem; }
+@keyframes deal-urgent-pulse {
+  0%, 100% { box-shadow: 0 3px 10px rgba(184, 52, 31, 0.4); }
+  50% { box-shadow: 0 3px 20px rgba(184, 52, 31, 0.8); }
+}
+</style>
+<app-breadcrumbs [title]="'Mes Deals & Promos'" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+@if (submitSuccess) {
+  <div class="alert alert-success border-0 shadow-sm d-flex align-items-center gap-2 mb-4 rounded-3">
+    <i class="ri-checkbox-circle-fill fs-18"></i>
+    <span>{{ submitSuccess }}</span>
+  </div>
+}
+
+<!-- Header Actions -->
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+  <div class="d-flex gap-1 p-1 rounded-3" style="background:#f0f2f7">
+    <button class="btn btn-sm px-4 py-2 fw-medium rounded-2"
+            [style.background]="activeTab==='miennes' ? 'var(--surface-color)' : 'transparent'"
+            [style.color]="activeTab==='miennes' ? '#c07800' : 'var(--text-muted)'"
+            [style.box-shadow]="activeTab==='miennes' ? '0 2px 8px rgba(0,0,0,.08)' : 'none'"
+            (click)="activeTab='miennes'">
+      <i class="ri-store-2-line me-1"></i>Mes deals
+      @if (myDeals.length > 0) {
+        <span class="badge ms-1 rounded-pill" style="background:#f7b84b;color:var(--surface-color);font-size:10px">{{ myDeals.length }}</span>
+      }
+    </button>
+    <button class="btn btn-sm px-4 py-2 fw-medium rounded-2"
+            [style.background]="activeTab==='toutes' ? 'var(--surface-color)' : 'transparent'"
+            [style.color]="activeTab==='toutes' ? '#c07800' : 'var(--text-muted)'"
+            [style.box-shadow]="activeTab==='toutes' ? '0 2px 8px rgba(0,0,0,.08)' : 'none'"
+            (click)="activeTab='toutes'">
+      <i class="ri-global-line me-1"></i>Deals publics
+    </button>
+  </div>
+
+  <button class="btn fw-medium px-4 py-2 rounded-3 text-white"
+          style="background:linear-gradient(135deg,#f7b84b,#f06548)"
+          (click)="showForm=!showForm">
+    <i class="ri-price-tag-3-line me-2"></i>Nouveau deal
+  </button>
+</div>
+
+<!-- Formulaire -->
+@if (showForm) {
+  <div class="card border-0 shadow mb-4 rounded-4 overflow-hidden">
+    <div class="px-4 py-3 d-flex align-items-center gap-2"
+         style="background:linear-gradient(90deg,#f7b84b,#f06548)">
+      <i class="ri-price-tag-3-line text-white fs-18"></i>
+      <h6 class="fw-bold text-white mb-0">Créer un nouveau deal / offre promo</h6>
+      <button class="btn btn-sm ms-auto text-white opacity-75"
+              style="background:rgba(255,255,255,.2);border-radius:8px"
+              (click)="showForm=false"><i class="ri-close-line"></i></button>
+    </div>
+    <div class="card-body p-4">
+      <form [formGroup]="dealForm" (ngSubmit)="submit()">
+        <div class="row g-4">
+          <div class="col-12">
+            <label class="form-label fw-semibold">Titre du deal <span class="text-danger">*</span></label>
+            <input type="text" class="form-control form-control-lg rounded-3" formControlName="title"
+                   placeholder="Ex: Flash Sale à 50% sur les smartphones jusqu'à dimanche !"
+                   [class.is-invalid]="f['title'].invalid && f['title'].touched">
+            <div class="invalid-feedback">Minimum 5 caractères.</div>
+          </div>
+
+          <div class="col-12">
+            <label class="form-label fw-semibold">Description <span class="text-danger">*</span></label>
+            <textarea class="form-control rounded-3" rows="4" formControlName="content"
+                      placeholder="Détaillez votre offre : produits concernés, durée, conditions..."
+                      [class.is-invalid]="f['content'].invalid && f['content'].touched"></textarea>
+            <div class="invalid-feedback">Minimum 10 caractères.</div>
+          </div>
+
+          <!-- NOUVEAU — champs alignés sur les vraies colonnes Deals -->
+          <div class="col-sm-4">
+            <label class="form-label fw-semibold">Prix (TND)</label>
+            <input type="text" class="form-control rounded-3" formControlName="price"
+                   placeholder="Ex: 99.900"
+                   [class.is-invalid]="f['price'].invalid && f['price'].touched">
+            @if (f['price'].invalid && f['price'].touched) {
+              <div class="text-danger fs-12 mt-1">Format invalide (ex: 99.900).</div>
+            }
+          </div>
+          <div class="col-sm-4">
+            <label class="form-label fw-semibold">Remise (%)</label>
+            <input type="text" class="form-control rounded-3" formControlName="discount"
+                   placeholder="Ex: 50"
+                   [class.is-invalid]="f['discount'].invalid && f['discount'].touched">
+            @if (f['discount'].invalid && f['discount'].touched) {
+              <div class="text-danger fs-12 mt-1">Nombre entre 0 et 999.</div>
+            }
+          </div>
+          <div class="col-sm-4">
+            <label class="form-label fw-semibold">Quantité disponible</label>
+            <input type="number" class="form-control rounded-3" formControlName="quantity" placeholder="Ex: 50">
+          </div>
+
+          <div class="col-12">
+            <label class="form-label fw-semibold">Date de fin de l'offre <span class="fs-12 fw-normal text-muted">(optionnel)</span></label>
+            <input type="datetime-local" class="form-control rounded-3" formControlName="dateEnd">
+          </div>
+
+          <div class="col-12">
+            <label class="form-label fw-semibold">Image du deal (optionnel)</label>
+            <div class="d-flex align-items-start gap-3">
+              <div class="rounded-3 overflow-hidden border d-flex align-items-center justify-content-center flex-shrink-0"
+                   style="width:100px;height:100px;background:#fff8ec">
+                @if (imagePreview) {
+                  <img [src]="imagePreview" class="w-100 h-100" style="object-fit:cover">
+                } @else {
+                  <i class="ri-price-tag-3-line fs-2" style="color:#f7b84b"></i>
+                }
+              </div>
+              <div class="d-flex flex-column gap-2" style="padding-top:8px">
+                <label for="dealImg" class="btn btn-outline-warning rounded-3" style="cursor:pointer;width:fit-content">
+                  <i class="ri-upload-cloud-2-line me-1"></i>Choisir une image
+                </label>
+                <input type="file" id="dealImg" class="d-none" accept="image/*" (change)="onImageSelected($event)">
+                @if (imagePreview) {
+                  <button type="button" class="btn btn-outline-danger btn-sm rounded-3" (click)="imagePreview=''">
+                    <i class="ri-delete-bin-line me-1"></i>Supprimer
+                  </button>
+                }
+                <span class="text-muted fs-12">JPG, PNG, WEBP • Max 40 Ko (limite technique backend)</span>
+              </div>
+            </div>
+          </div>
+
+          @if (submitError) {
+            <div class="col-12">
+              <div class="alert alert-danger rounded-3 py-2 fs-13 mb-0">
+                <i class="ri-error-warning-line me-1"></i>{{ submitError }}
+              </div>
+            </div>
+          }
+
+          <div class="col-12 d-flex gap-3">
+            <button type="submit" class="btn px-5 py-2 rounded-3 fw-medium text-white"
+                    style="background:linear-gradient(135deg,#f7b84b,#f06548)"
+                    [disabled]="dealForm.invalid || submitting">
+              @if (submitting) { <span class="spinner-border spinner-border-sm me-2"></span> }
+              <i class="ri-send-plane-line me-1"></i>Soumettre pour validation
+            </button>
+            <button type="button" class="btn btn-outline-secondary px-4 rounded-3" (click)="showForm=false">
+              Annuler
+            </button>
+          </div>
+        </div>
+      </form>
+    </div>
+  </div>
+}
+
+<!-- Mes deals -->
+@if (activeTab === 'miennes') {
+  @if (loading) {
+    <div class="text-center py-5">
+      <div class="spinner-border" style="color:#f7b84b;width:2.5rem;height:2.5rem"></div>
+    </div>
+  } @else if (myDeals.length === 0) {
+    <div class="card border-0 shadow-sm rounded-4">
+      <div class="card-body text-center py-5">
+        <div class="mb-3" style="font-size:60px;opacity:.15">???</div>
+        <h5 class="fw-semibold">Aucun deal publié</h5>
+        <p class="text-muted fs-14 mb-4">Créez des offres promotionnelles pour attirer plus de clients.</p>
+        <button class="btn fw-medium px-4 rounded-3 text-white"
+                style="background:linear-gradient(135deg,#f7b84b,#f06548)"
+                (click)="showForm=true">
+          <i class="ri-add-line me-1"></i>Créer un deal
+        </button>
+      </div>
+    </div>
+  } @else {
+    <div class="row g-3">
+      @for (deal of myDeals; track deal.id) {
+        <div class="col-12">
+          <div class="card border-0 shadow-sm rounded-4 overflow-hidden"
+               style="border-left:4px solid #f7b84b!important">
+            <div class="card-body p-4">
+              <div class="d-flex justify-content-between align-items-start gap-3">
+                <div class="flex-fill">
+                  <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                    <h5 class="fw-bold mb-0 fs-16">{{ deal.title }}</h5>
+                    <span class="badge rounded-pill px-3 py-1 {{ getStatusClass(deal.status) }}">
+                      @if (deal.status === 'approved') { <i class="ri-checkbox-circle-line me-1"></i> }
+                      @if (deal.status === 'pending')  { <i class="ri-time-line me-1"></i> }
+                      {{ getStatusLabel(deal.status) }}
+                    </span>
+                    @if (deal.isExpired) {
+                      <span class="badge rounded-pill px-3 py-1 bg-secondary-subtle text-secondary">
+                        <i class="ri-time-line me-1"></i>Expiré
+                      </span>
+                    }
+                  </div>
+
+                  @if (deal.status === 'pending') {
+                    <div class="d-flex align-items-center gap-2 fs-12 mb-2" style="color:#c07800">
+                      <i class="ri-information-line"></i>En attente de validation
+                    </div>
+                  }
+
+                  <p class="text-muted fs-14 mb-2" style="line-height:1.6">{{ deal.content }}</p>
+
+                  <!-- NOUVEAU — prix / remise / quantité -->
+                  <div class="d-flex flex-wrap gap-3 mb-3">
+                    @if (deal.price) {
+                      <span class="fw-bold fs-15" style="color:#0ab39c">{{ deal.price }} TND</span>
+                    }
+                    @if (deal.discount) {
+                      <span class="badge rounded-pill px-3 py-1" style="background:#fdecea;color:#e74c3c">
+                        -{{ deal.discount }}%
+                      </span>
+                    }
+                    @if (deal.quantity != null) {
+                      <span class="text-muted fs-13"><i class="ri-archive-line me-1"></i>{{ deal.quantity }} restant(s)</span>
+                    }
+                  </div>
+
+                  <!-- NOUVEAU — barre de progression calculée côté backend -->
+                  @if (deal.totalCount) {
+                    <div class="mb-3" style="max-width:280px">
+                      <div class="d-flex justify-content-between fs-11 text-muted mb-1">
+                        <span>Vendus</span>
+                        <span>{{ deal.quantityProgress }}%</span>
+                      </div>
+                      <div style="height:6px;border-radius:4px;background:#eef0f5;overflow:hidden">
+                        <div style="height:100%;border-radius:4px;background:linear-gradient(90deg,#f06548,#f7b84b)"
+                             [style.width.%]="deal.quantityProgress"></div>
+                      </div>
+                    </div>
+                  }
+
+                  @if (deal.image_url) {
+                    <div class="mb-3 rounded-3 overflow-hidden" style="max-height:240px">
+                      <img [src]="deal.image_url" class="w-100" style="object-fit:cover;max-height:240px">
+                    </div>
+                  }
+
+                  <div class="d-flex align-items-center gap-4 pt-2 border-top text-muted fs-13">
+                                      @if (deal.dateEnd) {
+                    <div class="deal-flip-timer mb-2"
+                         [class.is-urgent]="isDealUrgent(deal)"
+                         [class.is-expired]="isDealExpired(deal)">
+                      @if (isDealExpired(deal)) {
+                        <span class="deal-timer-expired"><i class="ri-close-circle-line me-1"></i>Offre terminee</span>
+                      } @else {
+                        <span class="deal-timer-icon"><i class="ri-timer-flash-fill"></i></span>
+                        <div class="flip-unit"><span class="flip-value">{{ getDealTimeParts(deal).days }}</span><span class="flip-label">J</span></div>
+                        <span class="flip-sep">:</span>
+                        <div class="flip-unit"><span class="flip-value">{{ getDealTimeParts(deal).hours }}</span><span class="flip-label">H</span></div>
+                        <span class="flip-sep">:</span>
+                        <div class="flip-unit"><span class="flip-value">{{ getDealTimeParts(deal).minutes }}</span><span class="flip-label">M</span></div>
+                        <span class="flip-sep">:</span>
+                        <div class="flip-unit"><span class="flip-value">{{ getDealTimeParts(deal).seconds }}</span><span class="flip-label">S</span></div>
+                      }
+                    </div>
+                  }
+                    <span><i class="ri-heart-3-line me-1 text-danger"></i>{{ deal.likes || 0 }} J'aime</span>
+                    <span><i class="ri-eye-line me-1"></i>{{ deal.ViewCount || 0 }} vues</span>
+                    <span class="ms-auto"><i class="ri-calendar-line me-1"></i>{{ deal.created_at | date:'dd MMM yyyy' }}</span>
+                  </div>
+                </div>
+
+                <button class="btn btn-sm btn-outline-danger rounded-3 flex-shrink-0" (click)="deleteDeal(deal.id)">
+                  <i class="ri-delete-bin-line"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+}
+
+<!-- Deals publics -->
+@if (activeTab === 'toutes') {
+  @if (publicDeals.length === 0) {
+    <div class="card border-0 shadow-sm rounded-4">
+      <div class="card-body text-center py-5">
+        <div class="mb-3" style="font-size:60px;opacity:.15">???</div>
+        <h5 class="fw-semibold">Aucun deal public</h5>
+        <p class="text-muted fs-14">Les deals approuvés apparaîtront ici.</p>
+      </div>
+    </div>
+  } @else {
+    <div class="row g-4">
+      @for (deal of publicDeals; track deal.id) {
+        <div class="col-lg-6">
+          <div class="card border-0 shadow-sm rounded-4 h-100 overflow-hidden">
+            <div class="px-4 py-2 d-flex align-items-center gap-2"
+                 style="background:linear-gradient(90deg,#fff8ec,#fff3cd)">
+              <i class="ri-flashlight-fill" style="color:#f7b84b"></i>
+              <span class="fw-semibold fs-13" style="color:#c07800">Offre Spéciale</span>
+              <span class="ms-auto text-muted fs-12">{{ deal.created_at | date:'dd MMM yyyy' }}</span>
+            </div>
+
+            @if (deal.image_url) {
+              <div style="height:190px;overflow:hidden">
+                <img [src]="deal.image_url" class="w-100 h-100" style="object-fit:cover">
+              </div>
+            }
+
+            <div class="card-body p-4">
+              <div class="d-flex align-items-center gap-3 mb-3">
+                <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0"
+                     style="width:38px;height:38px;background:linear-gradient(135deg,#f7b84b,#f06548)">
+                  {{ deal.author_name?.[0] || '?' }}
+                </div>
+                <div>
+                  <div class="fw-semibold fs-14">{{ deal.author_name }}</div>
+                  <div class="text-muted fs-12">{{ deal.shop_name || 'Vendeur' }}</div>
+                </div>
+                @if (deal.discount) {
+                  <span class="badge ms-auto rounded-pill px-3" style="background:#fdecea;color:#e74c3c">
+                    -{{ deal.discount }}%
+                  </span>
+                }
+              </div>
+
+              <h5 class="fw-bold mb-2 fs-16">{{ deal.title }}</h5>
+              <p class="text-muted fs-13 mb-2" style="line-height:1.7">{{ deal.content }}</p>
+
+              @if (deal.price) {
+                <div class="fw-bold fs-15 mb-3" style="color:#0ab39c">{{ deal.price }} TND</div>
+              }
+
+              <div class="d-flex align-items-center gap-2 pt-3 border-top">
+                <button class="btn btn-sm rounded-pill px-3 gap-2 d-flex align-items-center"
+                        [style.background]="isLiked(deal.id) ? '#e74c3c' : '#fff0f0'"
+                        [style.color]="isLiked(deal.id) ? 'var(--surface-color)' : '#e74c3c'"
+                        style="border:1px solid #ffd5d5"
+                        [disabled]="liking[deal.id]"
+                        (click)="like(deal)">
+                  <i [class]="isLiked(deal.id) ? 'ri-heart-3-fill' : 'ri-heart-3-line'"></i>
+                  <span>{{ deal.likes || 0 }}</span>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  }
+}

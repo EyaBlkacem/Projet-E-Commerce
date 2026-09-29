@@ -1,0 +1,21 @@
+<div id="layout-wrapper">
+    <!-- Top Bar -->
+    <app-topbar-entreprise (mobileMenuButtonClicked)="onToggleMobileMenu()"></app-topbar-entreprise>
+    <!-- Side Bar -->
+    <!-- <app-sidebar></app-sidebar> -->
+ 
+    <app-horizontal-topbar-entreprises></app-horizontal-topbar-entreprises>
+
+    <div class="main-content">
+        <div class="page-content">
+            <div class="container-fluid">
+                <!-- Main Content -->
+                <router-outlet></router-outlet>
+            </div>
+        </div>
+        <!-- Footer -->
+        <app-footer></app-footer>
+    </div>
+  </div>
+  <!-- Right Side Bar -->
+  <app-rightsidebar  (settingsButtonClicked)="onSettingsButtonClicked()"></app-rightsidebar>

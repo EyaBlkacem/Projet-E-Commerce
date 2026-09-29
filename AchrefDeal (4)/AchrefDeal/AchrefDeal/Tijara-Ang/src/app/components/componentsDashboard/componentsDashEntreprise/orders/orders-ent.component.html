@@ -1,0 +1,234 @@
+﻿<app-breadcrumbs [title]="'Mes Commandes'" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+@if (error) {
+  <div class="alert alert-danger">{{ error }}</div>
+}
+
+<!-- ── KPI ────────────────────────────────────────────────────────────────── -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-4">
+    <div class="card border-0 shadow-sm h-100" style="border-radius:14px">
+      <div class="card-body d-flex align-items-center gap-3 py-3">
+        <div style="width:46px;height:46px;background:#edfaf8;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <i class="ri-file-list-3-line fs-22 text-success"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0">{{ countByStatus.total }}</h3>
+          <small class="text-muted">Total commandes</small>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-4">
+    <div class="card border-0 shadow-sm h-100" style="border-radius:14px;cursor:pointer"
+         (click)="filterStatus='actif'; applyFilter()">
+      <div class="card-body d-flex align-items-center gap-3 py-3">
+        <div style="width:46px;height:46px;background:#edf7fd;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <i class="ri-checkbox-circle-line fs-22 text-info"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0 text-info">{{ countByStatus.actives }}</h3>
+          <small class="text-muted">Actives</small>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-xl-4">
+    <div class="card border-0 shadow-sm h-100" style="border-radius:14px;cursor:pointer"
+         (click)="filterStatus='annule'; applyFilter()">
+      <div class="card-body d-flex align-items-center gap-3 py-3">
+        <div style="width:46px;height:46px;background:#fef0ec;border-radius:12px;display:flex;align-items:center;justify-content:center;flex-shrink:0">
+          <i class="ri-close-circle-line fs-22 text-danger"></i>
+        </div>
+        <div>
+          <h3 class="fw-bold mb-0 text-danger">{{ countByStatus.annulees }}</h3>
+          <small class="text-muted">Annulées</small>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- ── DÉTAIL COMMANDE ────────────────────────────────────────────────────── -->
+@if (selectedOrder) {
+  <div class="card border-0 shadow mb-4" style="border-radius:16px;border-left:4px solid #405189 !important">
+    <div class="card-body p-4">
+      <div class="d-flex align-items-start justify-content-between mb-4">
+        <div>
+          <h5 class="fw-bold mb-1">
+            <i class="ri-file-list-3-line me-2 text-primary"></i>Commande #{{ selectedOrder.id }}
+          </h5>
+          <div class="d-flex gap-2 flex-wrap">
+            <span class="badge" [class.bg-success-subtle]="selectedOrder.active" [class.text-success]="selectedOrder.active"
+                  [class.bg-danger-subtle]="!selectedOrder.active" [class.text-danger]="!selectedOrder.active">
+              {{ selectedOrder.active ? 'Active' : 'Annulée' }}
+            </span>
+            <span class="text-muted fs-13"><i class="ri-calendar-line me-1"></i>{{ selectedOrder.date }}</span>
+          </div>
+        </div>
+        <button class="btn btn-sm btn-soft-secondary" (click)="selectedOrder=null">
+          <i class="ri-close-line"></i>
+        </button>
+      </div>
+
+      <div class="row g-4">
+        <div class="col-md-6">
+          <div class="bg-light rounded-3 p-3">
+            <h6 class="fw-semibold mb-3"><i class="ri-user-line me-2 text-primary"></i>Client</h6>
+            <p class="mb-1 fs-14"><strong>Nom :</strong> {{ selectedOrder.client }}</p>
+            <p class="mb-1 fs-14"><strong>Adresse :</strong> {{ selectedOrder.ville }}</p>
+            <p class="mb-1 fs-14"><strong>Email :</strong> {{ selectedOrder.email }}</p>
+            <p class="mb-0 fs-14"><strong>Téléphone :</strong> {{ selectedOrder.telephone }}</p>
+          </div>
+        </div>
+        <div class="col-md-6">
+          <div class="bg-light rounded-3 p-3">
+            <h6 class="fw-semibold mb-3"><i class="ri-shopping-bag-line me-2 text-success"></i>Produits</h6>
+            @for (line of selectedOrder.lines; track line.IdOrderDeatils) {
+              <div class="d-flex align-items-center gap-2 mb-2 fs-14">
+                <div class="rounded-2 overflow-hidden border flex-shrink-0" style="width:40px;height:40px;background:#fff">
+                  @if (line._image) {
+                    <img [src]="line._image" [alt]="line.product?.TitleProduct" class="w-100 h-100" style="object-fit:cover">
+                  } @else {
+                    <div class="d-flex align-items-center justify-content-center w-100 h-100"><i class="ri-image-line text-muted fs-14"></i></div>
+                  }
+                </div>
+                <span class="text-muted">{{ line.product?.TitleProduct ?? ('#' + line.IdProduct) }} × {{ line.Quantity }}</span>
+              </div>
+            }
+            <div class="d-flex justify-content-between pt-2 border-top fs-15 mt-2">
+              <span class="fw-bold">Total</span>
+              <span class="fw-bold text-primary">{{ selectedOrder.total | number }} DT</span>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div class="mt-3 d-flex align-items-center gap-2 flex-wrap">
+        <span class="text-muted fs-13 fw-medium">Statut :</span>
+        @if (selectedOrder.status === 'pending') {
+          <button class="btn btn-sm btn-success" (click)="changeOrderStatus(selectedOrder, 'accept')">
+            <i class="ri-check-line me-1"></i>Accepter
+          </button>
+          <button class="btn btn-sm btn-outline-danger" (click)="changeOrderStatus(selectedOrder, 'reject')">
+            <i class="ri-close-line me-1"></i>Refuser
+          </button>
+        } @else if (selectedOrder.status === 'accepted') {
+          <button class="btn btn-sm btn-info" (click)="changeOrderStatus(selectedOrder, 'ship')">
+            <i class="ri-truck-line me-1"></i>Marquer expédiée
+          </button>
+        } @else {
+          <span class="badge bg-secondary-subtle text-secondary">Aucune action disponible pour ce statut</span>
+        }
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ── TABLEAU ────────────────────────────────────────────────────────────── -->
+<div class="card border-0 shadow-sm" style="border-radius:16px">
+  <div class="card-header bg-transparent border-0 pt-4 px-4 pb-3">
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+      <h6 class="fw-bold mb-0">
+        Commandes reçues
+        <span class="badge bg-primary-subtle text-primary ms-2">{{ filteredOrders.length }}</span>
+      </h6>
+      <div class="d-flex gap-2 flex-wrap align-items-center">
+        <div class="input-group" style="width:220px">
+          <span class="input-group-text bg-white border-end-0">
+            <i class="ri-search-line text-muted"></i>
+          </span>
+          <input type="text" class="form-control border-start-0 ps-0"
+                 placeholder="Réf., client, produit..."
+                 [(ngModel)]="searchTerm" (input)="applyFilter()">
+        </div>
+        <select class="form-select" style="width:160px" [(ngModel)]="filterStatus" (change)="applyFilter()">
+          <option value="tous">Tous les statuts</option>
+          <option value="actif">Actives</option>
+          <option value="annule">Annulées</option>
+        </select>
+         <input type="date" class="form-control" style="width:160px" [(ngModel)]="dateFrom"
+           (ngModelChange)="applyFilter()" aria-label="Date de début">
+         <input type="date" class="form-control" style="width:160px" [(ngModel)]="dateTo"
+           (ngModelChange)="applyFilter()" aria-label="Date de fin">
+         <button type="button" class="btn btn-outline-secondary" (click)="resetFilter()" title="Réinitialiser les filtres">
+           <i class="ri-refresh-line"></i>
+         </button>
+      </div>
+    </div>
+  </div>
+
+  <div class="card-body p-0">
+    @if (loading) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+      </div>
+    } @else if (filteredOrders.length === 0) {
+      <div class="text-center py-5">
+        <i class="ri-file-list-3-line display-3 text-muted"></i>
+        <h5 class="mt-3 fw-semibold">Aucune commande</h5>
+        <p class="text-muted">Aucun résultat pour les filtres sélectionnés.</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-4 fw-medium text-muted fs-12">Réf.</th>
+              <th class="fw-medium text-muted fs-12">Client</th>
+              <th class="fw-medium text-muted fs-12">Produit(s)</th>
+              <th class="fw-medium text-muted fs-12">Total</th>
+              <th class="fw-medium text-muted fs-12">Date</th>
+              <th class="fw-medium text-muted fs-12">Statut</th>
+              <th class="fw-medium text-muted fs-12 text-center">Action</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (o of pagedOrders; track o.id) {
+              <tr>
+                <td class="ps-4 fw-semibold text-primary fs-13">#{{ o.id }}</td>
+                <td class="fs-13">{{ o.client }}</td>
+                <td class="fs-13" style="max-width:200px">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-2 overflow-hidden border flex-shrink-0" style="width:30px;height:30px;background:#fff">
+                      @if (o.lines[0]?._image) {
+                        <img [src]="o.lines[0]._image" class="w-100 h-100" style="object-fit:cover">
+                      } @else {
+                        <div class="d-flex align-items-center justify-content-center w-100 h-100"><i class="ri-image-line text-muted fs-12"></i></div>
+                      }
+                    </div>
+                    <span class="text-muted text-truncate" style="max-width:150px">{{ o.products }}</span>
+                  </div>
+                </td>
+                <td class="fw-semibold fs-13">{{ o.total | number }} DT</td>
+                <td class="text-muted fs-13">{{ o.date }}</td>
+                <td>
+                  <span class="badge" [class.bg-success-subtle]="o.active" [class.text-success]="o.active"
+                        [class.bg-danger-subtle]="!o.active" [class.text-danger]="!o.active">
+                    {{ o.active ? 'Active' : 'Annulée' }}
+                  </span>
+                </td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-soft-primary" (click)="selectedOrder=o" title="Voir détail">
+                    <i class="ri-eye-line"></i>
+                  </button>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+  <div class="card-footer bg-transparent border-0 px-4 py-3 d-flex flex-wrap justify-content-between align-items-center gap-2">
+    <span class="text-muted fs-12">Affichage de {{ pageStart }} a {{ pageEnd }} sur {{ filteredOrders.length }} commande(s)</span>
+    @if (filteredOrders.length > pageSize) {
+      <div class="btn-group btn-group-sm" aria-label="Pagination commandes">
+        <button class="btn btn-light" [disabled]="currentPage === 1" (click)="goToPage(currentPage - 1)"><i class="ri-arrow-left-s-line"></i></button>
+        @for (page of pages; track page) {
+          <button class="btn" [class.btn-primary]="page === currentPage" [class.btn-light]="page !== currentPage" (click)="goToPage(page)">{{ page }}</button>
+        }
+        <button class="btn btn-light" [disabled]="currentPage === totalPages" (click)="goToPage(currentPage + 1)"><i class="ri-arrow-right-s-line"></i></button>
+      </div>
+    }
+  </div>
+</div>

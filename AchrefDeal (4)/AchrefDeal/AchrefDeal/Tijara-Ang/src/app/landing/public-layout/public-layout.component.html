@@ -1,0 +1,353 @@
+﻿<div (window:scroll)="windowScroll()">
+
+  <!-- ---------- NAVBAR PRINCIPALE ---------- -->
+  <nav class="navbar navbar-expand-lg navbar-landing fixed-top" id="pub-navbar">
+    <div class="container">
+      <a class="navbar-brand d-flex align-items-center gap-2" routerLink="/landing">
+        <div style="width:34px;height:34px;background:linear-gradient(135deg,#405189,#0ab39c);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+          <i class="ri-shopping-bag-3-fill text-white fs-18"></i>
+        </div>
+        <span class="fw-bold fs-20" style="color:#405189;letter-spacing:0.5px">Tijara</span>
+      </a>
+
+      <button class="navbar-toggler py-0 fs-20" type="button" (click)="menuOpen=!menuOpen">
+        <i class="mdi mdi-menu"></i>
+      </button>
+
+      <div class="collapse navbar-collapse" [class.show]="menuOpen">
+        <ul class="navbar-nav mx-auto mt-2 mt-lg-0">
+          <li class="nav-item"><a class="nav-link" routerLink="/landing">Accueil</a></li>
+          <li class="nav-item"><a class="nav-link" routerLink="/landing/annonces">Annonces</a></li>
+          <li class="nav-item"><a class="nav-link" routerLink="/landing/deals">Deals</a></li>
+          <li class="nav-item"><a class="nav-link" routerLink="/landing/produits">Produits</a></li>
+          <li class="nav-item"><a class="nav-link" routerLink="/landing/vendeurs">Vendeurs</a></li>
+        </ul>
+
+        @if (isLoggedIn) {
+          <div class="d-flex align-items-center gap-2">
+            <div class="d-flex align-items-center gap-2 px-3 py-1 rounded-pill" style="background:#f0f4ff;border:1px solid #d0d9f0">
+              <div class="d-flex align-items-center justify-content-center rounded-circle fw-bold text-white"
+                   style="width:30px;height:30px;background:linear-gradient(135deg,#405189,#0ab39c);font-size:12px">
+                {{ currentUser?.firstName?.charAt(0) | uppercase }}
+              </div>
+              <span class="fw-medium fs-13 text-dark">{{ currentUser?.firstName }}</span>
+            </div>
+
+            <div class="topbar-icon-group d-flex align-items-center">
+              <div class="header-item">
+                <a routerLink="/shop/cart" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle position-relative" ngbTooltip="Mon panier">
+                  <i class="ri-shopping-cart-2-line fs-22"></i>
+                  @if (cart_length > 0) {
+                    <span class="position-absolute topbar-badge fs-10 translate-middle badge rounded-pill bg-success">{{ cart_length }}</span>
+                  }
+                </a>
+              </div>
+
+              <div class="header-item">
+                <a routerLink="/users/messages" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle position-relative" ngbTooltip="Messagerie">
+                  <i class="ri-chat-3-line fs-22"></i>
+                  @if (unreadMessages > 0) {
+                    <span class="position-absolute topbar-badge fs-10 translate-middle badge rounded-pill bg-info">{{ unreadMessages }}</span>
+                  }
+                </a>
+              </div>
+
+            <div ngbDropdown class="dropdown topbar-head-dropdown header-item">
+              <button type="button" ngbDropdownToggle
+                      class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle position-relative">
+                <i class="bx bx-bell fs-22"></i>
+                @if (unreadNotifications > 0) {
+                  <span class="position-absolute topbar-badge fs-10 translate-middle badge rounded-pill bg-danger">{{ unreadNotifications }}</span>
+                }
+              </button>
+
+              <div ngbDropdownMenu class="dropdown-menu-end p-0" style="width:340px">
+                <div class="d-flex align-items-center justify-content-between px-3 py-2 border-bottom">
+                  <h6 class="m-0 fs-14 fw-semibold">Notifications</h6>
+                  <span class="badge bg-light text-dark fs-11">{{ unreadNotifications }} non lues</span>
+                </div>
+
+                <div style="max-height:320px;overflow-y:auto">
+                  @if (notifications.length > 0) {
+                    @for (n of notifications; track n.IdNotification) {
+                      <a href="javascript:void(0)"
+                         class="dropdown-item d-flex align-items-start gap-2 py-2 border-bottom"
+                         [class.bg-light]="!n.IsRead"
+                         (click)="onNotificationClick(n)">
+                        <div class="avatar-xs flex-shrink-0">
+                          <span class="avatar-title rounded-circle fs-16"
+                                [ngClass]="n.Type === 'message' ? 'bg-info-subtle text-info' : 'bg-warning-subtle text-warning'">
+                            <i [ngClass]="n.Type === 'message' ? 'ri-chat-3-line' : 'ri-customer-service-2-line'"></i>
+                          </span>
+                        </div>
+                        <div class="flex-grow-1">
+                          <div class="fs-13 fw-semibold">{{ n.Title }}</div>
+                          <div class="fs-11 text-muted">{{ n.Description }}</div>
+                        </div>
+                      </a>
+                    }
+                  } @else {
+                    <div class="text-center py-4">
+                      <i class="ri-notification-off-line display-6 text-muted opacity-50"></i>
+                      <p class="fs-13 mt-2 mb-0">Aucune notification</p>
+                    </div>
+                  }
+                </div>
+
+                @if (unreadNotifications > 0) {
+                  <div class="p-2 border-top text-center">
+                    <button class="btn btn-sm btn-link" (click)="markAllRead()">
+                      <i class="ri-check-double-line me-1"></i>Tout marquer comme lu
+                    </button>
+                  </div>
+                }
+              </div>
+            </div>
+            </div>
+
+            <a [routerLink]="currentUser?.role==='admin' ? '/admin/dashboard' : currentUser?.role==='vendor' ? '/ent/dashboard' : '/users/dashboard'"
+               class="btn btn-sm btn-soft-primary rounded-pill px-3">Mon espace</a>
+            <button (click)="logout()" class="btn btn-sm btn-outline-secondary rounded-pill px-3">Deconnexion</button>
+          </div>
+        } @else {
+          <div class="d-flex align-items-center gap-2">
+            <a routerLink="/auth/login" class="btn btn-outline-primary btn-sm rounded-pill px-3">Connexion</a>
+            <a routerLink="/auth/register" class="btn btn-primary btn-sm rounded-pill px-3"
+               style="background:linear-gradient(135deg,#405189,#0ab39c);border:none">S'inscrire</a>
+          </div>
+        }
+      </div>
+    </div>
+  </nav>
+
+  
+  <div class="cat-pills-bar" id="cat-pills-bar">
+    <div class="container position-relative">
+      <div class="cat-pills-scroll">
+        <button type="button" class="cat-pill" [class.active]="activeCatId === null" (click)="clearCategory()">
+          <i class="ri-apps-2-line"></i>
+          <span>Toutes</span>
+        </button>
+        @for (cat of categories; track cat.id) {
+          <div class="cat-pill-holder"
+               (mouseenter)="onPillEnter(cat.id)"
+               (mouseleave)="onPillLeave()">
+            <button type="button" class="cat-pill" [class.active]="activeCatId === cat.id || hoveredCatId === cat.id"
+                    (click)="selectCategory(cat.id)">
+              <i class="{{ cat.icon }}"></i>
+              <span>{{ cat.label }}</span>
+            </button>
+          </div>
+        }
+      </div>
+
+      <!-- Sous-menu déroulant : caractéristiques de la catégorie survolée -->
+      @if (hoveredCatId !== null) {
+        <div class="cat-subpanel" (mouseenter)="keepPanelOpen()" (mouseleave)="onPillLeave()">
+          @if (loadingFeaturesForCatId === hoveredCatId) {
+            <div class="text-muted fs-13 px-2 py-2">
+              <span class="spinner-border spinner-border-sm me-2"></span>Chargement…
+            </div>
+          } @else if (getFeaturesFor(hoveredCatId).length > 0) {
+            <div class="cat-subpanel-grid">
+              @for (feat of getFeaturesFor(hoveredCatId); track feat.label) {
+                <button type="button" class="cat-subpanel-link"
+                        (click)="selectFeature(hoveredCatId, feat.label)">
+                  {{ feat.label }}
+                </button>
+              }
+            </div>
+          } @else {
+            <div class="text-muted fs-13 px-2 py-2">Aucune caractéristique spécifique — voir toutes les annonces.</div>
+          }
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Page content -->
+  <div style="padding-top:120px;min-height:calc(100vh - 120px)">
+    <router-outlet></router-outlet>
+  </div>
+
+  <!-- ---------- FOOTER ---------- -->
+  <footer style="background:linear-gradient(135deg,#1a2241 0%,#0d1b2a 100%);padding:60px 0 0">
+    <div class="container">
+      <div class="row g-4 pb-4">
+        <div class="col-lg-4">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div style="width:38px;height:38px;background:linear-gradient(135deg,#405189,#0ab39c);border-radius:10px;display:flex;align-items:center;justify-content:center">
+              <i class="ri-shopping-bag-3-fill text-white fs-18"></i>
+            </div>
+            <span class="fw-bold fs-22 text-white">Tijara</span>
+          </div>
+          <p style="color:rgba(255,255,255,0.5);font-size:14px;line-height:1.7">
+            La marketplace tunisienne intelligente. Achetez, vendez, changez en toute confiance.
+          </p>
+        </div>
+        <div class="col-6 col-lg-2">
+          <h6 class="text-white fw-semibold mb-3 fs-13 text-uppercase" style="letter-spacing:1px">Plateforme</h6>
+          <ul class="list-unstyled footer-link-list">
+            <li><a routerLink="/landing/annonces">Annonces</a></li>
+            <li><a routerLink="/landing/deals">Deals</a></li>
+            <li><a routerLink="/landing/produits">Produits</a></li>
+            <li><a routerLink="/landing/vendeurs">Vendeurs</a></li>
+          </ul>
+        </div>
+        <div class="col-6 col-lg-2">
+          <h6 class="text-white fw-semibold mb-3 fs-13 text-uppercase" style="letter-spacing:1px">Informations</h6>
+          <ul class="list-unstyled footer-link-list">
+            <li><a routerLink="/landing/about">À propos</a></li>
+            <li><a routerLink="/landing/contact">Contact</a></li>
+            <li><a routerLink="/landing/faq">FAQ</a></li>
+            <li><a routerLink="/landing/cgu">CGU</a></li>
+            <li><a routerLink="/landing/privacy">Confidentialité</a></li>
+          </ul>
+        </div>
+        <div class="col-lg-4">
+          <h6 class="text-white fw-semibold mb-3 fs-13 text-uppercase" style="letter-spacing:1px">Newsletter</h6>
+          <p style="color:rgba(255,255,255,0.5);font-size:14px">Recevez les meilleures offres directement dans votre boîte mail.</p>
+          <div class="input-group mt-2" style="background:rgba(255,255,255,0.06);border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.1)">
+            <input type="email" class="form-control border-0 text-white" style="background:transparent" placeholder="votre@email.com">
+            <button class="btn btn-primary px-3" type="button"><i class="ri-send-plane-2-line"></i></button>
+          </div>
+        </div>
+      </div>
+      <div style="border-top:1px solid rgba(255,255,255,0.08);padding:20px 0">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <p class="mb-0" style="color:rgba(255,255,255,0.35);font-size:13px">&copy; {{ year }} Tijara. Tous droits réservés.</p>
+          <div class="d-flex gap-3">
+            <a routerLink="/landing/cgu"     style="color:rgba(255,255,255,0.35);font-size:13px;text-decoration:none">CGU</a>
+            <a routerLink="/landing/privacy" style="color:rgba(255,255,255,0.35);font-size:13px;text-decoration:none">Confidentialité</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+</div>
+<style>
+.topbar-icon-group {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+  padding: 0 6px;
+  margin: 0 4px;
+  border-left: 1px solid rgba(64, 81, 137, .12);
+  border-right: 1px solid rgba(64, 81, 137, .12);
+}
+.topbar-icon-group .header-item { margin: 0 !important; }
+.footer-link-list li { margin-bottom:8px; }
+.footer-link-list a  { color:rgba(255,255,255,0.5);text-decoration:none;font-size:14px;transition:color .2s; }
+.footer-link-list a:hover { color:#0ab39c; }
+.btn-soft-primary { background:rgba(64,81,137,0.1);color:#405189;border:none; }
+.btn-soft-primary:hover { background:#405189;color:var(--surface-color); }
+
+/* ---------- BARRE DE CATÉGORIES + SOUS-MENU (façon Tunisianet) ---------- */
+.cat-pills-bar {
+  position: fixed;
+  top: 70px;
+  left: 0;
+  right: 0;
+  z-index: 1029;
+  background: var(--surface-color);
+  border-bottom: 1px solid rgba(64, 81, 137, .08);
+  box-shadow: 0 2px 8px rgba(20, 25, 45, .04);
+}
+
+.cat-pills-scroll {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 0;
+  overflow-x: auto;
+  scrollbar-width: thin;
+}
+.cat-pills-scroll::-webkit-scrollbar { height: 4px; }
+.cat-pills-scroll::-webkit-scrollbar-thumb { background: #dfe2ea; border-radius: 4px; }
+
+.cat-pill-holder { flex-shrink: 0; }
+
+.cat-pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  white-space: nowrap;
+  flex-shrink: 0;
+  border: none;
+  background: var(--cat-pill-bg);
+  color: var(--cat-pill-color);
+  font-size: 13.5px;
+  font-weight: 600;
+  padding: 8px 16px;
+  border-radius: 30px;
+  cursor: pointer;
+  transition: all .18s ease;
+}
+.cat-pill i { font-size: 15px; opacity: .8; }
+.cat-pill:hover { background: var(--cat-pill-hover-bg); color: var(--cat-pill-hover-color); }
+.cat-pill.active {
+  background: linear-gradient(135deg, #f7b84b, #f7a828);
+  color: #1a1a1a;
+  box-shadow: 0 4px 12px rgba(247, 184, 75, .35);
+}
+.cat-pill.active i { opacity: 1; }
+
+/* Sous-menu déroulant sur toute la largeur, sous la barre de pills */
+.cat-subpanel {
+  position: absolute;
+  top: 100%;
+  left: 12px;
+  right: 12px;
+  background: var(--surface-color);
+  border: 1px solid rgba(64, 81, 137, .08);
+  border-top: none;
+  box-shadow: 0 16px 40px rgba(20, 25, 45, .12);
+  border-radius: 0 0 14px 14px;
+  padding: 16px 20px;
+  z-index: 1030;
+  animation: catSubpanelFadeIn .15s ease;
+}
+
+@keyframes catSubpanelFadeIn {
+  from { opacity: 0; transform: translateY(-4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+
+.cat-subpanel-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 6px 20px;
+}
+
+@media (max-width: 767px) {
+  .cat-subpanel-grid { grid-template-columns: repeat(2, 1fr); }
+}
+
+.cat-subpanel-link {
+  text-align: left;
+  border: none;
+  background: transparent;
+  color: var(--cat-pill-color);
+  font-size: 13.5px;
+  padding: 7px 4px;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all .15s ease;
+}
+.cat-subpanel-link:hover {
+  background: #f0f4ff;
+  color: #405189;
+  padding-left: 10px;
+}
+
+.topbar-icon-group a,
+.topbar-icon-group .btn-ghost-secondary,
+.topbar-icon-group .btn-ghost-secondary i {
+  color: #878a99 !important;
+}
+
+.topbar-icon-group .dropdown-toggle::after {
+  display: none !important;
+}
+</style>

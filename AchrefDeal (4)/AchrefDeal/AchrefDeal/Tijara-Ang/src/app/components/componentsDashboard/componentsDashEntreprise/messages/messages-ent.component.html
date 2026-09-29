@@ -1,0 +1,236 @@
+<app-breadcrumbs [title]="'Messages'" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+<!-- KPI -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center py-3" style="border-radius:14px">
+      <div class="mx-auto mb-2 d-flex align-items-center justify-content-center"
+           style="width:44px;height:44px;background:#405189;border-radius:12px">
+        <i class="ri-chat-3-line text-white fs-20"></i>
+      </div>
+      <h3 class="fw-bold mb-0">{{ conversations.length }}</h3>
+      <small class="text-muted">Conversations</small>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center py-3" style="border-radius:14px">
+      <div class="mx-auto mb-2 d-flex align-items-center justify-content-center"
+           style="width:44px;height:44px;background:#f06548;border-radius:12px">
+        <i class="ri-mail-unread-line text-white fs-20"></i>
+      </div>
+      <h3 class="fw-bold mb-0 text-danger">{{ totalUnread }}</h3>
+      <small class="text-muted">Non lus</small>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center py-3" style="border-radius:14px">
+      <div class="mx-auto mb-2 d-flex align-items-center justify-content-center"
+           style="width:44px;height:44px;background:#0ab39c;border-radius:12px">
+        <i class="ri-user-smile-line text-white fs-20"></i>
+      </div>
+      <h3 class="fw-bold mb-0 text-success">{{ conversations.length }}</h3>
+      <small class="text-muted">Clients actifs</small>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center py-3" style="border-radius:14px">
+      <div class="mx-auto mb-2 d-flex align-items-center justify-content-center"
+           style="width:44px;height:44px;background:#f7b84b;border-radius:12px">
+        <i class="ri-wifi-line text-white fs-20"></i>
+      </div>
+      <h3 class="fw-bold mb-0 text-warning">Live</h3>
+      <small class="text-muted">Temps réel</small>
+    </div>
+  </div>
+</div>
+
+<!-- INTERFACE CHAT -->
+<div class="chat-wrapper">
+
+  <!-- Liste conversations -->
+  <div class="conv-list">
+    <div class="conv-search">
+      <div class="input-group">
+        <span class="input-group-text bg-light border-0">
+          <i class="ri-search-line text-muted fs-14"></i>
+        </span>
+        <input type="text" class="form-control bg-light border-0 fs-13"
+               placeholder="Rechercher..." [(ngModel)]="searchTerm">
+      </div>
+    </div>
+
+    <div class="conv-items">
+      @if (loading) {
+        <div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+      } @else if (filteredConversations.length === 0) {
+        <div class="text-center py-5 text-muted fs-13">
+          <i class="ri-chat-3-line display-4 d-block mb-2 opacity-25"></i>
+          Aucune conversation
+        </div>
+      }
+      @for (conv of filteredConversations; track conv.id; let i = $index) {
+        <div class="conv-item" [class.active]="selectedConv?.id === conv.id"
+             (click)="selectConv(conv)">
+          <div class="d-flex align-items-center gap-3">
+            <div class="avatar" [style.background]="getAvatarColor(i)">
+              {{ getInitials(getOtherName(conv)) }}
+            </div>
+            <div class="flex-grow-1 min-width-0">
+              <div class="d-flex align-items-center justify-content-between">
+                <span class="conv-name">{{ getOtherName(conv) }}</span>
+                <span class="text-muted fs-11">{{ conv.updated_at | date:'HH:mm' }}</span>
+              </div>
+              <div class="d-flex align-items-center justify-content-between mt-1">
+                <span class="conv-preview">{{ conv.last_message || 'Nouvelle conversation' }}</span>
+                @if (conv.unread_count > 0) {
+                  <span class="badge bg-primary rounded-pill ms-1" style="font-size:10px;min-width:18px">
+                    {{ conv.unread_count }}
+                  </span>
+                }
+              </div>
+              @if (conv.product_name) {
+                <div class="mt-1">
+                  <span class="badge bg-primary-subtle text-primary fs-10">
+                    <i class="ri-box-3-line me-1"></i>{{ conv.product_name }}
+                  </span>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+
+  <!-- Zone chat -->
+  @if (selectedConv) {
+    <div class="chat-area">
+      <!-- Header -->
+      <div class="chat-header">
+        <div class="d-flex align-items-center justify-content-between">
+          <div class="d-flex align-items-center gap-3">
+            <div class="d-flex align-items-center justify-content-center fw-bold text-white fs-14"
+                 style="width:42px;height:42px;border-radius:12px;background:#405189;flex-shrink:0">
+              {{ getInitials(getOtherName(selectedConv)) }}
+            </div>
+            <div>
+              <div class="fw-semibold fs-14">{{ getOtherName(selectedConv) }}</div>
+              <div class="text-muted fs-12">
+                <i class="ri-circle-fill text-success" style="font-size:8px;vertical-align:middle"></i>
+                {{ getOtherEmail(selectedConv) }}
+              </div>
+            </div>
+          </div>
+          @if (selectedConv.product_name) {
+            <span class="badge bg-primary-subtle text-primary fs-11">
+              <i class="ri-box-3-line me-1"></i>{{ selectedConv.product_name }}
+            </span>
+          }
+        </div>
+      </div>
+
+      <!-- Messages -->
+      <div class="messages-container" #msgContainer>
+        @for (msg of messages; track msg.id) {
+          <div class="msg-bubble" [class.msg-vendor]="isMyMessage(msg)" [class.msg-client]="!isMyMessage(msg)">
+            @if (!isMyMessage(msg)) {
+              <div class="d-flex align-items-end gap-2">
+                <div class="d-flex align-items-center justify-content-center fw-bold text-white fs-11"
+                     style="width:28px;height:28px;border-radius:8px;background:#405189;flex-shrink:0;margin-bottom:4px">
+                  {{ getInitials(msg.sender_name) }}
+                </div>
+                <div>
+                 <div class="bubble">
+                    @if (msg.body) { {{ msg.body }} }
+                    @for (att of msg.attachments; track att.IdAttachment) {
+                      @if (isImageAttachment(att)) {
+                        <img [src]="attachmentUrl(att)" class="msg-attachment-img" alt="pièce jointe">
+                      } @else {
+                        <a [href]="attachmentUrl(att)" target="_blank" class="msg-attachment-file">
+                          <i class="ri-file-line me-1"></i>{{ att.OriginalName }}
+                        </a>
+                      }
+                    }
+                  </div>
+                  <div class="msg-time">{{ msg.created_at | date:'HH:mm' }}</div>
+                </div>
+              </div>
+            } @else {
+              <div>
+               <div class="bubble">
+                    @if (msg.body) { {{ msg.body }} }
+                    @for (att of msg.attachments; track att.IdAttachment) {
+                      @if (isImageAttachment(att)) {
+                        <img [src]="attachmentUrl(att)" class="msg-attachment-img" alt="pièce jointe">
+                      } @else {
+                        <a [href]="attachmentUrl(att)" target="_blank" class="msg-attachment-file">
+                          <i class="ri-file-line me-1"></i>{{ att.OriginalName }}
+                        </a>
+                      }
+                    }
+                  </div>
+                <div class="msg-time">
+                  {{ msg.created_at | date:'HH:mm' }}
+                  <i class="ri-check-double-line text-info ms-1"></i>
+                </div>
+              </div>
+            }
+          </div>
+        }
+        @if (messages.length === 0) {
+          <div class="text-center text-muted fs-13 py-4">
+            <i class="ri-chat-new-line fs-2 d-block mb-2 opacity-25"></i>
+            Démarrez la conversation
+          </div>
+        }
+      </div>
+
+      <!-- Input -->
+      <div class="chat-input">
+        @if (selectedFile) {
+          <div class="d-flex align-items-center gap-2 mb-2 px-2">
+            <i class="ri-attachment-2 text-muted"></i>
+            <span class="fs-12 text-muted flex-grow-1">{{ selectedFile.name }}</span>
+            <button class="btn btn-sm btn-link text-danger p-0" (click)="removeSelectedFile()">
+              <i class="ri-close-line"></i>
+            </button>
+          </div>
+        }
+        <div class="d-flex align-items-end gap-2">
+          <input #fileInput type="file" hidden accept="image/*,.pdf,.doc,.docx"
+                 (change)="onFileSelected($event)">
+          <button class="btn btn-light d-flex align-items-center justify-content-center"
+                  style="width:44px;height:44px;border-radius:12px;padding:0;flex-shrink:0"
+                  [disabled]="sending"
+                  (click)="fileInput.click()">
+            <i class="ri-attachment-2 fs-18"></i>
+          </button>
+          <div class="flex-grow-1">
+            <textarea class="form-control border-0 bg-light"
+                      rows="2"
+                      placeholder="Écrire un message... (Entrée pour envoyer)"
+                      [(ngModel)]="newMessage"
+                      (keydown)="onEnter($event)"
+                      style="resize:none;border-radius:12px;font-size:13.5px"></textarea>
+          </div>
+          <button class="btn btn-primary d-flex align-items-center justify-content-center"
+                  style="width:44px;height:44px;border-radius:12px;padding:0;flex-shrink:0"
+                  [disabled]="(!newMessage.trim() && !selectedFile) || sending"
+                  (click)="sendMessage()">
+            @if (sending) {
+              <span class="spinner-border spinner-border-sm"></span>
+            } @else {
+              <i class="ri-send-plane-2-fill fs-18"></i>
+            }
+          </button>
+        </div>
+      </div>
+    </div>
+  } @else {
+    <div class="empty-chat">
+      <i class="ri-chat-3-line" style="font-size:64px;opacity:0.2"></i>
+      <span class="fs-14">Sélectionnez une conversation</span>
+    </div>
+  }
+
+</div>

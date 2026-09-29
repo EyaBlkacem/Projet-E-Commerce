@@ -1,0 +1,289 @@
+<app-breadcrumbs [title]="'Mon Profil'" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+@if (loading) {
+  <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+} @else {
+
+<!-- -- HEADER PROFIL ---------------------------------------------------------- -->
+<div class="profile-banner mb-4">
+  <div class="profile-banner-bg"></div>
+  <div class="profile-banner-content">
+    <!-- Photo -->
+    <div class="profile-avatar-wrap">
+      <div class="profile-avatar">
+        @if (profilePicture) {
+          <img [src]="profilePicture" alt="Photo" class="w-100 h-100 object-fit-cover rounded-circle">
+        } @else {
+          <span class="fw-bold text-white" style="font-size:36px">{{ initials }}</span>
+        }
+      </div>
+      <label class="profile-avatar-edit" title="Changer la photo">
+        <i class="ri-camera-line"></i>
+        <input type="file" accept="image/*" class="d-none" (change)="onPhotoSelected($event)">
+      </label>
+    </div>
+    <!-- Info -->
+    <div class="profile-banner-info">
+      <h4 class="text-white fw-bold mb-1">{{ fi['firstName'].value }} {{ fi['lastName'].value }}</h4>
+      <span class="text-white opacity-75 fs-13">
+        <i class="ri-store-2-line me-1"></i>Vendeur
+        @if (fs['shopName'].value) { — {{ fs['shopName'].value }} }
+      </span>
+    </div>
+  </div>
+</div>
+
+<!-- -- Alertes --------------------------------------------------------------- -->
+@if (saveMsg) {
+  <div class="alert alert-success d-flex align-items-center gap-2 py-2 mb-3">
+    <i class="ri-check-circle-line fs-18"></i>{{ saveMsg }}
+  </div>
+}
+@if (saveError) {
+  <div class="alert alert-danger d-flex align-items-center gap-2 py-2 mb-3">
+    <i class="ri-error-warning-line fs-18"></i>{{ saveError }}
+  </div>
+}
+
+<!-- -- ONGLETS ---------------------------------------------------------------- -->
+<div class="card border-0 shadow-sm" style="border-radius:16px">
+  <div class="card-header border-0 bg-transparent pt-4 px-4 pb-0">
+    <ul class="nav nav-tabs nav-tabs-custom gap-1">
+      <li class="nav-item">
+        <button class="nav-link fs-13 fw-medium" [class.active]="activeTab==='infos'" (click)="activeTab='infos'">
+          <i class="ri-user-line me-1"></i>Informations personnelles
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link fs-13 fw-medium" [class.active]="activeTab==='boutique'" (click)="activeTab='boutique'">
+          <i class="ri-store-2-line me-1"></i>Ma boutique
+        </button>
+      </li>
+      <li class="nav-item">
+        <button class="nav-link fs-13 fw-medium" [class.active]="activeTab==='securite'" (click)="activeTab='securite'">
+          <i class="ri-lock-line me-1"></i>Sécurité
+        </button>
+      </li>      <li class="nav-item">
+        <button class="nav-link fs-13 fw-medium" [class.active]="activeTab==='verification'" (click)="activeTab='verification'">
+          <i class="ri-shield-check-line me-1"></i>Verification
+        </button>
+      </li>
+    </ul>
+  </div>
+
+  <div class="card-body p-4">
+
+    <!-- - INFOS PERSONNELLES ------------------------------- -->
+    @if (activeTab === 'infos') {
+      <form [formGroup]="infoForm" (ngSubmit)="saveInfos()">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold fs-13">Prénom <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" formControlName="firstName"
+                   placeholder="Votre prénom"
+                   [class.is-invalid]="submitted && fi['firstName'].invalid">
+            @if (submitted && fi['firstName'].errors?.['required']) {
+              <div class="invalid-feedback">Prénom requis.</div>
+            }
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold fs-13">Nom <span class="text-danger">*</span></label>
+            <input type="text" class="form-control" formControlName="lastName"
+                   placeholder="Votre nom"
+                   [class.is-invalid]="submitted && fi['lastName'].invalid">
+            @if (submitted && fi['lastName'].errors?.['required']) {
+              <div class="invalid-feedback">Nom requis.</div>
+            }
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold fs-13">Téléphone</label>
+            <div class="input-group">
+              <span class="input-group-text bg-white"><i class="ri-phone-line text-muted"></i></span>
+              <input type="tel" class="form-control" formControlName="phone" placeholder="Ex : 55123456">
+            </div>
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold fs-13">Ville</label>
+            <select class="form-select" formControlName="city">
+              <option value="">— Sélectionner —</option>
+              @for (w of wilayas; track w) {
+                <option [value]="w">{{ w }}</option>
+              }
+            </select>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold fs-13">Adresse complète</label>
+            <input type="text" class="form-control" formControlName="address"
+                   placeholder="Rue, immeuble, n°...">
+          </div>
+        </div>
+        <div class="d-flex justify-content-end mt-4">
+          <button type="submit" class="btn btn-primary px-5" [disabled]="saving">
+            @if (saving) { <span class="spinner-border spinner-border-sm me-2"></span> }
+            Enregistrer
+          </button>
+        </div>
+      </form>
+    }
+
+    <!-- - BOUTIQUE ----------------------------------------- -->
+    @if (activeTab === 'boutique') {
+      <div class="alert alert-warning d-flex align-items-center gap-2 py-2 mb-3 fs-13">
+        <i class="ri-information-line fs-16"></i>
+        Ces informations sont enregistrées uniquement sur cet appareil pour le moment (sauvegarde serveur à venir).
+      </div>
+      <form [formGroup]="shopForm" (ngSubmit)="saveBoutique()">
+        <div class="row g-3">
+          <div class="col-md-6">
+            <label class="form-label fw-semibold fs-13">Nom de la boutique <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <span class="input-group-text bg-white"><i class="ri-store-2-line text-muted"></i></span>
+              <input type="text" class="form-control" formControlName="shopName"
+                     placeholder="Nom de votre boutique"
+                     [class.is-invalid]="shopSubmit && fs['shopName'].invalid">
+            </div>
+            @if (shopSubmit && fs['shopName'].errors?.['required']) {
+              <div class="text-danger fs-12 mt-1">Nom boutique requis.</div>
+            }
+          </div>
+          <div class="col-md-6">
+            <label class="form-label fw-semibold fs-13">N° de registre commercial</label>
+            <input type="text" class="form-control" formControlName="companyNumber"
+                   placeholder="Ex : TN12345678">
+          </div>
+        </div>
+        <div class="d-flex justify-content-end mt-4">
+          <button type="submit" class="btn btn-primary px-5" [disabled]="saving">
+            @if (saving) { <span class="spinner-border spinner-border-sm me-2"></span> }
+            Enregistrer
+          </button>
+        </div>
+      </form>
+    }
+
+    <!-- - SÉCURITÉ ------------------------------------------ -->
+    @if (activeTab === 'securite') {
+      <form [formGroup]="pwdForm" (ngSubmit)="changePassword()">
+        <div class="row g-3" style="max-width:480px">
+          <div class="col-12">
+            <label class="form-label fw-semibold fs-13">Mot de passe actuel <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <input [type]="showCurrentPwd ? 'text' : 'password'" class="form-control"
+                     formControlName="currentPwd" placeholder="••••••••"
+                     [class.is-invalid]="pwdSubmit && fp['currentPwd'].invalid">
+              <button type="button" class="btn btn-outline-secondary"
+                      (click)="showCurrentPwd=!showCurrentPwd">
+                <i class="{{ showCurrentPwd ? 'ri-eye-off-line' : 'ri-eye-line' }}"></i>
+              </button>
+            </div>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold fs-13">Nouveau mot de passe <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <input [type]="showNewPwd ? 'text' : 'password'" class="form-control"
+                     formControlName="newPwd" placeholder="Min. 6 caractères"
+                     [class.is-invalid]="pwdSubmit && fp['newPwd'].invalid">
+              <button type="button" class="btn btn-outline-secondary"
+                      (click)="showNewPwd=!showNewPwd">
+                <i class="{{ showNewPwd ? 'ri-eye-off-line' : 'ri-eye-line' }}"></i>
+              </button>
+            </div>
+          </div>
+          <div class="col-12">
+            <label class="form-label fw-semibold fs-13">Confirmer le mot de passe <span class="text-danger">*</span></label>
+            <div class="input-group">
+              <input [type]="showConfirmPwd ? 'text' : 'password'" class="form-control"
+                     formControlName="confirmPwd" placeholder="Répétez le nouveau mot de passe"
+                     [class.is-invalid]="pwdMismatch">
+              <button type="button" class="btn btn-outline-secondary"
+                      (click)="showConfirmPwd=!showConfirmPwd">
+                <i class="{{ showConfirmPwd ? 'ri-eye-off-line' : 'ri-eye-line' }}"></i>
+              </button>
+            </div>
+            @if (pwdMismatch) {
+              <div class="text-danger fs-12 mt-1">Les mots de passe ne correspondent pas.</div>
+            }
+          </div>
+        </div>
+        <div class="d-flex justify-content-end mt-4">
+          <button type="submit" class="btn btn-primary px-5" [disabled]="saving">
+            @if (saving) { <span class="spinner-border spinner-border-sm me-2"></span> }
+            Modifier le mot de passe
+          </button>
+        </div>
+      </form>
+    }
+
+    @if (activeTab === 'verification') {
+      <div class="row justify-content-center">
+        <div class="col-lg-8">
+          <div class="alert" [class.alert-success]="verification.isVerified" [class.alert-warning]="!verification.isVerified">
+            <i class="ri-shield-check-line me-2"></i>
+            @if (verification.isVerified) { Compte verifie. }
+            @else { Votre document sera verifie par un administrateur apres envoi. }
+          </div>
+          @if (verificationMessage) { <div class="alert alert-success">{{ verificationMessage }}</div> }
+          @if (verificationError) { <div class="alert alert-danger">{{ verificationError }}</div> }
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Type de document</label>
+            <select class="form-select" [(ngModel)]="verification.documentType" [disabled]="verification.isVerified">
+              <option value="CIN">CIN</option>
+              <option value="Patente">Patente / matricule fiscal</option>
+            </select>
+          </div>
+          <div class="mb-3">
+            <label class="form-label fw-semibold">Numero du document</label>
+            <input type="text" class="form-control" [(ngModel)]="verification.identityNumber"
+                   [disabled]="verification.isVerified" placeholder="Numero CIN ou matricule fiscal">
+          </div>
+          <div class="mb-4">
+            <label class="form-label fw-semibold">Photo du document</label>
+            <input type="file" class="form-control" accept="image/jpeg,image/png"
+                   [disabled]="verification.isVerified" (change)="onVerificationPhotoSelected($event)">
+            <div class="form-text">JPG ou PNG, 5 Mo maximum.</div>
+            @if (verificationPhotoPreview) {
+              <div class="mt-3 position-relative d-inline-block">
+                <img [src]="verificationPhotoPreview" alt="Apercu document" class="img-fluid rounded-3 border" style="max-height:180px;max-width:100%">
+                <button type="button" class="btn btn-sm btn-light position-absolute top-0 end-0 m-2" (click)="clearVerificationPhoto()">
+                  <i class="ri-close-line"></i>
+                </button>
+              </div>
+            }
+          </div>
+          @if (!verification.isVerified) {
+            <button type="button" class="btn btn-primary" [disabled]="verificationSubmitting" (click)="submitVerification()">
+              @if (verificationSubmitting) { <span class="spinner-border spinner-border-sm me-2"></span> }
+              Envoyer pour verification
+            </button>
+          }
+        </div>
+      </div>
+    }
+
+  </div>
+</div>
+
+} <!-- end @if loading -->
+
+<style>
+.profile-banner { position:relative; border-radius:20px; overflow:hidden; height:180px; }
+.profile-banner-bg { position:absolute; inset:0; background:linear-gradient(135deg,#405189 0%,#0ab39c 100%); }
+.profile-banner-content { position:absolute; inset:0; display:flex; align-items:flex-end; gap:20px; padding:0 28px 24px; }
+.profile-avatar-wrap { position:relative; flex-shrink:0; }
+.profile-avatar {
+  width:88px; height:88px; border-radius:50%; border:3px solid var(--surface-color);
+  background:linear-gradient(135deg,#405189,#0ab39c);
+  display:flex; align-items:center; justify-content:center;
+  overflow:hidden;
+}
+.profile-avatar-edit {
+  position:absolute; bottom:0; right:0; width:26px; height:26px;
+  background:var(--surface-color); border-radius:50%; display:flex; align-items:center;
+  justify-content:center; cursor:pointer; box-shadow:0 1px 4px rgba(0,0,0,.2);
+  font-size:13px; color:#405189;
+}
+.profile-banner-info { padding-bottom:4px; }
+.nav-tabs-custom { border-bottom:2px solid var(--border-color-soft); }
+.nav-tabs-custom .nav-link { border:none; border-bottom:2px solid transparent; border-radius:0; padding:.6rem 1rem; color:#74788d; margin-bottom:-2px; }
+.nav-tabs-custom .nav-link.active { color:#405189; border-bottom-color:#405189; background:transparent; }
+</style>

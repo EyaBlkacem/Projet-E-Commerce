@@ -1,0 +1,332 @@
+<app-breadcrumbs [title]="'Détail Produit'" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+@if (loading) {
+  <div class="text-center py-5"><div class="spinner-border text-primary" style="width:3rem;height:3rem"></div></div>
+} @else if (product) {
+
+  <!-- ─── FICHE PRODUIT ─────────────────────────────────────────────── -->
+  <div class="row g-4">
+
+    <!-- Image -->
+    <div class="col-xl-5 col-lg-6">
+      <div class="card border-0 shadow-sm">
+        <div class="card-body p-3">
+          <div class="position-relative rounded overflow-hidden bg-light d-flex align-items-center justify-content-center"
+               style="height:350px">
+            <img [src]="selectedImage" [alt]="product.name"
+                 style="max-height:320px; max-width:100%; object-fit:contain"
+                 onerror="this.src='assets/images/companies/img-1.png'">
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Infos produit -->
+    <div class="col-xl-7 col-lg-6">
+      <div class="card border-0 shadow-sm h-100">
+        <div class="card-body">
+
+          <p class="text-muted mb-1"><i class="ri-folder-line me-1"></i>{{ product.category }}</p>
+          <h3 class="fw-semibold mb-2">{{ product.name }}</h3>
+
+          <!-- Vendeur cliquable -->
+          <p class="mb-2">
+            <i class="ri-store-2-line me-1 text-primary"></i>
+            <span class="text-muted">Vendu par </span>
+            <a href="javascript:void(0)" class="fw-semibold text-primary text-decoration-none"
+               (click)="goSeller(product.vendor_id)">{{ product.vendor }}</a>
+          </p>
+
+          <!-- Étoiles + note -->
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div class="d-flex gap-1">
+              @for (star of getStars(5); track star) {
+                <i class="ri-star-{{ star <= avgRating ? 'fill' : 'line' }} text-warning fs-15"></i>
+              }
+            </div>
+            <span class="fw-semibold">{{ avgRating }}</span>
+            <span class="text-muted">({{ reviewStats?.total || 0 }} avis)</span>
+          </div>
+
+          <!-- Prix -->
+          <div class="d-flex align-items-baseline gap-3 mb-4 p-3 bg-light rounded">
+            <span class="fs-24 fw-bold text-primary">{{ product.price | number:'1.3-3' }} DT</span>
+          </div>
+
+          <!-- Stock -->
+          <p class="mb-3">
+            @if (product.stock > 10) {
+              <span class="badge bg-success-subtle text-success"><i class="ri-checkbox-circle-line me-1"></i>En stock ({{ product.stock }} disponibles)</span>
+            } @else if (product.stock > 0) {
+              <span class="badge bg-warning-subtle text-warning"><i class="ri-alert-line me-1"></i>Stock limité ({{ product.stock }} restants)</span>
+            } @else {
+              <span class="badge bg-danger-subtle text-danger"><i class="ri-close-circle-line me-1"></i>Rupture de stock</span>
+            }
+          </p>
+
+          <!-- Quantité -->
+          <div class="d-flex align-items-center gap-3 mb-4">
+            <label class="fw-semibold mb-0">Quantité :</label>
+            <div class="input-group" style="width:130px">
+              <button class="btn btn-outline-secondary" type="button" (click)="decreaseQty()">-</button>
+              <input type="text" class="form-control text-center" [value]="quantity" readonly>
+              <button class="btn btn-outline-secondary" type="button" (click)="increaseQty()">+</button>
+            </div>
+          </div>
+
+          <!-- Boutons action -->
+          <div class="d-flex gap-3 flex-wrap mb-4">
+            @if (!addedToCart) {
+              <button class="btn btn-primary btn-lg" (click)="addToCart()" [disabled]="product.stock === 0">
+                <i class="ri-shopping-cart-line me-2"></i>Ajouter au panier
+              </button>
+            } @else {
+              <button class="btn btn-success btn-lg" disabled>
+                <i class="ri-check-line me-2"></i>Dans le panier
+              </button>
+            }
+            <button class="btn btn-soft-primary btn-lg" (click)="buyNow()" [disabled]="product.stock === 0">
+              <i class="ri-flashlight-line me-2"></i>Acheter maintenant
+            </button>
+          </div>
+
+          <button class="btn btn-link text-muted p-0" (click)="goBack()">
+            <i class="ri-arrow-left-line me-1"></i>Retour à la boutique
+          </button>
+
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ─── ONGLETS ─────────────────────────────────────────────────── -->
+  <div class="card border-0 shadow-sm mt-4">
+    <div class="card-header bg-white border-bottom">
+      <ul class="nav nav-tabs card-header-tabs">
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="activeTab==='description'"
+             href="javascript:void(0)" (click)="activeTab='description'">
+            <i class="ri-file-text-line me-1"></i>Description
+          </a>
+        </li>
+        <li class="nav-item">
+          <a class="nav-link" [class.active]="activeTab==='reviews'"
+             href="javascript:void(0)" (click)="activeTab='reviews'">
+            <i class="ri-star-line me-1"></i>Avis clients ({{ reviewStats?.total || 0 }})
+          </a>
+        </li>
+      </ul>
+    </div>
+    <div class="card-body">
+
+      <!-- Description -->
+      @if (activeTab === 'description') {
+        <h5 class="mb-3">À propos de ce produit</h5>
+        @if (product.description) {
+          <p class="text-muted">{{ product.description }}</p>
+        } @else {
+          <p class="text-muted">Ce produit est proposé par <strong>{{ product.vendor }}</strong>. Pour plus d'informations, contactez le vendeur.</p>
+        }
+        <ul class="text-muted mt-3">
+          <li>Catégorie : {{ product.category }}</li>
+          <li>Vendeur : {{ product.vendor }}</li>
+          <li>Stock disponible : {{ product.stock }} unités</li>
+          <li>Livraison : 24–48h ouvrables</li>
+          <li>Retours : sous 7 jours</li>
+        </ul>
+      }
+
+      <!-- Avis -->
+      @if (activeTab === 'reviews') {
+        @if (reviewsLoading) {
+          <div class="text-center py-4"><div class="spinner-border spinner-border-sm text-primary"></div></div>
+        } @else {
+
+          <!-- Résumé des notes -->
+          @if (reviewStats?.total > 0) {
+            <div class="row g-4 mb-4 pb-4 border-bottom">
+              <div class="col-md-3 text-center">
+                <div class="display-3 fw-bold text-warning">{{ avgRating }}</div>
+                <div class="d-flex justify-content-center gap-1 my-1">
+                  @for (s of getStars(5); track s) {
+                    <i class="ri-star-{{ s <= avgRating ? 'fill' : 'line' }} text-warning fs-18"></i>
+                  }
+                </div>
+                <div class="text-muted fs-13">{{ reviewStats.total }} avis</div>
+              </div>
+              <div class="col-md-9">
+                @for (n of [5,4,3,2,1]; track n) {
+                  <div class="d-flex align-items-center gap-2 mb-1">
+                    <span class="text-muted fs-12" style="width:20px">{{ n }}</span>
+                    <i class="ri-star-fill text-warning fs-12"></i>
+                    <div class="progress flex-fill" style="height:8px">
+                      <div class="progress-bar bg-warning" [style.width.%]="getRatingPct(n)"></div>
+                    </div>
+                    <span class="text-muted fs-12" style="width:30px">{{ getRatingPct(n) }}%</span>
+                  </div>
+                }
+              </div>
+            </div>
+          }
+
+          <!-- Formulaire avis -->
+          @if (currentUserId) {
+            <div class="card border-0 bg-light rounded-3 p-4 mb-4">
+              <h6 class="fw-bold mb-3"><i class="ri-edit-line me-2 text-primary"></i>Laisser un avis</h6>
+              <div class="d-flex gap-2 mb-3">
+                @for (s of getStars(5); track s) {
+                  <i class="fs-24 cursor-pointer {{ s <= myRating ? 'ri-star-fill text-warning' : 'ri-star-line text-muted' }}"
+                     style="cursor:pointer" (click)="myRating = s"></i>
+                }
+              </div>
+              <textarea class="form-control mb-3" rows="3" [(ngModel)]="myComment"
+                        placeholder="Décrivez votre expérience avec ce produit..."></textarea>
+              @if (reviewError) { <div class="alert alert-danger py-2 fs-13 mb-2">{{ reviewError }}</div> }
+              @if (reviewSuccess) { <div class="alert alert-success py-2 fs-13 mb-2">{{ reviewSuccess }}</div> }
+              <button class="btn btn-primary px-4" (click)="submitReview()" [disabled]="submittingReview">
+                @if (submittingReview) { <span class="spinner-border spinner-border-sm me-1"></span> }
+                <i class="ri-send-plane-line me-1"></i>Publier mon avis
+              </button>
+            </div>
+          } @else {
+            <div class="alert alert-info fs-13 mb-4">
+              <i class="ri-information-line me-1"></i>
+              <a routerLink="/account/login" class="fw-semibold">Connectez-vous</a> pour laisser un avis.
+            </div>
+          }
+
+          <!-- Liste des avis -->
+          @if (reviews.length === 0) {
+            <div class="text-center py-4">
+              <i class="ri-star-line display-4 text-muted"></i>
+              <p class="text-muted mt-2">Aucun avis pour ce produit. Soyez le premier à en laisser un !</p>
+            </div>
+          } @else {
+            <div class="d-flex flex-column gap-3">
+              @for (review of reviews; track review.id) {
+                <div class="border rounded-3 p-3">
+                  <div class="d-flex align-items-center justify-content-between mb-2">
+                    <div class="d-flex align-items-center gap-2">
+                      <div class="rounded-circle bg-primary d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0"
+                           style="width:36px;height:36px">
+                        {{ review.author_name?.[0] || '?' }}
+                      </div>
+                      <div>
+                        <div class="fw-semibold fs-14">{{ review.author_name }}</div>
+                        <div class="text-muted fs-12">{{ review.created_at | date:'dd MMM yyyy' }}</div>
+                      </div>
+                    </div>
+                    <div class="d-flex gap-1">
+                      @for (s of getStars(5); track s) {
+                        <i class="ri-star-{{ s <= review.rating ? 'fill' : 'line' }} text-warning fs-14"></i>
+                      }
+                    </div>
+                  </div>
+                  @if (review.comment) {
+                    <p class="mb-0 text-muted fs-13">{{ review.comment }}</p>
+                  }
+                </div>
+              }
+            </div>
+          }
+        }
+      }
+
+    </div>
+  </div>
+
+  <!-- ─── SCORE IA ─────────────────────────────────────────────────────── -->
+  @if (aiScore && !aiScore.error) {
+    <div class="card border-0 shadow-sm mt-4" style="border-radius:16px">
+      <div class="card-body p-4">
+        <div class="d-flex align-items-center gap-3 flex-wrap">
+          <div class="rounded-circle d-flex align-items-center justify-content-center"
+               style="width:52px;height:52px;background:linear-gradient(135deg,#405189,#0ab39c);flex-shrink:0">
+            <i class="ri-robot-line text-white fs-22"></i>
+          </div>
+          <div class="flex-fill">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+              <div>
+                <h6 class="fw-bold mb-0">Analyse IA — Potentiel de ce produit</h6>
+                <small class="text-muted">Score calculé par notre modèle d'intelligence artificielle</small>
+              </div>
+              <span class="badge fs-14 px-3 py-2 {{ aiScoreBg }}">
+                {{ aiScore.success_score }}% — {{ aiScore.label }}
+              </span>
+            </div>
+            <div class="progress mt-2" style="height:10px;border-radius:5px">
+              <div class="progress-bar {{ aiScoreBg }}"
+                   [style.width]="aiScore.success_score + '%'"
+                   style="border-radius:5px;transition:width .8s ease">
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  }
+
+  <!-- ─── PRODUITS SIMILAIRES (IA) ──────────────────────────────────────── -->
+  <div class="mt-5">
+    <div class="d-flex align-items-center gap-2 mb-4">
+      <i class="ri-robot-line fs-22 text-primary"></i>
+      <h5 class="fw-bold mb-0">Vous aimerez aussi</h5>
+      <span class="badge bg-primary-subtle text-primary fs-11">Recommandé par IA</span>
+    </div>
+
+    @if (loadingSimilar) {
+      <div class="row g-3">
+        @for (_ of [1,2,3,4]; track $index) {
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm" style="border-radius:14px;height:280px">
+              <div class="card-body d-flex align-items-center justify-content-center">
+                <div class="spinner-border spinner-border-sm text-primary"></div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    } @else if (similarProducts.length === 0) {
+      <div class="text-center py-4 text-muted">
+        <i class="ri-store-2-line display-4 d-block mb-2"></i>
+        <p>Aucune recommandation disponible pour le moment.</p>
+      </div>
+    } @else {
+      <div class="row g-3">
+        @for (p of similarProducts; track p.IdDeal) {
+          <div class="col-6 col-md-3">
+            <div class="card border-0 shadow-sm h-100 similar-card"
+                 (click)="goRelated(p.IdDeal)">
+              <div class="card-body p-3 d-flex flex-column">
+                <!-- Image -->
+                <div class="rounded-3 overflow-hidden bg-light d-flex align-items-center justify-content-center mb-3"
+                     style="height:150px">
+                  @if (p.imageDeal) {
+                    <img [src]="p.imageDeal" [alt]="p.titleDeal"
+                         style="max-height:140px;max-width:100%;object-fit:contain"
+                         onerror="this.src='assets/images/companies/img-1.png'">
+                  } @else {
+                    <i class="ri-image-line display-4 text-muted"></i>
+                  }
+                </div>
+                <!-- Info -->
+                <div class="flex-fill">
+                  <span class="badge bg-primary-subtle text-primary fs-10 mb-1">{{ p.category }}</span>
+                  <h6 class="fw-semibold mb-1 text-truncate" [title]="p.titleDeal" style="font-size:13px">
+                    {{ p.titleDeal }}
+                  </h6>
+                  <p class="fw-bold text-primary mb-0">{{ p.priceDeal }}</p>
+                </div>
+                <!-- Bouton -->
+                <button class="btn btn-soft-primary btn-sm w-100 mt-2">
+                  <i class="ri-eye-line me-1"></i>Voir le produit
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    }
+  </div>
+
+}

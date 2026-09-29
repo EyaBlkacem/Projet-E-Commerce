@@ -1,0 +1,225 @@
+<app-breadcrumbs [title]="'Finaliser la commande'" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+<!-- ─── CONFIRMATION ─────────────────────────────────────────────── -->
+@if (orderPlaced) {
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm text-center py-5">
+        <div class="card-body">
+          <div class="mx-auto mb-4 bg-success-subtle rounded-circle d-flex align-items-center justify-content-center"
+               style="width:80px;height:80px">
+            <i class="ri-check-double-line text-success" style="font-size:2.5rem"></i>
+          </div>
+          <h3 class="fw-semibold text-success mb-2">Commande confirmée !</h3>
+          <p class="text-muted mb-1">Merci pour votre achat sur <strong>Tijara</strong></p>
+          <p class="text-muted mb-4">
+            Votre numéro de commande :
+            <span class="badge bg-primary fs-14 ms-1">{{ orderNumber }}</span>
+          </p>
+          <p class="text-muted small mb-4">
+            Notre équipe traitera votre commande dans les plus brefs délais. Vous pouvez suivre votre commande dans votre espace personnel.
+          </p>
+          <div class="d-flex gap-3 justify-content-center flex-wrap">
+            <button class="btn btn-primary" (click)="goShop()">
+              <i class="ri-shopping-bag-3-line me-1"></i>Continuer mes achats
+            </button>
+            <button class="btn btn-soft-primary" (click)="goOrders()">
+              <i class="ri-file-list-3-line me-1"></i>Mes commandes
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- ─── FORMULAIRE CHECKOUT ───────────────────────────────────────── -->
+@if (!orderPlaced) {
+  <form [formGroup]="checkoutForm" (ngSubmit)="placeOrder()">
+    <div class="row g-4">
+
+      <!-- Colonne gauche : formulaire -->
+      <div class="col-xl-8">
+
+        <!-- Informations personnelles -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="ri-user-line me-2 text-primary"></i>Informations personnelles</h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Prénom <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="firstName"
+                       [class.is-invalid]="submitted && f['firstName'].errors">
+                @if (submitted && f['firstName'].errors) {
+                  <div class="invalid-feedback">Prénom requis (min 2 car.)</div>
+                }
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Nom <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="lastName"
+                       [class.is-invalid]="submitted && f['lastName'].errors">
+                @if (submitted && f['lastName'].errors) {
+                  <div class="invalid-feedback">Nom requis.</div>
+                }
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Email <span class="text-danger">*</span></label>
+                <input type="email" class="form-control" formControlName="email"
+                       [class.is-invalid]="submitted && f['email'].errors">
+                @if (submitted && f['email'].errors) {
+                  <div class="invalid-feedback">Email valide requis.</div>
+                }
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Téléphone <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <span class="input-group-text"><i class="ri-phone-line"></i> +216</span>
+                  <input type="tel" class="form-control" formControlName="phone"
+                         placeholder="2X / 5X / 9X XXXXXX"
+                         [class.is-invalid]="submitted && f['phone'].errors">
+                </div>
+                @if (submitted && f['phone'].errors) {
+                  <div class="text-danger small mt-1">Numéro tunisien invalide (ex: 25123456)</div>
+                }
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Adresse de livraison -->
+        <div class="card border-0 shadow-sm mb-4">
+          <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="ri-map-pin-line me-2 text-primary"></i>Adresse de livraison</h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Ville / Gouvernorat <span class="text-danger">*</span></label>
+                <select class="form-select" formControlName="ville"
+                        [class.is-invalid]="submitted && f['ville'].errors">
+                  <option value="">Sélectionner une ville</option>
+                  @for (v of villes; track v) {
+                    <option [value]="v">{{ v }}</option>
+                  }
+                </select>
+                @if (submitted && f['ville'].errors) {
+                  <div class="invalid-feedback">Ville requise.</div>
+                }
+              </div>
+              <div class="col-md-6">
+                <label class="form-label fw-semibold">Adresse complète <span class="text-danger">*</span></label>
+                <input type="text" class="form-control" formControlName="address"
+                       placeholder="Rue, numéro, cité..."
+                       [class.is-invalid]="submitted && f['address'].errors">
+                @if (submitted && f['address'].errors) {
+                  <div class="invalid-feedback">Adresse requise (min 8 car.)</div>
+                }
+              </div>
+              <div class="col-12">
+                <label class="form-label fw-semibold">Notes (optionnel)</label>
+                <textarea class="form-control" rows="2" formControlName="notes"
+                          placeholder="Instructions spéciales, horaires..."></textarea>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Mode de paiement -->
+        <div class="card border-0 shadow-sm">
+          <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="ri-secure-payment-line me-2 text-primary"></i>Mode de paiement</h5>
+          </div>
+          <div class="card-body">
+            <div class="row g-3">
+              <div class="col-12 col-md-4">
+                <div class="border rounded-3 p-3 text-center h-100"
+                     [class.border-primary]="paymentMethod === 'livraison'"
+                     [class.bg-primary-subtle]="paymentMethod === 'livraison'"
+                     style="cursor:pointer" (click)="paymentMethod='livraison'">
+                  <i class="ri-truck-line fs-28 text-primary mb-2 d-block"></i>
+                  <div class="fw-semibold small">Paiement à la livraison</div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4">
+                <div class="border rounded-3 p-3 text-center h-100"
+                     [class.border-primary]="paymentMethod === 'virement'"
+                     [class.bg-primary-subtle]="paymentMethod === 'virement'"
+                     style="cursor:pointer" (click)="paymentMethod='virement'">
+                  <i class="ri-bank-line fs-28 text-primary mb-2 d-block"></i>
+                  <div class="fw-semibold small">Virement bancaire</div>
+                </div>
+              </div>
+              <div class="col-12 col-md-4">
+                <div class="border rounded-3 p-3 text-center h-100"
+                     [class.border-primary]="paymentMethod === 'carte'"
+                     [class.bg-primary-subtle]="paymentMethod === 'carte'"
+                     style="cursor:pointer" (click)="paymentMethod='carte'">
+                  <i class="ri-bank-card-line fs-28 text-primary mb-2 d-block"></i>
+                  <div class="fw-semibold small">Carte bancaire</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Colonne droite : récapitulatif -->
+      <div class="col-xl-4">
+        <div class="card border-0 shadow-sm sticky-top" style="top:80px">
+          <div class="card-header bg-white">
+            <h5 class="mb-0"><i class="ri-shopping-cart-line me-2 text-primary"></i>Récapitulatif</h5>
+          </div>
+          <div class="card-body p-0">
+            @for (item of cartItems; track item.product.id) {
+              <div class="d-flex align-items-center gap-3 px-3 py-2 border-bottom">
+                <img [src]="item.product.image" alt="" style="width:48px;height:48px;object-fit:cover;border-radius:8px">
+                <div class="flex-grow-1">
+                  <div class="small fw-semibold text-truncate" style="max-width:140px">{{ item.product.name }}</div>
+                  <div class="text-muted" style="font-size:12px">x{{ item.qty }}</div>
+                </div>
+                <span class="fw-bold text-primary small">{{ item.product.price * item.qty }} DT</span>
+              </div>
+            }
+          </div>
+          <div class="card-footer bg-white">
+            <div class="d-flex justify-content-between mb-1">
+              <span class="text-muted small">Sous-total</span>
+              <span>{{ subtotal }} DT</span>
+            </div>
+            <div class="d-flex justify-content-between mb-2">
+              <span class="text-muted small">Livraison</span>
+              @if (shipping === 0) {
+                <span class="text-success fw-semibold">Gratuite</span>
+              } @else {
+                <span>{{ shipping }} DT</span>
+              }
+            </div>
+            <div class="border-top pt-2 d-flex justify-content-between fw-bold fs-5">
+              <span>Total</span>
+              <span class="text-primary">{{ total }} DT</span>
+            </div>
+            @if (errorMsg) {
+              <div class="alert alert-danger mt-3 py-2 small mb-0">
+                <i class="ri-error-warning-line me-1"></i>{{ errorMsg }}
+              </div>
+            }
+            <button type="submit" class="btn btn-primary w-100 mt-3 py-3 fw-semibold" [disabled]="loading">
+              @if (loading) {
+                <span class="spinner-border spinner-border-sm me-2"></span>Traitement...
+              } @else {
+                <i class="ri-check-line me-2"></i>Confirmer la commande
+              }
+            </button>
+            @if (submitted && checkoutForm.invalid) {
+              <div class="alert alert-danger mt-2 py-2 small text-center mb-0">
+                Veuillez corriger les erreurs ci-dessus.
+              </div>
+            }
+          </div>
+        </div>
+      </div>
+    </div>
+  </form>
+}

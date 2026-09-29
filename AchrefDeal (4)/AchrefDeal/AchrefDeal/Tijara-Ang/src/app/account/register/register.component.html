@@ -1,0 +1,321 @@
+<div class="auth-page-wrapper pt-5">
+    <div class="auth-one-bg-position auth-one-bg" id="auth-particles">
+        <div class="bg-overlay"></div>
+        <div class="shape">
+            <svg xmlns="http://www.w3.org/2000/svg" version="1.1" xmlns:xlink="http://www.w3.org/1999/xlink" viewBox="0 0 1440 120">
+                <path d="M 0,36 C 144,53.6 432,123.2 720,124 C 1008,124.8 1296,56.8 1440,40L1440 140L0 140z"></path>
+            </svg>
+        </div>
+    </div>
+
+    <div class="auth-page-content">
+        <div class="container">
+            <div class="row justify-content-center">
+                <div class="col-lg-12 text-center mt-sm-5 mb-4 text-white-50">
+                    <a routerLink="/landing" class="d-inline-block auth-logo">
+                        <img src="assets/images/logo-light.png" alt="Tijara" height="20">
+                    </a>
+                    <p class="mt-3 fs-15 fw-medium">La marketplace intelligente</p>
+                </div>
+            </div>
+
+            <!-- Message email de confirmation envoyé -->
+            @if (emailSent) {
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6 col-xl-5">
+                    <div class="card mt-4 border-0 shadow-lg" style="border-radius:20px;overflow:hidden">
+                        <div style="background:linear-gradient(135deg,#405189,#0ab39c);padding:40px 32px;text-align:center">
+                            <div style="width:72px;height:72px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+                                <i class="ri-mail-check-line text-white" style="font-size:36px"></i>
+                            </div>
+                            <h4 class="text-white fw-bold mb-1">Vérifiez votre boîte mail !</h4>
+                            <p class="mb-0" style="color:rgba(255,255,255,0.8);font-size:14px">Un email de confirmation a été envoyé</p>
+                        </div>
+                        <div class="card-body p-4 text-center">
+                            <p class="text-muted fs-14 mb-1">Nous avons envoyé un lien de confirmation à :</p>
+                            <div class="fw-bold fs-16 text-primary mb-4">{{ registeredEmail }}</div>
+                            <div class="alert alert-info text-start fs-13 border-0" style="background:#e8f4fd;border-radius:12px">
+                                <i class="ri-information-line me-2 text-info"></i>
+                                Cliquez sur le lien dans l'email pour activer votre compte. Vérifiez aussi vos <strong>spams</strong>.
+                            </div>
+                            <p class="text-muted fs-12 mt-3 mb-4">Le lien expire dans <strong>24 heures</strong>.</p>
+                            <a routerLink="/auth/login" class="btn btn-primary w-100 rounded-pill fw-semibold py-2">
+                                <i class="ri-arrow-left-line me-1"></i> Aller à la connexion
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            }
+
+            <!-- Message attente approbation vendor -->
+            @if (pendingApproval) {
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6 col-xl-5">
+                    <div class="card mt-4 border-warning">
+                        <div class="card-body p-4 text-center">
+                            <div class="mb-4">
+                                <i class="ri-time-line text-warning" style="font-size:4rem"></i>
+                            </div>
+                            <h4 class="text-warning fw-bold">Demande envoyée !</h4>
+                            <p class="text-muted mb-4">
+                                Votre demande de compte <strong>vendeur</strong> a été soumise avec succès.<br>
+                                L'administrateur va examiner votre dossier.
+                            </p>
+                            <div class="alert alert-warning text-start fs-13">
+                                <i class="ri-information-line me-2"></i>
+                                Une fois votre compte <strong>approuvé</strong>, vous pourrez vous connecter et commencer à vendre.
+                            </div>
+                            <a routerLink="/auth/login" class="btn btn-primary w-100">
+                                <i class="ri-arrow-left-line me-1"></i> Retour à la connexion
+                            </a>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            }
+
+            @if (!pendingApproval && !emailSent) {
+            <div class="row justify-content-center">
+                <div class="col-md-9 col-lg-7 col-xl-6">
+                    <div class="card mt-4">
+                        <div class="card-body p-4">
+                            <div class="text-center mt-2 mb-4">
+                                <h5 class="text-primary fw-bold">Créer un compte</h5>
+                                <p class="text-muted">Rejoignez la communauté Tijara gratuitement</p>
+                            </div>
+
+                            @if (error) {
+                            <div class="alert alert-danger border-0 rounded-3">
+                                <i class="ri-error-warning-line me-2"></i>{{ error }}
+                            </div>
+                            }
+
+                            <!-- Connexion sociale (clients uniquement) -->
+                            <div class="mb-3">
+                                <p class="text-muted fs-12 text-center mb-2">Inscription rapide pour les clients</p>
+                                <div id="google-btn-register" class="d-flex justify-content-center mb-2"></div>
+                                @if (googleLoading) {
+                                    <div class="d-flex align-items-center justify-content-center gap-2 text-muted fs-13 mt-1 mb-2">
+                                        <span class="spinner-border spinner-border-sm"></span>
+                                        Connexion en cours...
+                                    </div>
+                                }
+                                <!-- Facebook -->
+                                <button type="button"
+                                        class="btn w-100 fw-semibold py-2 d-flex align-items-center justify-content-center gap-2"
+                                        style="background:#1877f2;color:white;border:none;border-radius:8px"
+                                        (click)="facebookLogin()"
+                                        [disabled]="facebookLoading">
+                                    @if(facebookLoading){
+                                        <span class="spinner-border spinner-border-sm"></span>
+                                    } @else {
+                                        <i class="ri-facebook-fill fs-18"></i>
+                                    }
+                                    Continuer avec Facebook
+                                </button>
+                            </div>
+
+                            <!-- Séparateur -->
+                            <div class="d-flex align-items-center gap-3 mb-4">
+                                <hr class="flex-fill m-0">
+                                <span class="text-muted fs-12 fw-medium px-1">OU inscription manuelle</span>
+                                <hr class="flex-fill m-0">
+                            </div>
+
+                            <!-- Sélection type de compte -->
+                            <div class="mb-4">
+                                <label class="form-label fw-semibold">Type de compte <span class="text-danger">*</span></label>
+                                <div class="d-flex gap-3">
+                                    <div class="flex-fill border rounded-3 p-3 cursor-pointer"
+                                        [class.border-primary]="f['role'].value === 'user'"
+                                        [class.bg-primary-subtle]="f['role'].value === 'user'"
+                                        (click)="setRole('user')" style="cursor:pointer">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <input type="radio" [checked]="f['role'].value === 'user'" class="form-check-input mt-0">
+                                            <div>
+                                                <div class="fw-semibold"><i class="ri-user-line me-1 text-primary"></i>Client</div>
+                                                <div class="text-muted fs-12">Accès immédiat</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="flex-fill border rounded-3 p-3"
+                                        [class.border-warning]="f['role'].value === 'vendor'"
+                                        [class.bg-warning-subtle]="f['role'].value === 'vendor'"
+                                        (click)="setRole('vendor')" style="cursor:pointer">
+                                        <div class="d-flex align-items-center gap-2">
+                                            <input type="radio" [checked]="f['role'].value === 'vendor'" class="form-check-input mt-0">
+                                            <div>
+                                                <div class="fw-semibold"><i class="ri-store-2-line me-1 text-warning"></i>Entreprise</div>
+                                                <div class="text-muted fs-12">Validation requise</div>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <form [formGroup]="signupForm" (ngSubmit)="onSubmit()">
+
+                                <!-- Informations personnelles -->
+                                <div class="border rounded-3 p-3 mb-3">
+                                    <h6 class="text-muted mb-3 fs-12 text-uppercase fw-semibold">
+                                        <i class="ri-user-line me-1"></i>Informations personnelles
+                                    </h6>
+                                    <div class="row g-3">
+                                        <div class="col-6">
+                                            <label class="form-label">Prénom <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" placeholder="Prénom"
+                                                formControlName="firstName"
+                                                [ngClass]="{'is-invalid': submitted && f['firstName'].errors}">
+                                            @if (submitted && f['firstName'].errors) {
+                                            <div class="invalid-feedback">Requis</div>
+                                            }
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Nom <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" placeholder="Nom"
+                                                formControlName="lastName"
+                                                [ngClass]="{'is-invalid': submitted && f['lastName'].errors}">
+                                            @if (submitted && f['lastName'].errors) {
+                                            <div class="invalid-feedback">Requis</div>
+                                            }
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Téléphone</label>
+                                            <input type="tel" class="form-control" placeholder="+216 XX XXX XXX"
+                                                formControlName="phone">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">Ville</label>
+                                            <input type="text" class="form-control" placeholder="Tunis, Sfax..."
+                                                formControlName="city">
+                                        </div>
+
+                                        <!-- Date de naissance et Genre (client uniquement) -->
+                                        @if (f['role'].value === 'user') {
+                                        <div class="col-6">
+                                            <label class="form-label">
+                                                <i class="ri-cake-line me-1 text-muted"></i>Date de naissance
+                                            </label>
+                                            <input type="date" class="form-control"
+                                                formControlName="birthDate"
+                                                [max]="year - 18 + '-12-31'">
+                                        </div>
+                                        <div class="col-6">
+                                            <label class="form-label">
+                                                <i class="ri-user-line me-1 text-muted"></i>Genre
+                                            </label>
+                                            <select class="form-select" formControlName="gender">
+                                                <option value="">— Sélectionner —</option>
+                                                <option value="homme">Homme</option>
+                                                <option value="femme">Femme</option>
+                                                <option value="autre">Préfère ne pas préciser</option>
+                                            </select>
+                                        </div>
+                                        }
+
+                                    </div>
+                                </div>
+
+                                <!-- Informations boutique (vendor seulement) -->
+                                @if (f['role'].value === 'vendor') {
+                                <div class="border border-warning rounded-3 p-3 mb-3 bg-warning-subtle">
+                                    <h6 class="text-warning mb-3 fs-12 text-uppercase fw-semibold">
+                                        <i class="ri-store-2-line me-1"></i>Informations boutique
+                                    </h6>
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label class="form-label">Nom de la boutique / entreprise <span class="text-danger">*</span></label>
+                                            <input type="text" class="form-control" placeholder="Ex: TechTunis, ModeTN..."
+                                                formControlName="shopName"
+                                                [ngClass]="{'is-invalid': submitted && f['shopName'].errors}">
+                                            @if (submitted && f['shopName'].errors) {
+                                            <div class="invalid-feedback">Nom de boutique requis</div>
+                                            }
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">Numéro d'entreprise / MF <span class="text-muted fs-12">(optionnel)</span></label>
+                                            <input type="text" class="form-control" placeholder="Ex: 1234567A/B/C/D"
+                                                formControlName="companyNumber">
+                                        </div>
+                                    </div>
+                                </div>
+                                }
+
+                                <!-- Compte -->
+                                <div class="border rounded-3 p-3 mb-3">
+                                    <h6 class="text-muted mb-3 fs-12 text-uppercase fw-semibold">
+                                        <i class="ri-lock-line me-1"></i>Accès au compte
+                                    </h6>
+                                    <div class="row g-3">
+                                        <div class="col-12">
+                                            <label class="form-label">Email <span class="text-danger">*</span></label>
+                                            <input type="email" class="form-control" placeholder="exemple@email.com"
+                                                formControlName="email"
+                                                [ngClass]="{'is-invalid': submitted && f['email'].errors}">
+                                            @if (submitted && f['email'].errors) {
+                                            <div class="invalid-feedback">
+                                                @if (f['email'].errors['required']) { Email requis }
+                                                @if (f['email'].errors['email']) { Email invalide }
+                                            </div>
+                                            }
+                                        </div>
+                                        <div class="col-12">
+                                            <label class="form-label">Mot de passe <span class="text-danger">*</span></label>
+                                            <div class="position-relative">
+                                                <input [type]="fieldTextType ? 'text' : 'password'" class="form-control pe-5"
+                                                    placeholder="Min. 6 caractères"
+                                                    formControlName="password"
+                                                    [ngClass]="{'is-invalid': submitted && f['password'].errors}">
+                                                <button class="btn btn-link position-absolute end-0 top-0 text-muted"
+                                                    type="button" (click)="toggleFieldTextType()">
+                                                    <i class="mdi" [ngClass]="{'mdi-eye-off-outline': !fieldTextType, 'mdi-eye-outline': fieldTextType}"></i>
+                                                </button>
+                                                @if (submitted && f['password'].errors) {
+                                                <div class="invalid-feedback">
+                                                    @if (f['password'].errors['required']) { Requis }
+                                                    @if (f['password'].errors['minlength']) { Minimum 6 caractères }
+                                                </div>
+                                                }
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                @if (f['role'].value === 'vendor') {
+                                <div class="alert alert-warning fs-12 py-2">
+                                    <i class="ri-information-line me-1"></i>
+                                    Les comptes vendeurs sont <strong>examinés par l'administrateur</strong> avant activation.
+                                </div>
+                                }
+
+                                <p class="fs-12 text-muted mb-3">En créant un compte, vous acceptez les
+                                    <a routerLink="/landing" class="text-primary fw-medium">Conditions d'utilisation</a>
+                                </p>
+
+                                <button class="btn btn-success w-100 py-2" type="submit" [disabled]="loading">
+                                    @if (loading) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                                    {{ loading ? 'Création en cours...' : 'Créer mon compte' }}
+                                </button>
+                            </form>
+                        </div>
+                    </div>
+                    <div class="mt-4 text-center">
+                        <p class="mb-0">Déjà un compte ?
+                            <a routerLink="/auth/login" class="fw-semibold text-primary text-decoration-underline">Se connecter</a>
+                        </p>
+                    </div>
+                </div>
+            </div>
+            }
+        </div>
+    </div>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="text-center">
+                <p class="mb-0 text-muted">&copy; {{year}} Tijara. Tous droits réservés.</p>
+            </div>
+        </div>
+    </footer>
+</div>

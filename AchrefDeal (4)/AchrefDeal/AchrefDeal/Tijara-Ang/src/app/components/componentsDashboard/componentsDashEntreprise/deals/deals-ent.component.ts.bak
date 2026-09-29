@@ -1,0 +1,313 @@
+import { Component, OnInit, OnDestroy } from '@angular/core';
+import { AssetsService } from 'src/app/core/services/assets.service';
+import { FormBuilder, FormGroup, Validators } from '@angular/forms';
+import { DealsService } from 'src/app/core/services/deals.service';
+
+@Component({
+  selector: 'app-deals-ent',
+  templateUrl: './deals-ent.component.html',
+  standalone: false
+})
+export class DealsEntComponent implements OnInit, OnDestroy {
+
+  now: number = Date.now();
+  private countdownTimer: any = null;
+
+  breadCrumbItems = [
+    { label: 'Vendeur' },
+    { label: 'Mes Deals & Promos', active: true }
+  ];
+
+  myDeals: any[] = [];
+  publicDeals: any[] = [];
+  activeTab: 'miennes' | 'toutes' = 'miennes';
+  loading       = true;
+  showForm      = false;
+  submitting    = false;
+  submitSuccess = '';
+  submitError   = '';
+  imagePreview  = '';
+  dealForm!: FormGroup;
+
+  private currentUserId = 0;
+
+  // NOUVEAU - la colonne imageDeal est un simple TEXT (~64 Ko max) et il n'existe
+  // aucune route d'upload dédiée pour les deals (contrairement aux produits/
+  // annonces qui ont /products/{id}/media et /ads/{id}/media) : l'image doit donc
+  // être envoyée directement en base64 dans le payload JSON. On limite fortement
+  // la taille du fichier source pour rester sous la capacité de la colonne une
+  // fois encodé en base64 (l'encodage base64 gonfle la taille d'environ 33%).
+  private readonly maxImageBytes = 40 * 1024; // 40 Ko
+
+  // NOUVEAU - /deal-likes n'expose aucune route "index" (seulement store/destroy),
+  // impossible donc de savoir qui a déjà liké quoi après un rechargement de page.
+  // On garde l'état "liké" uniquement en mémoire pour la session en cours.
+  private likedDealIds = new Set<number>();
+  private likeRecordIds: Record<number, number> = {};
+  liking: Record<number, boolean> = {};
+
+  constructor(private dealsService: DealsService, private assetsService: AssetsService, private fb: FormBuilder) {}
+
+  ngOnInit(): void {
+    try {
+      const user = JSON.parse(localStorage.getItem('currentUser') || '{}');
+      this.currentUserId = user?.id ?? user?.IdUser ?? 0;
+    } catch { this.currentUserId = 0; }
+
+    this.loadMine();
+    this.loadPublic();
+    this.initForm();
+    this.startCountdownClock();
+  }
+
+  initForm(): void {
+    this.dealForm = this.fb.group({
+      title:       ['', [Validators.required, Validators.minLength(5)]],
+      content:     ['', [Validators.required, Validators.minLength(10)]],
+      price:       ['', [Validators.pattern(/^\d+(\.\d{1,3})?$/)]],
+      discount:    ['', [Validators.pattern(/^\d{1,3}$/)]],
+      quantity:    [''],
+      dateEnd:     [''],
+      categoryId:  [null],
+    });
+  }
+
+  get f() { return this.dealForm.controls; }
+
+  // ✅ CORRIGÉ — normalise un objet Deals brut (titleDeal, descriptionDeal,
+  // priceDeal, imageDeal, idUser, active, likes, datePublication...) vers la
+  // forme attendue par le template (id, title, content, price, status,
+  // likes_count, created_at...). Le backend calcule déjà QuantityProgress,
+  // TimeRemaining, TimeProgress et IsExpired (accessors $appends dans
+  // Deals.php) — on les récupère tels quels plutôt que de les recalculer.
+  private mapDeal(raw: any): any {
+    const id = raw.IdDeal ?? raw.id;
+    return {
+      id,
+      title:           raw.titleDeal ?? raw.title ?? 'Sans titre',
+      content:         raw.descriptionDeal ?? raw.content ?? '',
+      details:         raw.detailsDeal ?? '',
+      price:           raw.priceDeal ?? null,
+      discount:        raw.discountDeal ?? null,
+      quantity:        raw.quantity ?? null,
+      totalCount:      raw.TotalCount ?? null,
+      // ✅ CORRIGÉ — même logique que listing.component.ts (résolution par
+      // IdDeal), qui affiche correctement les images des deals. L'ancienne
+      // version passait raw.imageDeal (base64/URL directe) à resolveImage(),
+      // ce qui produisait des images cassées ici alors que le listing public
+      // fonctionnait déjà en se basant sur l'ID.
+      image_url:       this.resolveImage(id),
+      category_id:     raw.idCateg ?? null,
+      // ✅ dérivé de "active" (0/1) — pas d'autre champ de statut confirmé côté backend.
+      status:          (raw.active === 1 || raw.active === true) ? 'approved' : 'pending',
+      author_name:     raw.iduser?.NameUser ?? raw.iduser?.name ?? 'Vendeur',
+      shop_name:       raw.iduser?.ShopName ?? '',
+      created_at:      raw.datePublication ?? raw.created_at ?? '',
+      dateEnd:         raw.dateEnd ?? null,
+      likes_count:     raw.likes ?? 0,
+      views:            raw.ViewCount ?? 0,
+      // Accessors calculés côté backend (Deals::$appends) — déjà prêts à l'emploi.
+      quantityProgress: raw.QuantityProgress ?? 0,
+      timeRemaining:    raw.TimeRemaining ?? null,
+      timeProgress:     raw.TimeProgress ?? 0,
+      isExpired:        raw.IsExpired ?? false,
+      raw
+    };
+  }
+
+  // ✅ CORRIGÉ — reprend la logique de listing.component.ts (résolution par
+  // IdDeal : `${assetsBaseUrl}/assets/deals/deal_{id}.jpg`) au lieu de lire
+  // raw.imageDeal, pour rester cohérent avec la page qui affiche déjà les
+  // images correctement.
+  private resolveImage(dealId: any): string | null {
+    if (!dealId) return null;
+    return `${this.assetsService.assetsBaseUrl}/assets/deals/deal_${dealId}.jpg`;
+  }
+
+  loadMine(): void {
+    this.loading = true;
+    this.dealsService.getMyDeals().subscribe({
+      next: (res: any) => {
+        const raw: any[] = Array.isArray(res) ? res : (res?.data ?? []);
+        this.myDeals = raw.map((d: any) => this.mapDeal(d));
+        this.loading = false;
+      },
+      error: () => { this.myDeals = []; this.loading = false; }
+    });
+  }
+
+  loadPublic(): void {
+    this.dealsService.getDeals({ __raw: { active: 1, per_page: 50 } }).subscribe({
+      next: (res: any) => {
+        const raw: any[] = Array.isArray(res) ? res : (res?.data ?? []);
+        this.publicDeals = raw.map((d: any) => this.mapDeal(d));
+      },
+      error: () => { this.publicDeals = []; }
+    });
+  }
+
+  onImageSelected(event: Event): void {
+    const file = (event.target as HTMLInputElement).files?.[0];
+    if (!file) return;
+    if (file.size > this.maxImageBytes) {
+      alert(`Image trop volumineuse. Maximum ${Math.round(this.maxImageBytes / 1024)} Ko (contrainte technique de la colonne backend, pas de service d'upload dédié pour les deals).`);
+      return;
+    }
+    const reader = new FileReader();
+    reader.onload = (e: any) => { this.imagePreview = e.target.result; };
+    reader.readAsDataURL(file);
+  }
+
+  // ✅ CORRIGÉ — payload entièrement reconstruit avec les vrais noms de colonnes
+  // Deals (voir createDeal() dans le service). L'ancien code envoyait
+  // { title, content, type, image_url } vers createAnnonce() (route /ads) :
+  // aucun de ces champs n'existe sur la table Deals, rien n'était jamais
+  // réellement enregistré comme deal.
+  submit(): void {
+    if (this.dealForm.invalid) return;
+    this.submitting  = true;
+    this.submitError = '';
+
+    const val = this.dealForm.value;
+    const payload: any = {
+      titleDeal:       val.title?.trim(),
+      descriptionDeal: val.content?.trim(),
+      idUser:          this.currentUserId,
+      active:          0,
+      // "active" non envoyé : le backend décide de la valeur par défaut à la
+      // création (probablement 0 / en attente de validation admin, cohérent
+      // avec le workflow déjà observé sur Ads/Products).
+    };
+    if (val.price)      payload.priceDeal    = val.price;
+    if (val.discount)   payload.discountDeal = val.discount;
+    if (val.quantity)   payload.quantity     = val.quantity;
+    if (val.dateEnd)    payload.dateEnd      = val.dateEnd;
+    if (val.categoryId) payload.idCateg      = val.categoryId;
+    if (this.imagePreview) payload.imageDeal = this.imagePreview;
+
+    this.dealsService.createDeal(payload).subscribe({ // TODO verify
+      next: (res: any) => {
+        const created = res?.data ?? res;
+        this.submitting    = false;
+        this.showForm      = false;
+        this.submitSuccess = (created?.active === 1)
+          ? '✅ Deal publié avec succès ! Il est maintenant visible sur la boutique.'
+          : '⏳ Deal soumis ! En attente de validation par l\'administrateur.';
+        this.imagePreview  = '';
+        this.dealForm.reset();
+        this.loadMine();
+        setTimeout(() => { this.submitSuccess = ''; }, 6000);
+      },
+      error: (err: any) => {
+        this.submitting  = false;
+        this.submitError = err?.error?.message || 'Erreur lors de la soumission.';
+      }
+    });
+  }
+
+  deleteDeal(id: number): void {
+    if (!confirm('Supprimer ce deal ?')) return;
+    this.dealsService.deleteDeal(id).subscribe({ // TODO verify
+      next: () => { this.myDeals = this.myDeals.filter(d => d.id !== id); }
+    });
+  }
+
+  // ✅ CORRIGÉ — utilise addDealLike()/removeDealLike() (route réelle /deal-likes,
+  // champs IdDeal/IdUser) au lieu de toggleLike() qui pointait vers /ad-likes
+  // (table complètement différente). État "liké" gardé en mémoire de session
+  // uniquement — voir le commentaire sur likedDealIds plus haut.
+  like(deal: any): void {
+    if (this.liking[deal.id]) return;
+    this.liking[deal.id] = true;
+
+    if (this.likedDealIds.has(deal.id)) {
+      const likeId = this.likeRecordIds[deal.id];
+      if (!likeId) { this.liking[deal.id] = false; return; }
+      this.dealsService.removeDealLike(likeId).subscribe({
+        next: () => {
+          deal.likes_count = Math.max(0, (deal.likes_count || 0) - 1);
+          this.likedDealIds.delete(deal.id);
+          delete this.likeRecordIds[deal.id];
+        },
+        error: () => {},
+        complete: () => { this.liking[deal.id] = false; }
+      });
+    } else {
+      this.dealsService.addDealLike(deal.id).subscribe({
+        next: (res: any) => {
+          const created = res?.data ?? res;
+          deal.likes_count = (deal.likes_count || 0) + 1;
+          this.likedDealIds.add(deal.id);
+          this.likeRecordIds[deal.id] = created?.IdDealLike ?? created?.id;
+        },
+        error: () => {},
+        complete: () => { this.liking[deal.id] = false; }
+      });
+    }
+  }
+
+  isLiked(dealId: number): boolean {
+    return this.likedDealIds.has(dealId);
+  }
+
+  getStatusClass(s: string): string {
+    switch (s) {
+      case 'approved': return 'bg-success-subtle text-success';
+      case 'pending':  return 'bg-warning-subtle text-warning';
+      default:         return 'bg-secondary-subtle text-secondary';
+    }
+  }
+
+  getStatusLabel(s: string): string {
+    switch (s) {
+      case 'approved': return 'Approuvé';
+      case 'pending':  return 'En attente';
+      default:         return s;
+    }
+  }
+
+  ngOnDestroy(): void {
+    this.stopCountdownClock();
+  }
+
+  startCountdownClock(): void {
+    if (this.countdownTimer) return;
+    this.countdownTimer = setInterval(() => { this.now = Date.now(); }, 1000);
+  }
+
+  stopCountdownClock(): void {
+    if (this.countdownTimer) {
+      clearInterval(this.countdownTimer);
+      this.countdownTimer = null;
+    }
+  }
+
+  getDealTimeParts(deal: any): { days: string; hours: string; minutes: string; seconds: string } {
+    const pad = (n: number) => String(Math.max(0, n)).padStart(2, '0');
+    if (!deal.dateEnd) return { days: '00', hours: '00', minutes: '00', seconds: '00' };
+    const end = new Date(deal.dateEnd).getTime();
+    if (isNaN(end)) return { days: '00', hours: '00', minutes: '00', seconds: '00' };
+    const diff = Math.max(0, end - this.now);
+    const totalSeconds = Math.floor(diff / 1000);
+    return {
+      days: pad(Math.floor(totalSeconds / 86400)),
+      hours: pad(Math.floor((totalSeconds % 86400) / 3600)),
+      minutes: pad(Math.floor((totalSeconds % 3600) / 60)),
+      seconds: pad(totalSeconds % 60)
+    };
+  }
+
+  isDealExpired(deal: any): boolean {
+    if (!deal.dateEnd) return false;
+    const end = new Date(deal.dateEnd).getTime();
+    if (isNaN(end)) return false;
+    return (end - this.now) <= 0;
+  }
+
+  isDealUrgent(deal: any): boolean {
+    if (!deal.dateEnd || this.isDealExpired(deal)) return false;
+    const end = new Date(deal.dateEnd).getTime();
+    if (isNaN(end)) return false;
+    return (end - this.now) <= 3600 * 1000;
+  }
+}

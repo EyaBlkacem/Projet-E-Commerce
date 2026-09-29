@@ -1,0 +1,253 @@
+<div class="container py-4">
+
+  @if (successOrderId) {
+    <div class="alert alert-success d-flex align-items-center gap-2 mb-4">
+      <i class="ri-checkbox-circle-fill fs-18"></i>
+
+      <span>
+        Votre commande
+        <strong>#{{ successOrderId }}</strong>
+        a bien été enregistrée.
+        Merci pour votre achat !
+      </span>
+    </div>
+  }
+
+  <h4 class="fw-semibold mb-4">
+    Mes commandes
+  </h4>
+
+  <!-- Filtres -->
+  <div class="d-flex flex-wrap gap-2 align-items-center mb-3">
+
+    <input
+      class="form-control"
+      style="max-width:220px"
+      placeholder="Référence ou statut"
+      [(ngModel)]="searchTerm"
+      (ngModelChange)="applyFilter()"
+    />
+
+    <input
+      type="date"
+      class="form-control"
+      style="max-width:170px"
+      [(ngModel)]="dateFrom"
+      (ngModelChange)="applyFilter()"
+      aria-label="Date de début"
+    />
+
+    <input
+      type="date"
+      class="form-control"
+      style="max-width:170px"
+      [(ngModel)]="dateTo"
+      (ngModelChange)="applyFilter()"
+      aria-label="Date de fin"
+    />
+
+    <button
+      type="button"
+      class="btn btn-outline-secondary"
+      (click)="resetFilter()"
+    >
+      <i class="ri-refresh-line me-1"></i>
+      Réinitialiser
+    </button>
+
+  </div>
+
+  <!-- Chargement -->
+  @if (loading) {
+    <div class="text-center py-5">
+      <div
+        class="spinner-border text-primary"
+        role="status"
+      ></div>
+    </div>
+  }
+
+  <!-- Aucune commande -->
+  @if (!loading && orders.length === 0) {
+
+    <div class="card border-0 shadow-sm">
+
+      <div class="card-body text-center py-5">
+
+        <i
+          class="ri-inbox-2-line display-4 text-muted opacity-50"
+        ></i>
+
+        <p class="text-muted mt-3 fs-14">
+          Aucune commande pour le moment.
+        </p>
+
+        <a
+          routerLink="/shop/products"
+          class="btn btn-primary btn-sm mt-2"
+        >
+          Découvrir la boutique
+        </a>
+
+      </div>
+
+    </div>
+  }
+
+  <!-- Liste des commandes -->
+  @if (!loading && filteredOrders.length > 0) {
+
+    <div class="card border-0 shadow-sm">
+
+      <div class="table-responsive">
+
+        <table class="table table-hover align-middle mb-0">
+
+          <thead class="table-light">
+
+            <tr>
+              <th class="ps-3">Commande</th>
+              <th>Date</th>
+              <th>Total</th>
+              <th>Statut</th>
+              <th>Facture</th>
+            </tr>
+
+          </thead>
+
+          <tbody>
+
+            @for (
+              order of filteredOrders;
+              track order.id
+            ) {
+
+              <tr>
+
+                <!-- Commande -->
+                <td class="ps-3 fw-semibold text-primary">
+                  #{{ order.id }}
+                </td>
+
+                <!-- Date -->
+                <td>
+                  {{
+                    order.createdAt
+                      ? (order.createdAt | date:'dd/MM/yyyy')
+                      : '—'
+                  }}
+                </td>
+
+                <!-- Total -->
+                <td class="fw-bold">
+                  {{ order.total_amount }} DT
+                </td>
+
+                <!-- Statut -->
+                <td>
+                  <span
+                    [class]="statusClass(order.status)"
+                  >
+                    {{ statusLabel(order.status) }}
+                  </span>
+                </td>
+
+                <!-- Facture -->
+                <td>
+
+                  @if (order.invoice) {
+
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-primary"
+                      [disabled]="
+                        downloadingInvoiceId ===
+                        (
+                          order.invoice.IdInvoice ??
+                          order.invoice.idInvoice ??
+                          order.invoice.id
+                        )
+                      "
+                      (click)="downloadInvoice(order)"
+                    >
+
+                      @if (
+                        downloadingInvoiceId ===
+                        (
+                          order.invoice.IdInvoice ??
+                          order.invoice.idInvoice ??
+                          order.invoice.id
+                        )
+                      ) {
+
+                        <span
+                          class="spinner-border spinner-border-sm me-1"
+                        ></span>
+
+                      } @else {
+
+                        <i
+                          class="ri-file-download-line me-1"
+                        ></i>
+
+                      }
+
+                      Télécharger
+
+                      {{
+                        order.invoice.Number ??
+                        'Facture'
+                      }}
+
+                      <span class="ms-1 text-muted fs-12">
+
+                        (
+                        {{
+                          invoiceStatusLabel(
+                            order.invoice.Status ??
+                            order.invoice.status
+                          )
+                        }}
+                        )
+
+                      </span>
+
+                    </button>
+
+                  } @else {
+
+                    <span class="text-muted fs-13">
+                      Aucune facture
+                    </span>
+
+                  }
+
+                </td>
+
+              </tr>
+
+            }
+
+          </tbody>
+
+        </table>
+
+      </div>
+
+    </div>
+  }
+
+  <!-- Résultat du filtre vide -->
+  @if (
+    !loading &&
+    orders.length > 0 &&
+    filteredOrders.length === 0
+  ) {
+
+    <div class="alert alert-info mt-3">
+      Aucune commande ne correspond aux filtres.
+    </div>
+
+  }
+
+</div>

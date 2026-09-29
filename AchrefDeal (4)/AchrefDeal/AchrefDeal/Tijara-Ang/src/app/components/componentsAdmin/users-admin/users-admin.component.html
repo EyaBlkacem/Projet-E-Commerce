@@ -1,0 +1,133 @@
+<app-breadcrumbs [title]="'Gestion Utilisateurs'" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <i class="ri-group-line fs-24 text-primary mb-1"></i>
+      <h4 class="fw-bold mb-0">{{ counts.total }}</h4>
+      <small class="text-muted">Total</small>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <i class="ri-user-line fs-24 text-info mb-1"></i>
+      <h4 class="fw-bold mb-0 text-info">{{ counts.users }}</h4>
+      <small class="text-muted">Acheteurs</small>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <i class="ri-store-2-line fs-24 text-success mb-1"></i>
+      <h4 class="fw-bold mb-0 text-success">{{ counts.vendors }}</h4>
+      <small class="text-muted">Vendeurs</small>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <i class="ri-forbid-line fs-24 text-danger mb-1"></i>
+      <h4 class="fw-bold mb-0 text-danger">{{ counts.blocked }}</h4>
+      <small class="text-muted">Bloqués</small>
+    </div>
+  </div>
+</div>
+
+<!-- Filtres -->
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-body p-3">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div class="input-group" style="width:240px">
+        <span class="input-group-text bg-white"><i class="ri-search-line text-muted"></i></span>
+        <input type="text" class="form-control border-start-0" placeholder="Nom, email..."
+               [(ngModel)]="searchTerm" (input)="applyFilter()">
+      </div>
+      <select class="form-select" style="width:160px" [(ngModel)]="filterRole" (change)="applyFilter()">
+        <option value="tous">Tous les rôles</option>
+        <option value="user">Acheteurs</option>
+        <option value="vendor">Vendeurs</option>
+      </select>
+      @if (filterRole !== 'tous' || searchTerm) {
+        <button class="btn btn-sm btn-soft-secondary"
+                (click)="filterRole='tous'; searchTerm=''; applyFilter()">
+          <i class="ri-refresh-line me-1"></i>Réinitialiser
+        </button>
+      }
+      <span class="text-muted small ms-auto">{{ filteredUsers.length }} utilisateur(s)</span>
+    </div>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card border-0 shadow-sm">
+  <div class="card-body p-0">
+    @if (filteredUsers.length === 0) {
+      <div class="text-center py-5">
+        <i class="ri-user-search-line display-3 text-muted"></i>
+        <h5 class="mt-3">Aucun utilisateur trouvé</h5>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead style="background:#f8f9fc">
+            <tr>
+              <th class="ps-4 py-3 fw-semibold text-muted border-0">Utilisateur</th>
+              <th class="py-3 fw-semibold text-muted border-0">Email</th>
+              <th class="py-3 fw-semibold text-muted border-0">Ville</th>
+              <th class="py-3 fw-semibold text-muted border-0">Rôle</th>
+              <th class="py-3 fw-semibold text-muted border-0">Statut</th>
+              <th class="py-3 fw-semibold text-muted border-0">Inscrit le</th>
+              <th class="py-3 fw-semibold text-muted border-0 text-center pe-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (u of filteredUsers; track u.id) {
+              <tr>
+                <td class="ps-4">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0"
+                         style="width:36px;height:36px;min-width:36px;font-size:12px;
+                                background:linear-gradient(135deg,#405189,#0ab39c)">
+                      {{ u.avatar }}
+                    </div>
+                    <div>
+                      <div class="fw-semibold fs-13">{{ u.name }}</div>
+                      <div class="text-muted" style="font-size:11px">{{ u.phone || '' }}</div>
+                    </div>
+                  </div>
+                </td>
+                <td class="text-muted fs-13">{{ u.email }}</td>
+                <td>
+                  @if (u.city && u.city !== '-') {
+                    <span class="d-flex align-items-center gap-1 text-muted fs-13">
+                      <i class="ri-map-pin-line text-primary fs-12"></i>{{ u.city }}
+                    </span>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+                <td><span class="badge rounded-pill {{ getRoleBadge(u.role) }}">{{ u.role }}</span></td>
+                <td><span class="badge rounded-pill {{ getStatusBadge(u.status) }}">{{ u.status }}</span></td>
+                <td class="text-muted fs-13">{{ u.joined }}</td>
+                <td class="text-center">
+                  <div class="d-flex gap-1 justify-content-center">
+                    <button class="btn btn-sm btn-soft-primary" (click)="viewProfile(u)" ngbTooltip="Voir profil">
+                      <i class="ri-eye-line"></i>
+                    </button>
+                    <button class="btn btn-sm {{ u.status === 'actif' ? 'btn-soft-danger' : 'btn-soft-success' }}"
+                            (click)="toggleStatus(u)"
+                            [ngbTooltip]="u.status === 'actif' ? 'Bloquer' : 'Débloquer'">
+                      <i class="ri-{{ u.status === 'actif' ? 'forbid' : 'check' }}-line"></i>
+                    </button>
+                    <button class="btn btn-sm btn-soft-danger" (click)="deleteUser(u)" ngbTooltip="Supprimer">
+                      <i class="ri-delete-bin-line"></i>
+                    </button>
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

@@ -1,0 +1,197 @@
+﻿<div class="container-fluid">
+  <div class="row">
+    <div class="col-12">
+      <div class="d-flex align-items-center justify-content-between mb-4">
+        <div>
+          <h5 class="fw-bold mb-0 fs-20">Mes annonces</h5>
+          <p class="text-muted mb-0 fs-13">Gérez vos annonces publiées sur Tijara</p>
+        </div>
+        <button class="btn btn-primary rounded-3 px-4 fw-medium" (click)="goCreate()">
+          <i class="ri-add-line me-1"></i>Nouvelle annonce
+        </button>
+      </div>
+
+      <div class="row g-3 mb-4">
+        <div class="col-md-3 col-6">
+          <div class="card rounded-3 shadow-sm border-0 p-3 mb-0">
+            <p class="text-muted fs-12 mb-1">Total annonces</p>
+            <h4 class="fw-bold mb-0">{{ totalResults }}</h4>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="card rounded-3 shadow-sm border-0 p-3 mb-0">
+            <p class="text-muted fs-12 mb-1">Approuvées</p>
+            <h4 class="fw-bold mb-0 text-success">{{ approvedCount }}</h4>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="card rounded-3 shadow-sm border-0 p-3 mb-0">
+            <p class="text-muted fs-12 mb-1">En attente</p>
+            <h4 class="fw-bold mb-0 text-warning">{{ pendingCount }}</h4>
+          </div>
+        </div>
+        <div class="col-md-3 col-6">
+          <div class="card rounded-3 shadow-sm border-0 p-3 mb-0">
+            <p class="text-muted fs-12 mb-1">Valeur totale</p>
+            <h4 class="fw-bold mb-0">{{ totalValue | number:'1.0-0' }} TND</h4>
+          </div>
+        </div>
+      </div>
+
+      <div class="card rounded-3 shadow-sm border-0 p-3 mb-4">
+        <div class="row g-2 align-items-center">
+          <div class="col-md-4">
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0"><i class="ri-search-line"></i></span>
+              <input type="text" class="form-control border-start-0" placeholder="Rechercher une annonce..."
+                     [(ngModel)]="search" (ngModelChange)="applyFilter()">
+              <button *ngIf="search" class="btn btn-outline-secondary" type="button" (click)="onClearSearch()">
+                <i class="ri-close-line"></i>
+              </button>
+            </div>
+          </div>
+
+          <div class="col-md-2">
+            <select class="form-select" [(ngModel)]="statusFilter" (ngModelChange)="currentPage=1; load()">
+              <option value="">Tous les statuts</option>
+              <option value="approved">Approuvées</option>
+              <option value="pending">En attente</option>
+            </select>
+          </div>
+
+          <div class="col-md-2 position-relative">
+            <button class="btn btn-outline-secondary w-100 text-start" type="button" (click)="toggleCategoryDropdown()">
+              {{ filterCategory || 'Catégorie' }} <i class="ri-arrow-down-s-line float-end"></i>
+            </button>
+            <div class="dropdown-menu p-2 shadow-sm" [class.show]="categoryDropdownOpen" style="position:absolute; z-index:10; width:100%;">
+              <button class="dropdown-item rounded-2" (click)="selectFilterCategory(null)">Toutes les catégories</button>
+              <button class="dropdown-item rounded-2" *ngFor="let cat of availableCategories" (click)="selectFilterCategory(cat)">
+                {{ cat.name }}
+              </button>
+            </div>
+          </div>
+
+          <div class="col-md-1">
+            <input type="number" class="form-control" placeholder="Min"
+                   [(ngModel)]="filterPriceMin" (ngModelChange)="currentPage=1; load()">
+          </div>
+          <div class="col-md-1">
+            <input type="number" class="form-control" placeholder="Max"
+                   [(ngModel)]="filterPriceMax" (ngModelChange)="currentPage=1; load()">
+          </div>
+
+          <div class="col-md-1">
+            <select class="form-select" [(ngModel)]="sortBy" (ngModelChange)="load()">
+              <option *ngFor="let opt of sortOptions" [value]="opt.value">{{ opt.label }}</option>
+            </select>
+          </div>
+
+          <div class="col-md-1 d-flex justify-content-end gap-1">
+            <button class="btn btn-sm" [class.btn-primary]="view==='grid'" [class.btn-outline-secondary]="view!=='grid'"
+                    (click)="view='grid'"><i class="ri-grid-line"></i></button>
+            <button class="btn btn-sm" [class.btn-primary]="view==='list'" [class.btn-outline-secondary]="view!=='list'"
+                    (click)="view='list'"><i class="ri-list-check-2"></i></button>
+          </div>
+        </div>
+
+        <div class="mt-2" *ngIf="activeFiltersCount > 0">
+          <button class="btn btn-sm btn-link text-danger p-0" (click)="resetAdvancedFilters()">
+            <i class="ri-close-circle-line me-1"></i>Réinitialiser les filtres ({{ activeFiltersCount }})
+          </button>
+        </div>
+      </div>
+
+      <div class="text-center py-5" *ngIf="loading">
+        <div class="spinner-border text-primary" role="status"></div>
+      </div>
+
+      <div class="text-center py-5" *ngIf="!loading && filtered.length === 0">
+        <i class="ri-inbox-line fs-1 text-muted d-block mb-3"></i>
+        <h5 class="fw-semibold">Aucune annonce trouvée</h5>
+        <p class="text-muted mb-4">Essayez de modifier vos filtres, ou créez votre première annonce.</p>
+        <button class="btn btn-primary px-4 rounded-3" (click)="goCreate()">
+          <i class="ri-add-line me-1"></i>Nouvelle annonce
+        </button>
+      </div>
+
+      <div class="row g-3" *ngIf="!loading && filtered.length > 0 && view==='grid'">
+        <div class="col-md-3 col-sm-6" *ngFor="let p of filtered">
+          <div class="card rounded-3 shadow-sm border-0 h-100">
+            <div class="position-relative" style="height:160px; overflow:hidden; background:#f1f1f1;">
+              <img [src]="imgBase + resolveImg(p.image)" [alt]="p.title"
+                   class="w-100 h-100" style="object-fit:cover">
+              <span class="badge position-absolute top-0 end-0 m-2"
+                    [class.bg-success-subtle]="p.status==='approved'" [class.text-success]="p.status==='approved'"
+                    [class.bg-warning-subtle]="p.status==='pending'" [class.text-warning]="p.status==='pending'">
+                {{ p.status === 'approved' ? 'Approuvée' : 'En attente' }}
+              </span>
+            </div>
+            <div class="card-body">
+              <h6 class="fw-semibold mb-1 text-truncate">{{ p.title }}</h6>
+              <p class="text-muted fs-12 mb-2">{{ p.category }}</p>
+              <p class="fw-bold text-success mb-3">{{ p.price | number:'1.0-0' }} TND</p>
+              <div class="d-flex gap-2">
+                <button class="btn btn-sm btn-outline-primary flex-fill" (click)="edit(p)">
+                  <i class="ri-pencil-line me-1"></i>Modifier
+                </button>
+                <button class="btn btn-sm btn-outline-danger" (click)="remove(p)">
+                  <i class="ri-delete-bin-line"></i>
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card rounded-3 shadow-sm border-0" *ngIf="!loading && filtered.length > 0 && view==='list'">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th>Photo</th>
+              <th>Titre</th>
+              <th>Catégorie</th>
+              <th>Prix</th>
+              <th>Statut</th>
+              <th class="text-end">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let p of filtered">
+              <td style="width:60px;">
+                <img [src]="imgBase + resolveImg(p.image)" [alt]="p.title"
+                     style="width:48px;height:48px;object-fit:cover;border-radius:8px;">
+              </td>
+              <td class="fw-semibold">{{ p.title }}</td>
+              <td class="text-muted">{{ p.category }}</td>
+              <td class="fw-bold text-success">{{ p.price | number:'1.0-0' }} TND</td>
+              <td>
+                <span class="badge"
+                      [class.bg-success-subtle]="p.status==='approved'" [class.text-success]="p.status==='approved'"
+                      [class.bg-warning-subtle]="p.status==='pending'" [class.text-warning]="p.status==='pending'">
+                  {{ p.status === 'approved' ? 'Approuvée' : 'En attente' }}
+                </span>
+              </td>
+              <td class="text-end">
+                <button class="btn btn-sm btn-outline-primary me-1" (click)="edit(p)"><i class="ri-pencil-line"></i></button>
+                <button class="btn btn-sm btn-outline-danger" (click)="remove(p)"><i class="ri-delete-bin-line"></i></button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex justify-content-center align-items-center gap-2 mt-4" *ngIf="!loading && totalPages > 1">
+        <button class="btn btn-sm btn-outline-secondary rounded-3" [disabled]="currentPage===1" (click)="goToPage(currentPage-1)">
+          <i class="ri-arrow-left-s-line"></i>
+        </button>
+        <button class="btn btn-sm rounded-3" *ngFor="let pg of pagesArray"
+                [class.btn-primary]="pg===currentPage" [class.btn-outline-secondary]="pg!==currentPage"
+                (click)="goToPage(pg)">{{ pg }}</button>
+        <button class="btn btn-sm btn-outline-secondary rounded-3" [disabled]="currentPage===lastPage" (click)="goToPage(currentPage+1)">
+          <i class="ri-arrow-right-s-line"></i>
+        </button>
+      </div>
+
+    </div>
+  </div>
+</div>

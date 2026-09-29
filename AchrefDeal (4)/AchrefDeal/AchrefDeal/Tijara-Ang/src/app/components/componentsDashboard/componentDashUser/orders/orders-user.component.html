@@ -1,0 +1,563 @@
+<app-breadcrumbs
+  title="Mes Commandes"
+  [breadcrumbItems]="breadcrumbItems">
+</app-breadcrumbs>
+
+<!-- Stats Header -->
+<div class="row g-3 mb-4">
+
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="fs-26 fw-bold text-primary">
+        {{ allOrders.length }}
+      </div>
+      <div class="text-muted fs-13">Total</div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="fs-26 fw-bold text-success">
+        {{ countByStatus('Livrée') }}
+      </div>
+      <div class="text-muted fs-13">Livrées</div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="fs-26 fw-bold text-info">
+        {{ countByStatus('Expédiée') }}
+      </div>
+      <div class="text-muted fs-13">En livraison</div>
+    </div>
+  </div>
+
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm text-center py-3">
+      <div class="fs-26 fw-bold text-warning">
+        {{ countByStatus('En attente') }}
+      </div>
+      <div class="text-muted fs-13">En attente</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Tab Filters -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body">
+    <div class="d-flex flex-wrap gap-2">
+
+      @for (tab of tabs; track $index) {
+        <button
+          type="button"
+          class="btn btn-sm rounded-pill px-3"
+          [class.btn-primary]="activeTab === tab"
+          [class.btn-outline-secondary]="activeTab !== tab"
+          (click)="onTabChange(tab)">
+
+          {{ tab }}
+
+          <span
+            class="badge ms-1"
+            [class.bg-light]="activeTab === tab"
+            [class.text-primary]="activeTab === tab"
+            [class.bg-secondary-subtle]="activeTab !== tab"
+            [class.text-muted]="activeTab !== tab">
+
+            {{ countByStatus(tab) }}
+
+          </span>
+        </button>
+      }
+
+    </div>
+  </div>
+</div>
+
+<!-- Search, Sort and Pagination -->
+<app-search-pagination-bar
+  [(searchInput)]="searchInput"
+  searchPlaceholder="Rechercher une commande..."
+  [(sortBy)]="sortBy"
+  [sortOptions]="sortOptions"
+  [currentPage]="currentPage"
+  [totalPages]="totalPages"
+  [pagesArray]="pagesArray"
+  [totalResults]="filteredOrders.length"
+  (search)="onSearchChange()"
+  (clear)="onClearSearch()"
+  (sortChange)="onSortChange()"
+  (pageChange)="goToPage($event)">
+</app-search-pagination-bar>
+
+<!-- Date Filters -->
+<div class="card border-0 shadow-sm mb-4">
+  <div class="card-body d-flex flex-wrap align-items-end gap-3 py-3">
+
+    <div>
+      <label
+        class="form-label fs-12 fw-semibold mb-1"
+        for="orders-date-from">
+        Du
+      </label>
+
+      <input
+        id="orders-date-from"
+        type="date"
+        class="form-control form-control-sm"
+        [(ngModel)]="dateFrom"
+        (change)="onDateChange()">
+    </div>
+
+    <div>
+      <label
+        class="form-label fs-12 fw-semibold mb-1"
+        for="orders-date-to">
+        Au
+      </label>
+
+      <input
+        id="orders-date-to"
+        type="date"
+        class="form-control form-control-sm"
+        [(ngModel)]="dateTo"
+        (change)="onDateChange()">
+    </div>
+
+    <button
+      type="button"
+      class="btn btn-sm btn-light"
+      [disabled]="!dateFrom && !dateTo"
+      (click)="clearDates()">
+
+      <i class="ri-refresh-line me-1"></i>
+      Réinitialiser les dates
+
+    </button>
+
+  </div>
+</div>
+
+<!-- Orders List -->
+@if (loading) {
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5">
+      <div class="spinner-border text-primary"></div>
+      <p class="text-muted mt-3 mb-0">
+        Chargement des commandes...
+      </p>
+    </div>
+  </div>
+
+} @else if (paginatedOrders.length === 0) {
+
+  <div class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5">
+      <i class="ri-inbox-2-line display-4 text-muted opacity-50"></i>
+
+      <p class="text-muted mt-3 fs-14">
+        Aucune commande trouvée.
+      </p>
+    </div>
+  </div>
+
+} @else {
+
+  @for (order of paginatedOrders; track order.rawId) {
+
+    <div class="card border-0 shadow-sm mb-3 overflow-hidden">
+
+      <!-- Order Header -->
+      <div class="card-body">
+        <div class="row align-items-center">
+
+          <!-- Order ID and Date -->
+          <div class="col-md-3 mb-2 mb-md-0">
+
+            <div class="fw-bold text-primary fs-14">
+              {{ order.id }}
+            </div>
+
+            <div class="text-muted fs-12 mt-1">
+              <i class="ri-calendar-line me-1"></i>
+              {{ order.date }}
+            </div>
+
+            <div class="text-muted fs-12 mt-1">
+              <i class="ri-archive-2-line me-1"></i>
+              {{ order.packages.length }} colis
+            </div>
+
+          </div>
+
+          <!-- Products Preview -->
+          <div class="col-md-4 mb-2 mb-md-0">
+
+            @for (pkg of order.packages; track pkg.sellerId) {
+
+              <div class="mb-2">
+
+                <div class="fs-12 fw-semibold text-muted mb-1">
+                  <i class="ri-store-2-line me-1"></i>
+                  {{ pkg.sellerName }}
+                </div>
+
+                @for (item of pkg.items; track $index) {
+
+                  <div
+                    class="d-flex align-items-center justify-content-between gap-2 mb-1">
+
+                    <div
+                      class="d-flex align-items-center gap-2 overflow-hidden">
+
+                      <div
+                        class="rounded-2 d-flex align-items-center justify-content-center flex-shrink-0"
+                        style="width:28px;height:28px"
+                        [style.background]="item.bgColor">
+
+                        <i class="ri-shopping-bag-2-line text-primary fs-12"></i>
+
+                      </div>
+
+                      <div class="text-truncate">
+
+                        <div class="fs-13 fw-medium text-dark text-truncate">
+                          {{ item.name }}
+                        </div>
+
+                        <div class="fs-11 text-muted">
+                          x{{ item.qty }} — {{ item.price }} TND
+                        </div>
+
+                      </div>
+
+                    </div>
+
+                    <span
+                      [class]="item.statusClass + ' rounded-pill px-2 py-1 fs-11 flex-shrink-0'">
+
+                      {{ item.status }}
+
+                    </span>
+
+                  </div>
+
+                }
+
+              </div>
+
+            }
+
+          </div>
+
+          <!-- Total and Invoice -->
+          <div class="col-md-2 mb-2 mb-md-0 text-center">
+
+            <div class="fs-16 fw-bold text-dark">
+              {{ order.total }}
+              <small class="fs-12 text-muted">TND</small>
+            </div>
+
+            <div class="fs-11 text-muted mt-1">
+              {{ order.payment }}
+            </div>
+
+            @if (order.invoice) {
+
+              <button
+                type="button"
+                class="btn btn-link btn-sm p-0 mt-1 fs-11"
+                [disabled]="downloadingInvoiceId === order.invoice.IdInvoice"
+                (click)="downloadInvoice(order, $event)">
+
+                @if (downloadingInvoiceId === order.invoice.IdInvoice) {
+                  <span
+                    class="spinner-border spinner-border-sm me-1"
+                    style="width:10px;height:10px">
+                  </span>
+                } @else {
+                  <i class="ri-file-download-line me-1"></i>
+                }
+
+                Facture
+
+              </button>
+
+            }
+
+          </div>
+
+          <!-- Global Status -->
+          <div class="col-md-2 mb-2 mb-md-0 text-center">
+
+            <span
+              [class]="getStatusClass(order.status) + ' rounded-pill px-3 py-1 fs-12'">
+
+              {{ order.status }}
+
+            </span>
+
+          </div>
+
+          <!-- Details Button -->
+          <div class="col-md-1 text-end">
+
+            <button
+              type="button"
+              class="btn btn-sm btn-light rounded-circle"
+              (click)="toggleOrder(order)"
+              [title]="selectedOrder?.id === order.id ? 'Fermer' : 'Détails'">
+
+              <i
+                class="ri-arrow-{{ selectedOrder?.id === order.id ? 'up' : 'down' }}-s-line fs-16">
+              </i>
+
+            </button>
+
+          </div>
+
+        </div>
+      </div>
+
+      <!-- Order Details -->
+      @if (selectedOrder?.id === order.id) {
+
+        <div class="border-top bg-light">
+          <div class="p-4">
+
+            <div class="row g-4">
+
+              <!-- Packages -->
+              <div class="col-md-7">
+
+                <h6
+                  class="fw-semibold mb-3 fs-13 text-muted text-uppercase"
+                  style="letter-spacing:1px">
+
+                  Colis ({{ order.packages.length }})
+
+                </h6>
+
+                @for (pkg of order.packages; track pkg.sellerId) {
+
+                  <div class="border rounded-3 p-3 mb-2 bg-white">
+
+                    <div class="fw-semibold fs-13 mb-2">
+                      <i class="ri-store-2-line me-1 text-primary"></i>
+                      {{ pkg.sellerName }}
+                    </div>
+
+                    @for (item of pkg.items; track $index) {
+
+                      <div
+                        class="d-flex align-items-center justify-content-between gap-2 mb-2 pb-2 border-bottom">
+
+                        <div class="d-flex align-items-center gap-2">
+
+                          <div
+                            class="rounded-2 d-flex align-items-center justify-content-center flex-shrink-0"
+                            style="width:32px;height:32px"
+                            [style.background]="item.bgColor">
+
+                            <i class="ri-shopping-bag-2-line text-primary fs-14"></i>
+
+                          </div>
+
+                          <div>
+
+                            <div class="fs-13 fw-medium text-dark">
+                              {{ item.name }}
+                            </div>
+
+                            <div class="fs-11 text-muted">
+                              x{{ item.qty }} — {{ item.price }} TND
+                            </div>
+
+                          </div>
+
+                        </div>
+
+                        <div class="text-end">
+
+                          <span
+                            [class]="item.statusClass + ' rounded-pill px-2 py-1 fs-11 d-block mb-1'">
+
+                            {{ item.status }}
+
+                          </span>
+
+                          <div class="fs-13 fw-semibold text-dark">
+                            {{ item.qty * item.price }} TND
+                          </div>
+
+                        </div>
+
+                      </div>
+
+                    }
+
+                    <div
+                      class="d-flex justify-content-end fs-12 fw-semibold text-primary mt-2">
+
+                      Sous-total colis :
+                      {{ pkg.total }} TND
+
+                    </div>
+
+                  </div>
+
+                }
+
+              </div>
+
+              <!-- Delivery Information -->
+              <div class="col-md-5">
+
+                <h6
+                  class="fw-semibold mb-3 fs-13 text-muted text-uppercase"
+                  style="letter-spacing:1px">
+
+                  Informations de livraison
+
+                </h6>
+
+                <div class="d-flex gap-2 mb-2">
+                  <i class="ri-map-pin-line text-primary mt-1"></i>
+
+                  <span class="fs-13 text-dark">
+                    {{ order.address }}
+                  </span>
+                </div>
+
+                <div class="d-flex gap-2">
+                  <i class="ri-secure-payment-line text-success mt-1"></i>
+
+                  <span class="fs-13 text-dark">
+                    {{ order.payment }}
+                  </span>
+                </div>
+
+                @if (order.status === 'Annulée') {
+
+                  <div
+                    class="alert alert-danger border-0 d-flex align-items-center gap-2 mt-3 mb-0">
+
+                    <i class="ri-close-circle-fill fs-18"></i>
+
+                    <span class="fs-13">
+                      Cette commande a été annulée.
+                    </span>
+
+                  </div>
+
+                }
+
+                <!-- Invoice -->
+                <div class="mt-3 pt-3 border-top">
+
+                  <h6
+                    class="fw-semibold mb-2 fs-13 text-muted text-uppercase"
+                    style="letter-spacing:1px">
+
+                    Facture
+
+                  </h6>
+
+                  @if (order.invoice) {
+
+                    <div
+                      class="d-flex align-items-center justify-content-between">
+
+                      <div>
+
+                        <div class="fs-13 fw-medium text-dark">
+                          {{ order.invoice.Number }}
+                        </div>
+
+                        <div class="fs-11 text-muted">
+                          {{ invoiceStatusLabel(order.invoice.Status) }}
+                        </div>
+
+                      </div>
+
+                      <button
+                        type="button"
+                        class="btn btn-sm btn-outline-primary"
+                        [disabled]="downloadingInvoiceId === order.invoice.IdInvoice"
+                        (click)="downloadInvoice(order, $event)">
+
+                        @if (downloadingInvoiceId === order.invoice.IdInvoice) {
+
+                          <span class="spinner-border spinner-border-sm me-1"></span>
+
+                        } @else {
+
+                          <i class="ri-file-download-line me-1"></i>
+
+                        }
+
+                        Télécharger
+
+                      </button>
+
+                    </div>
+
+                  } @else {
+
+                    <span class="text-muted fs-13">
+                      Aucune facture disponible pour cette commande.
+                    </span>
+
+                  }
+
+                </div>
+
+                <!-- Total -->
+                <div class="mt-3 pt-3 border-top">
+
+                  <div
+                    class="d-flex justify-content-between fs-13 text-muted mb-1">
+
+                    <span>Sous-total</span>
+                    <span>{{ getOrderTotal(order) }} TND</span>
+
+                  </div>
+
+                  <div
+                    class="d-flex justify-content-between fs-13 text-muted mb-1">
+
+                    <span>Livraison</span>
+                    <span class="text-success">Gratuite</span>
+
+                  </div>
+
+                  <div
+                    class="d-flex justify-content-between fw-bold fs-14 mt-2 pt-2 border-top">
+
+                    <span>Total</span>
+
+                    <span class="text-primary">
+                      {{ order.total }} TND
+                    </span>
+
+                  </div>
+
+                </div>
+
+              </div>
+
+            </div>
+
+          </div>
+        </div>
+
+      }
+
+    </div>
+
+  }
+
+}

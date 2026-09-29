@@ -1,0 +1,346 @@
+<app-breadcrumbs [title]="'Mes Commandes'" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+<!-- *--* DETAIL MODAL *--* -->
+@if (selectedOrder) {
+  <div class="position-fixed top-0 start-0 w-100 h-100 d-flex align-items-center justify-content-center"
+       style="background:rgba(0,0,0,.45);z-index:1050" (click)="closeDetail()">
+    <div class="card shadow-lg border-0 rounded-4"
+         style="width:540px;max-width:96vw;max-height:88vh;overflow-y:auto"
+         (click)="$event.stopPropagation()">
+
+      <!-- Header -->
+      <div class="px-4 py-3 d-flex align-items-center justify-content-between rounded-top-4"
+           style="background:linear-gradient(135deg,#405189,#0ab39c)">
+        <div>
+          <h6 class="mb-0 text-white fw-bold">
+            <i class="ri-file-list-3-line me-2"></i>{{ orderLabel(selectedOrder.id) }}
+          </h6>
+          <div class="text-white opacity-75 fs-12">
+            {{ selectedOrder.created_at | date:'dd MMM yyyy, HH:mm' }}
+          </div>
+        </div>
+        <span class="badge rounded-pill px-3 py-2 {{ getStatusClass(selectedOrder.status) }}">
+          {{ getStatusLabel(selectedOrder.status) }}
+        </span>
+      </div>
+
+      <div class="card-body p-4">
+        @if (loadingDetail) {
+          <div class="text-center py-3">
+            <div class="spinner-border text-primary"></div>
+          </div>
+        }
+
+        <!-- Infos livraison -->
+        <div class="mb-4 p-3 rounded-3" style="background:var(--page-bg)">
+          <div class="d-flex justify-content-between align-items-center mb-2">
+            <div class="fw-semibold fs-13 text-muted text-uppercase">
+              <i class="ri-map-pin-line me-1"></i>Adresse de livraison
+            </div>
+            <span class="badge rounded-pill px-2 py-1 {{ getDeliveryBadgeClass(selectedOrder) }}">
+              {{ getDeliveryState(selectedOrder) }}
+            </span>
+          </div>
+          <div class="fs-14 mb-2">{{ selectedOrder.shipping_address || 'Non renseignée' }}</div>
+          <div class="d-flex flex-wrap gap-2 fs-12 text-muted">
+            <span class="badge bg-light text-dark rounded-pill px-2 py-1">
+              <i class="ri-truck-line me-1"></i>{{ selectedOrder.package_type || 'Colis' }}
+            </span>
+            <span class="badge bg-light text-dark rounded-pill px-2 py-1">
+              <i class="ri-spam-line me-1"></i>{{ selectedOrder.shipping_method || 'Livraison standard' }}
+            </span>
+            <span class="badge bg-light text-dark rounded-pill px-2 py-1">
+              <i class="ri-passport-line me-1"></i>{{ selectedOrder.tracking_number || 'N/A' }}
+            </span>
+          </div>
+        </div>
+
+        @if (canRequestReturn(selectedOrder)) {
+          <div class="mb-3 d-flex justify-content-between align-items-center flex-wrap gap-2 p-3 border rounded-3">
+            <div>
+              <div class="fw-semibold fs-13">Retour / échange</div>
+              <div class="text-muted fs-12">Vous pouvez demander un retour tant que le colis est livré.</div>
+            </div>
+            <button class="btn btn-sm btn-outline-danger" (click)="requestReturn(selectedOrder); $event.stopPropagation()">
+              <i class="ri-arrow-go-back-line me-1"></i>Demander un retour
+            </button>
+          </div>
+        } @else if (selectedOrder?.return_requested) {
+          <div class="mb-3 alert alert-warning py-2 mb-3">Demande de retour enregistrée. Le vendeur la traitera prochainement.</div>
+        }
+
+        <!-- Colis par vendeur (remplace l'ancienne section "Articles" plate) -->
+        @if (selectedOrder.colis?.length) {
+          <h6 class="fw-semibold fs-13 text-muted text-uppercase mb-3">
+            <i class="ri-archive-2-line me-1"></i>Colis ({{ selectedOrder.colis.length }})
+          </h6>
+          @for (c of selectedOrder.colis; track c.vendorKey) {
+            <div class="mb-3 p-3 rounded-3" style="background:var(--page-bg)">
+              <div class="d-flex justify-content-between align-items-center mb-2 flex-wrap gap-2">
+                <span class="fw-semibold fs-13">
+                  <i class="ri-store-2-line me-1 text-primary"></i>{{ c.vendorName }}
+                </span>
+                <div class="d-flex align-items-center gap-2">
+                  <!--
+                    Statut réel du colis : celui de la Delivery créée par ce
+                    vendeur (via changeOrderStatus() dans orders-ent.component.ts),
+                    retrouvée grâce au tag "IdSeller:<id>" écrit dans son champ
+                    Note (voir resolveColisStatuses()). Si ce vendeur n'a pas
+                    encore accepté sa part de la commande, aucune Delivery
+                    n'existe encore et on retombe sur le statut global de la
+                    commande (getColisStatusLabel/Class le gèrent).
+                  -->
+                  <span class="badge rounded-pill px-2 py-1 fs-11 {{ getColisStatusClass(c) }}">
+                    {{ getColisStatusLabel(c) }}
+                  </span>
+                  <span class="fw-semibold text-primary fs-13">{{ c.subtotal | number:'1.2-2' }} DT</span>
+                </div>
+              </div>
+              @for (item of c.items; track item.id) {
+                <div class="d-flex align-items-center gap-3 py-2 border-top">
+                  <img [src]="item.image_url || 'assets/images/products/img-1.png'" alt=""
+                       style="width:44px;height:44px;object-fit:cover;border-radius:8px">
+                  <div class="flex-fill">
+                    <div class="fw-semibold fs-13">{{ item.product_name }}</div>
+                    <div class="text-muted fs-12">
+                      Qté : {{ item.quantity }} × {{ item.unit_price | number:'1.2-2' }} DT/u
+                    </div>
+                  </div>
+                  <strong class="text-primary fs-13">
+                    {{ item.quantity * item.unit_price | number:'1.2-2' }} DT
+                  </strong>
+                </div>
+              }
+            </div>
+          }
+        }
+
+        <!-- Total -->
+        <div class="d-flex justify-content-between align-items-center mt-4 pt-3 border-top">
+          <span class="fw-semibold fs-15">Total</span>
+          <span class="fw-bold fs-18 text-primary">{{ selectedOrder.total_amount | number:'1.2-2' }} DT</span>
+        </div>
+      </div>
+
+      <div class="card-footer border-0 d-flex gap-2 p-3">
+        @if (selectedOrder?.invoice) {
+          <button
+            type="button"
+            class="btn btn-outline-primary flex-fill rounded-3"
+            (click)="downloadInvoice(selectedOrder); $event.stopPropagation()"
+            [disabled]="downloadingInvoiceId === (selectedOrder.invoice.IdInvoice ?? selectedOrder.invoice.idInvoice ?? selectedOrder.invoice.id)">
+            <i class="ri-file-pdf-line me-1"></i>
+            @if (downloadingInvoiceId === (selectedOrder.invoice.IdInvoice ?? selectedOrder.invoice.idInvoice ?? selectedOrder.invoice.id)) {
+              Téléchargement...
+            } @else {
+              Facture PDF
+            }
+          </button>
+        } @else {
+          <button
+            type="button"
+            class="btn btn-outline-secondary flex-fill rounded-3"
+            (click)="regenerateInvoice(selectedOrder); $event.stopPropagation()"
+            [disabled]="regeneratingInvoiceId === selectedOrder.id">
+            <i class="ri-file-add-line me-1"></i>
+            @if (regeneratingInvoiceId === selectedOrder.id) {
+              Génération...
+            } @else {
+              Générer la facture
+            }
+          </button>
+        }
+        <button class="btn btn-outline-secondary flex-fill rounded-3" (click)="closeDetail()">Fermer</button>
+
+        <button class="btn btn-primary flex-fill rounded-3" (click)="closeDetail(); goShop()">
+          <i class="ri-shopping-bag-line me-1"></i>Recommander
+        </button>
+      </div>
+
+      @if (selectedOrder?.invoice_error) {
+        <div class="px-3 pb-3">
+          <div class="alert alert-danger py-2 mb-0 fs-12">{{ selectedOrder.invoice_error }}</div>
+        </div>
+      }
+    </div>
+  </div>
+}
+
+<!-- *--* LOADING *--* -->
+@if (loading) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" style="width:2.5rem;height:2.5rem"></div>
+  </div>
+}
+
+<!-- *--* VIDE *--* -->
+@if (!loading && orders.length === 0) {
+  <div class="row justify-content-center">
+    <div class="col-lg-6">
+      <div class="card border-0 shadow-sm text-center py-5 rounded-4">
+        <div class="card-body">
+          <i class="ri-shopping-bag-3-line display-2 text-muted opacity-25 mb-3 d-block"></i>
+          <h4 class="fw-semibold">Aucune commande pour l'instant</h4>
+          <p class="text-muted mb-4">Parcourez notre boutique et passez votre première commande !</p>
+          <button class="btn btn-primary btn-lg rounded-3 px-5" (click)="goShop()">
+            <i class="ri-store-2-line me-2"></i>Découvrir la boutique
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+}
+
+<!-- *--* LISTE *--* -->
+@if (!loading && orders.length > 0) {
+
+  <!-- Filtres -->
+  <div class="card border-0 shadow-sm mb-4">
+    <div class="card-body p-3">
+      <div class="row g-3 align-items-end">
+        <div class="col-12 col-lg-5">
+          <label class="form-label fs-12 text-muted mb-1">Recherche</label>
+          <div class="input-group input-group-sm">
+            <span class="input-group-text"><i class="ri-search-line"></i></span>
+            <input type="text" class="form-control" placeholder="N° commande, adresse, article…"
+                   [(ngModel)]="search" />
+          </div>
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="form-label fs-12 text-muted mb-1">Du</label>
+          <input type="date" class="form-control form-control-sm" [(ngModel)]="startDate" />
+        </div>
+        <div class="col-6 col-lg-2">
+          <label class="form-label fs-12 text-muted mb-1">Au</label>
+          <input type="date" class="form-control form-control-sm" [(ngModel)]="endDate" />
+        </div>
+        <div class="col-12 col-lg-3 d-flex gap-2 justify-content-lg-end">
+          <button class="btn btn-sm btn-outline-secondary" (click)="clearFilters()">Réinitialiser</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <div class="d-flex gap-2 mb-4 flex-wrap">
+    @for (s of statuses; track s.value) {
+      <button class="btn btn-sm rounded-pill px-3"
+              [class.btn-primary]="filterStatus === s.value"
+              [class.btn-soft-secondary]="filterStatus !== s.value"
+              (click)="filterStatus = s.value">
+        {{ s.label }}
+        @if (s.value !== 'tous') {
+          <span class="ms-1 badge rounded-pill"
+                [class.bg-white]="filterStatus === s.value"
+                [class.text-primary]="filterStatus === s.value"
+                [class.bg-secondary-subtle]="filterStatus !== s.value"
+                style="font-size:10px">
+            {{ countByStatus(s.value) }}
+          </span>
+        }
+      </button>
+    }
+  </div>
+
+  @if (filteredOrders.length === 0) {
+    <div class="text-center py-4 text-muted">Aucune commande ne correspond à cette recherche ou à cette plage de dates.</div>
+  }
+
+  <div class="row g-3">
+    @for (o of filteredOrders; track o.id) {
+      <div class="col-12">
+        <div class="card border-0 shadow-sm rounded-4 overflow-hidden"
+             style="cursor:pointer;transition:box-shadow .2s"
+             (click)="showDetail(o)"
+             (mouseenter)="$any($event.currentTarget).style.boxShadow='0 4px 20px rgba(0,0,0,.1)'"
+             (mouseleave)="$any($event.currentTarget).style.boxShadow=''">
+          <div class="card-body p-4">
+            <div class="d-flex align-items-center justify-content-between flex-wrap gap-3">
+              <!-- Icône + infos -->
+              <div class="d-flex align-items-center gap-3">
+                <div class="rounded-3 d-flex align-items-center justify-content-center flex-shrink-0"
+                     style="width:52px;height:52px;background:linear-gradient(135deg,#405189,#0ab39c)">
+                  <i class="ri-shopping-bag-3-line text-white fs-22"></i>
+                </div>
+                <div>
+                  <div class="fw-bold text-primary fs-15">{{ orderLabel(o.id) }}</div>
+                  <div class="text-muted fs-12 mt-1">
+                    <i class="ri-calendar-line me-1"></i>{{ o.created_at | date:'dd MMM yyyy' }}
+                    @if (o.shipping_address) {
+                      — <i class="ri-map-pin-line ms-1 me-1"></i>{{ o.shipping_address | slice:0:35 }}…
+                    }
+                  </div>
+                </div>
+              </div>
+              <!-- Montant + statut -->
+              <div class="d-flex align-items-center gap-3">
+                <div class="text-end">
+                  <div class="fw-bold text-dark fs-16">{{ o.total_amount | number:'1.2-2' }} DT</div>
+                </div>
+                <span class="badge rounded-pill px-3 py-2 fs-12 {{ getStatusClass(o.status) }}">
+                  {{ getStatusLabel(o.status) }}
+                </span>
+                  @if (o.invoice) {
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-primary"
+                      (click)="downloadInvoice(o); $event.stopPropagation()"
+                      [disabled]="downloadingInvoiceId === (o.invoice.IdInvoice ?? o.invoice.idInvoice ?? o.invoice.id)">
+                      <i class="ri-file-pdf-line me-1"></i>
+                      @if (downloadingInvoiceId === (o.invoice.IdInvoice ?? o.invoice.idInvoice ?? o.invoice.id)) {
+                        ...
+                      } @else {
+                        PDF
+                      }
+                    </button>
+                  } @else {
+                    <button
+                      type="button"
+                      class="btn btn-sm btn-outline-secondary"
+                      (click)="regenerateInvoice(o); $event.stopPropagation()"
+                      [disabled]="regeneratingInvoiceId === o.id"
+                      title="{{ o.invoice_error || 'Générer la facture pour cette commande' }}">
+                      <i class="ri-file-add-line me-1"></i>
+                      @if (regeneratingInvoiceId === o.id) {
+                        ...
+                      } @else {
+                        Générer facture
+                      }
+                    </button>
+                  }
+                  <i class="ri-arrow-right-s-line text-muted fs-18"></i>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+
+  <!-- Pagination -->
+  @if (totalPages > 1) {
+    <nav class="d-flex justify-content-center mt-4">
+      <ul class="pagination pagination-sm mb-0">
+        <li class="page-item" [class.disabled]="currentPage === 1">
+          <button class="page-link" (click)="prevPage()">
+            <i class="ri-arrow-left-s-line"></i>
+          </button>
+        </li>
+
+        @for (p of pagesArray; track p) {
+          <li class="page-item" [class.active]="p === currentPage">
+            <button class="page-link" (click)="goToPage(p)">{{ p }}</button>
+          </li>
+        }
+
+        <li class="page-item" [class.disabled]="currentPage === totalPages">
+          <button class="page-link" (click)="nextPage()">
+            <i class="ri-arrow-right-s-line"></i>
+          </button>
+        </li>
+      </ul>
+    </nav>
+    <div class="text-center text-muted fs-12 mt-2">
+      Page {{ currentPage }} / {{ totalPages }} — {{ totalItems }} commande(s)
+    </div>
+  }
+}

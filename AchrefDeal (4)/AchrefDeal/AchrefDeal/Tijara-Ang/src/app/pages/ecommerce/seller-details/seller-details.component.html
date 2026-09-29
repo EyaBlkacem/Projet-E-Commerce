@@ -1,0 +1,481 @@
+﻿<app-breadcrumbs title="Profil vendeur" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+@if (loading) {
+  <div class="card border-0 shadow-sm mb-4 overflow-hidden placeholder-glow">
+    <div style="height:150px;background:var(--border-color-soft)"></div>
+    <div class="card-body pt-0">
+      <div class="d-flex align-items-end gap-4" style="margin-top:-50px">
+        <div class="rounded-circle bg-secondary" style="width:96px;height:96px;opacity:.3"></div>
+        <div class="flex-fill">
+          <span class="placeholder col-3 mb-2 d-block" style="height:22px"></span>
+          <span class="placeholder col-6 d-block" style="height:14px"></span>
+        </div>
+      </div>
+    </div>
+  </div>
+  <div class="row g-3">
+    @for (i of [1,2,3,4,5,6]; track i) {
+      <div class="col-lg-4 col-sm-6">
+        <div class="card border-0 shadow-sm placeholder-glow">
+          <div class="placeholder w-100" style="height:180px"></div>
+          <div class="card-body">
+            <span class="placeholder col-8 d-block mb-2"></span>
+            <span class="placeholder col-5 d-block"></span>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+} @else if (error) {
+  <div class="card border-0 shadow-sm">
+    <div class="card-body text-center py-5">
+      <i class="ri-user-unfollow-line display-4 text-danger"></i>
+      <p class="fw-semibold mt-3 mb-1">{{ error }}</p>
+      <a routerLink="/shop/products" class="btn btn-outline-primary btn-sm mt-2">
+        <i class="ri-arrow-left-line me-1"></i>Retour à la boutique
+      </a>
+    </div>
+  </div>
+} @else {
+
+<!-- ══════════ BANNIÈRE VENDEUR ══════════ -->
+<div class="card border-0 shadow-lg mb-4 overflow-hidden seller-hero">
+  <div class="position-relative seller-hero-banner">
+    <div class="hero-glow-1"></div>
+    <div class="hero-glow-2"></div>
+
+    <div class="position-absolute top-0 end-0 m-3 d-flex gap-2 z-2">
+      @if (vendor.is_approved) {
+        <span class="badge bg-white text-success rounded-pill px-3 py-2 shadow-sm">
+          <i class="ri-verified-badge-fill me-1"></i>Vendeur vérifié
+        </span>
+      }
+      <button class="btn btn-sm rounded-pill px-3 shadow-sm bg-white" (click)="copyProfileLink()">
+        <i class="me-1" [class.ri-check-line]="linkCopied" [class.text-success]="linkCopied" [class.ri-share-line]="!linkCopied"></i>
+        {{ linkCopied ? 'Copié !' : 'Partager' }}
+      </button>
+    </div>
+  </div>
+
+  <div class="card-body pt-0">
+    <div class="d-flex align-items-end gap-4 flex-wrap" style="margin-top:-52px">
+      <div class="rounded-circle border border-4 border-white d-flex align-items-center justify-content-center fw-bold text-white fs-2 flex-shrink-0 shadow seller-avatar">
+        {{ vendorInitials }}
+      </div>
+
+      <div class="pb-1 flex-fill">
+        <h4 class="fw-bold mb-1">{{ displayName }}</h4>
+        <div class="d-flex flex-wrap align-items-center gap-3 text-muted fs-13">
+          @if (vendor.city) {
+            <span><i class="ri-map-pin-2-line me-1 text-primary"></i>{{ vendor.city }}</span>
+          }
+          <span><i class="ri-calendar-line me-1 text-primary"></i>Membre depuis {{ memberSince }}</span>
+          <span><i class="ri-box-3-line me-1 text-primary"></i>{{ vendor.total_deals }} annonce(s)</span>
+          @if (vendor.review_count > 0) {
+            <span class="d-flex align-items-center gap-1">
+              @for (s of getStars(5); track s) {
+                <i class="ri-star-fill fs-12" [class.text-warning]="s <= vendor.avg_rating" [class.text-muted]="s > vendor.avg_rating"></i>
+              }
+              <span class="ms-1">{{ vendor.avg_rating | number:'1.1-1' }} ({{ vendor.review_count }} avis)</span>
+            </span>
+          }
+        </div>
+      </div>
+
+      <div class="d-flex gap-2 flex-wrap">
+        <button class="btn btn-sm fw-semibold" [disabled]="followLoading"
+                [class.btn-success]="isFollowing"
+                [class.btn-outline-success]="!isFollowing"
+                (click)="toggleFollow()">
+          @if (followLoading) { <span class="spinner-border spinner-border-sm me-1"></span> }
+          @else { <i class="me-1" [class.ri-user-unfollow-line]="isFollowing" [class.ri-user-follow-line]="!isFollowing"></i> }
+          {{ isFollowing ? 'Suivi ✓' : 'Suivre' }}
+        </button>
+        <button class="btn btn-primary btn-sm fw-semibold" (click)="showContactForm=!showContactForm">
+          <i class="ri-chat-3-line me-1"></i>Contacter
+        </button>
+        <a routerLink="/shop/products" class="btn btn-outline-secondary btn-sm">
+          <i class="ri-arrow-left-line me-1"></i>Retour
+        </a>
+      </div>
+    </div>
+  </div>
+</div>
+
+@if (contactSuccess) {
+  <div class="alert alert-success border-0 shadow-sm d-flex align-items-center gap-2 mb-3 rounded-3">
+    <i class="ri-checkbox-circle-fill fs-18"></i><span>{{ contactSuccess }}</span>
+  </div>
+}
+
+@if (showContactForm) {
+  <div class="card border-0 shadow mb-4 rounded-4 overflow-hidden">
+    <div class="px-4 py-3 d-flex align-items-center gap-2" style="background:linear-gradient(90deg,#405189,#3a4caa)">
+      <i class="ri-chat-3-line text-white fs-18"></i>
+      <h6 class="fw-bold text-white mb-0">Envoyer un message à {{ displayName }}</h6>
+      <button class="btn btn-sm ms-auto text-white opacity-75"
+              style="background:rgba(255,255,255,.15);border-radius:8px"
+              (click)="showContactForm=false"><i class="ri-close-line"></i></button>
+    </div>
+    <div class="card-body p-4">
+      @if (contactError) {
+        <div class="alert alert-danger rounded-3 py-2 fs-13 mb-3">
+          <i class="ri-error-warning-line me-1"></i>{{ contactError }}
+        </div>
+      }
+      <textarea class="form-control rounded-3 mb-3" rows="4"
+                placeholder="Bonjour, je suis intéressé par vos produits..."
+                [(ngModel)]="contactMessage"></textarea>
+      <div class="d-flex gap-2">
+        <button class="btn btn-primary px-4 rounded-3"
+                [disabled]="!contactMessage.trim() || contactSending"
+                (click)="sendContactMessage()">
+          @if (contactSending) { <span class="spinner-border spinner-border-sm me-2"></span> }
+          <i class="ri-send-plane-line me-1"></i>Envoyer
+        </button>
+        <button class="btn btn-outline-secondary rounded-3" (click)="showContactForm=false">Annuler</button>
+      </div>
+    </div>
+  </div>
+}
+
+<div class="row g-4">
+  <!-- ══════════ Colonne gauche : infos + FILTRES + stats ══════════ -->
+  <div class="col-lg-3">
+    <div class="card border-0 shadow-sm mb-3 sticky-panel">
+      <div class="card-body">
+        <h6 class="fw-bold mb-3 text-uppercase text-muted" style="font-size:11px;letter-spacing:.5px">Informations</h6>
+        <ul class="list-unstyled mb-0 fs-14">
+          @if (vendor.shop_name) {
+            <li class="mb-2 d-flex align-items-center">
+              <span class="icon-chip bg-primary-subtle"><i class="ri-store-2-line text-primary fs-14"></i></span>
+              {{ vendor.shop_name }}
+            </li>
+          }
+          @if (vendor.phone) {
+            <li class="mb-2 d-flex align-items-center">
+              <span class="icon-chip bg-success-subtle"><i class="ri-phone-line text-success fs-14"></i></span>
+              {{ vendor.phone }}
+            </li>
+          }
+          @if (vendor.city) {
+            <li class="mb-2 d-flex align-items-center">
+              <span class="icon-chip bg-info-subtle"><i class="ri-map-pin-2-line text-info fs-14"></i></span>
+              {{ vendor.city }}
+            </li>
+          }
+        </ul>
+      </div>
+    </div>
+
+    <!-- ══════════ CARTE FILTRES (sidebar verticale) ══════════ -->
+    <div class="card border-0 shadow-sm mb-3">
+      <div class="card-body">
+        <div class="d-flex align-items-center justify-content-between mb-3">
+          <h6 class="fw-bold text-uppercase text-muted mb-0" style="font-size:11px;letter-spacing:.5px">
+            <i class="ri-filter-3-line me-1"></i>Filtres
+          </h6>
+          <span class="badge bg-primary-subtle text-primary rounded-pill">{{ filteredProducts.length }} résultat(s)</span>
+        </div>
+
+        <div class="filter-group">
+          <label>Catégorie</label>
+          <select class="form-select form-select-sm" [(ngModel)]="selectedCategory" (ngModelChange)="onFilterChange()">
+            <option value="">Toutes ({{ products.length }})</option>
+            @for (c of categories; track c.name) {
+              <option [value]="c.name">{{ c.name }} ({{ c.count }})</option>
+            }
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Statut</label>
+          <select class="form-select form-select-sm" [(ngModel)]="selectedStatus" (ngModelChange)="onFilterChange()">
+            <option value="all">Tous</option>
+            <option value="actif">Active</option>
+            <option value="inactif">Inactive</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Note min.</label>
+          <select class="form-select form-select-sm" [(ngModel)]="minRating" (ngModelChange)="onFilterChange()">
+            <option [ngValue]="0">Toutes</option>
+            <option [ngValue]="3">3★ et +</option>
+            <option [ngValue]="4">4★ et +</option>
+            <option [ngValue]="4.5">4.5★ et +</option>
+          </select>
+        </div>
+
+        <div class="filter-group">
+          <label>Prix (DT)</label>
+          <div class="d-flex gap-2">
+            <input type="number" class="form-control form-control-sm" placeholder="Min"
+                   [(ngModel)]="priceMin" (ngModelChange)="onFilterChange()">
+            <input type="number" class="form-control form-control-sm" placeholder="Max"
+                   [(ngModel)]="priceMax" (ngModelChange)="onFilterChange()">
+          </div>
+        </div>
+
+        <div class="filter-group mb-3">
+          <label>Trier par</label>
+          <select class="form-select form-select-sm" [(ngModel)]="sortBy" (ngModelChange)="onFilterChange()">
+            <option value="recent">Plus récentes</option>
+            <option value="price_asc">Prix croissant</option>
+            <option value="price_desc">Prix décroissant</option>
+            <option value="rating">Mieux notées</option>
+          </select>
+        </div>
+
+        @if (activeFilterChips.length > 0) {
+          <div class="d-flex flex-wrap gap-2 mb-3 pt-2 border-top">
+            @for (chip of activeFilterChips; track chip.key) {
+              <span class="filter-chip">
+                {{ chip.label }}
+                <i class="ri-close-line" (click)="removeChip(chip.key)"></i>
+              </span>
+            }
+          </div>
+        }
+
+        <button class="btn btn-outline-secondary btn-sm w-100" (click)="resetFilters()">
+          <i class="ri-refresh-line me-1"></i>Réinitialiser les filtres
+        </button>
+      </div>
+    </div>
+
+    <div class="card border-0 shadow-sm">
+      <div class="card-body">
+        <h6 class="fw-bold mb-3 text-uppercase text-muted" style="font-size:11px;letter-spacing:.5px">Statistiques</h6>
+        <div class="row g-2 text-center">
+          <div class="col-6">
+            <div class="bg-primary-subtle rounded-3 p-3">
+              <div class="fw-bold fs-20 text-primary">{{ vendor.active_deals }}</div>
+              <div class="text-muted fs-12">Actives</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="bg-secondary-subtle rounded-3 p-3">
+              <div class="fw-bold fs-20 text-secondary">{{ vendor.total_deals }}</div>
+              <div class="text-muted fs-12">Total</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="bg-warning-subtle rounded-3 p-3">
+              <div class="fw-bold fs-20 text-warning">
+                {{ vendor.review_count > 0 ? (vendor.avg_rating | number:'1.1-1') : '—' }}
+              </div>
+              <div class="text-muted fs-12">Note</div>
+            </div>
+          </div>
+          <div class="col-6">
+            <div class="bg-success-subtle rounded-3 p-3">
+              <div class="fw-bold fs-20 text-success">{{ vendor.is_approved ? '✓' : '—' }}</div>
+              <div class="text-muted fs-12">Vérifié</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- ══════════ Colonne droite : recherche + produits ══════════ -->
+  <div class="col-lg-9" id="products-top">
+
+    <div class="card border-0 shadow-sm mb-3 search-toolbar">
+      <div class="card-body p-3">
+        <div class="d-flex gap-2 align-items-center">
+          <div class="search-input-wrap flex-fill">
+            <i class="ri-search-line"></i>
+            <input type="text" class="form-control" placeholder="Rechercher une annonce de {{ displayName }}..."
+                   [ngModel]="searchTerm" (ngModelChange)="onSearchChange($event)">
+            @if (searchTerm) {
+              <button class="clear-btn" (click)="onSearchChange('')"><i class="ri-close-line"></i></button>
+            }
+          </div>
+          <div class="view-toggle">
+            <button [class.active]="viewMode==='grid'" (click)="viewMode='grid'"><i class="ri-grid-fill"></i></button>
+            <button [class.active]="viewMode==='list'" (click)="viewMode='list'"><i class="ri-list-check-2"></i></button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Compteur de résultats -->
+    <div class="d-flex align-items-center justify-content-between flex-wrap gap-2 mb-3">
+      <h5 class="fw-bold mb-0">
+        <i class="ri-box-3-line me-2 text-primary"></i>{{ filteredProducts.length }} annonce(s) trouvée(s)
+      </h5>
+      @if (filteredProducts.length > 0) {
+        <select class="form-select form-select-sm w-auto rounded-3"
+                [ngModel]="pageSize" (ngModelChange)="changePageSize($event)">
+          <option [ngValue]="6">6 / page</option>
+          <option [ngValue]="12">12 / page</option>
+          <option [ngValue]="24">24 / page</option>
+        </select>
+      }
+    </div>
+
+    @if (filteredProducts.length === 0) {
+      <div class="card border-0 shadow-sm">
+        <div class="card-body text-center py-5">
+          <i class="ri-search-eye-line display-3 text-muted"></i>
+          <p class="text-muted mt-2 mb-1">Aucune annonce ne correspond à votre recherche.</p>
+          @if (activeFilterChips.length > 0) {
+            <button class="btn btn-sm btn-outline-primary mt-2" (click)="resetFilters()">Réinitialiser les filtres</button>
+          }
+        </div>
+      </div>
+    } @else {
+
+      <!-- Vue grille -->
+      @if (viewMode === 'grid') {
+        <div class="row g-3">
+          @for (p of paginatedProducts; track p.id) {
+            <div class="col-sm-6 col-xl-4">
+              <div class="card border-0 shadow-sm h-100 product-card" (click)="goDetail(p)">
+                <div class="position-relative overflow-hidden product-img-wrap">
+                  @if (p.image_url) {
+                    <img [src]="p.image_url" class="w-100 h-100 product-img" alt="{{ p.name }}"
+                         [class.opacity-50]="p.status !== 'actif'">
+                  } @else {
+                    <div class="w-100 h-100 d-flex align-items-center justify-content-center">
+                      <i class="ri-image-line fs-2 text-muted"></i>
+                    </div>
+                  }
+                  <span class="position-absolute top-0 end-0 m-2 badge rounded-pill"
+                        [class.bg-success]="p.status === 'actif'" [class.bg-secondary]="p.status !== 'actif'">
+                    {{ p.status === 'actif' ? 'Active' : 'Terminée / Inactive' }}
+                  </span>
+                  <div class="product-overlay">
+                    <span class="btn btn-light btn-sm rounded-pill"><i class="ri-eye-line me-1"></i>Voir</span>
+                  </div>
+                </div>
+                <div class="card-body p-3">
+                  <p class="fw-semibold mb-1 text-truncate fs-14">{{ p.name }}</p>
+                  <div class="text-muted fs-12 mb-2">{{ p.category_name }}</div>
+
+                  <!-- ══ Features / Values ══ -->
+                  @if (p.features && p.features.length > 0) {
+                    <div class="d-flex flex-wrap gap-1 mb-2">
+                      @for (f of visibleFeatures(p); track f.key) {
+                        <span class="feature-badge" [title]="f.key + ': ' + f.value">
+                          {{ f.key }} : {{ f.value }}
+                        </span>
+                      }
+                      @if (hiddenFeaturesCount(p) > 0) {
+                        <span class="feature-badge feature-badge-more">+{{ hiddenFeaturesCount(p) }}</span>
+                      }
+                    </div>
+                  }
+
+                  @if (p.avg_rating) {
+                    <div class="d-flex align-items-center gap-1 mb-2">
+                      @for (s of getStars(5); track s) {
+                        <i class="ri-star-fill fs-12" [class.text-warning]="s <= +p.avg_rating" [class.text-muted]="s > +p.avg_rating"></i>
+                      }
+                      <span class="text-muted fs-11">({{ p.review_count }})</span>
+                    </div>
+                  }
+                  <div class="d-flex align-items-center justify-content-between">
+                    <span class="fw-bold text-primary fs-15">{{ p.price | number:'1.3-3' }} DT</span>
+                    @if (p.status === 'actif') {
+                      <button class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                              (click)="$event.stopPropagation(); addToCart(p)">
+                        <i class="ri-shopping-cart-line"></i>
+                      </button>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Vue liste -->
+      @if (viewMode === 'list') {
+        <div class="d-flex flex-column gap-3">
+          @for (p of paginatedProducts; track p.id) {
+            <div class="card border-0 shadow-sm product-card-list" (click)="goDetail(p)">
+              <div class="d-flex">
+                <div class="position-relative flex-shrink-0 overflow-hidden" style="width:140px;height:110px">
+                  @if (p.image_url) {
+                    <img [src]="p.image_url" class="w-100 h-100 product-img" style="object-fit:cover" alt="{{ p.name }}"
+                         [class.opacity-50]="p.status !== 'actif'">
+                  } @else {
+                    <div class="w-100 h-100 d-flex align-items-center justify-content-center bg-light">
+                      <i class="ri-image-line fs-2 text-muted"></i>
+                    </div>
+                  }
+                </div>
+                <div class="card-body p-3 d-flex flex-column justify-content-center flex-fill">
+                  <div class="d-flex justify-content-between align-items-start">
+                    <div>
+                      <p class="fw-semibold mb-1 fs-14">{{ p.name }}</p>
+                      <div class="text-muted fs-12">{{ p.category_name }}</div>
+                    </div>
+                    <span class="badge rounded-pill" [class.bg-success]="p.status === 'actif'" [class.bg-secondary]="p.status !== 'actif'">
+                      {{ p.status === 'actif' ? 'Active' : 'Inactive' }}
+                    </span>
+                  </div>
+
+                  <!-- ══ Features / Values (vue liste) ══ -->
+                  @if (p.features && p.features.length > 0) {
+                    <div class="d-flex flex-wrap gap-1 mt-2">
+                      @for (f of visibleFeatures(p); track f.key) {
+                        <span class="feature-badge" [title]="f.key + ': ' + f.value">
+                          {{ f.key }} : {{ f.value }}
+                        </span>
+                      }
+                      @if (hiddenFeaturesCount(p) > 0) {
+                        <span class="feature-badge feature-badge-more">+{{ hiddenFeaturesCount(p) }}</span>
+                      }
+                    </div>
+                  }
+
+                  <div class="d-flex align-items-center justify-content-between mt-2">
+                    <span class="fw-bold text-primary fs-15">{{ p.price | number:'1.3-3' }} DT</span>
+                    @if (p.status === 'actif') {
+                      <button class="btn btn-sm btn-outline-primary rounded-pill px-3"
+                              (click)="$event.stopPropagation(); addToCart(p)">
+                        <i class="ri-shopping-cart-line me-1"></i>Ajouter
+                      </button>
+                    }
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+
+      <!-- Pagination : carrousel transparent -->
+      @if (totalPages > 1) {
+        <nav class="pg-carousel">
+          <button class="pg-arrow" [disabled]="currentPage===1" (click)="goToPage(currentPage-1)">
+            <i class="ri-arrow-left-s-line"></i>
+          </button>
+          <div class="pg-track">
+            @if (currentPage > 2) {
+              <button class="pg-dot" (click)="goToPage(1)">1</button>
+              @if (currentPage > 3) { <span class="pg-sep">···</span> }
+            }
+            @for (page of pageNumbers; track page) {
+              <button class="pg-dot" [class.active]="page===currentPage" (click)="goToPage(page)">{{ page }}</button>
+            }
+            @if (currentPage < totalPages - 1) {
+              @if (currentPage < totalPages - 2) { <span class="pg-sep">···</span> }
+              <button class="pg-dot" (click)="goToPage(totalPages)">{{ totalPages }}</button>
+            }
+          </div>
+          <button class="pg-arrow" [disabled]="currentPage===totalPages" (click)="goToPage(currentPage+1)">
+            <i class="ri-arrow-right-s-line"></i>
+          </button>
+        </nav>
+      }
+    }
+  </div>
+</div>
+
+}

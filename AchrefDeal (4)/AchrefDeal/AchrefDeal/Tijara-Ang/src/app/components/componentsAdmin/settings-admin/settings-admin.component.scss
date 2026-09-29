@@ -1,0 +1,52 @@
+.settings-page {
+    .card-section {
+        margin-bottom: 1.5rem;
+        border: 0;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.04);
+    }
+    .section-header {
+        background: linear-gradient(135deg, #405189, #0ab39c);
+        color: #fff;
+        padding: 0.85rem 1.15rem;
+        border-radius: 0.5rem 0.5rem 0 0;
+        display: flex;
+        align-items: center;
+        gap: 0.6rem;
+        font-weight: 600;
+        i { font-size: 1.1rem; }
+    }
+    .field-label {
+        font-size: 0.82rem;
+        font-weight: 600;
+        color: #495057;
+    }
+    .field-hint {
+        font-size: 0.72rem;
+        color: #6c757d;
+    }
+    .toggle-row {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 0.55rem 0.85rem;
+        border-radius: 0.45rem;
+        background: #f8f9fa;
+        margin-bottom: 0.5rem;
+        .label {
+            font-size: 0.88rem;
+            font-weight: 500;
+            color: #212529;
+        }
+    }
+    .packet-card {
+        border: 1px solid #e9ecef;
+        border-radius: 0.5rem;
+        padding: 0.9rem;
+        transition: all 0.2s ease;
+        &:hover { border-color: #0ab39c; background: #f8fffd; }
+        &.inactive { opacity: 0.6; }
+        .packet-title { font-weight: 600; color: #212529; }
+        .packet-price { color: #0ab39c; font-weight: 700; font-size: 1.1rem; }
+        .packet-points { color: #405189; font-weight: 600; }
+    }
+}

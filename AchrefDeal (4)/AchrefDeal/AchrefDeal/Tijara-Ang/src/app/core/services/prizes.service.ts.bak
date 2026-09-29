@@ -1,0 +1,34 @@
+import { Injectable } from '@angular/core';
+import { HttpClient } from '@angular/common/http';
+import { Observable } from 'rxjs';
+import { BaseApiService } from './base-api.service';
+
+/**
+ * ✅ Backend confirmé (PrizesController::index) : searchable=[title,description],
+ * filterable=[image,idUser,active], paginate().
+ *
+ * 🐛 CORRIGÉ : getPrizes() n'envoyait pas les headers (donc pas de token
+ * d'authentification) dans les deux versions reçues — ajouté ici.
+ * Adapté au style BaseApiService pour cohérence avec le reste de l'app.
+ */
+@Injectable({ providedIn: 'root' })
+export class PrizesService extends BaseApiService {
+
+  constructor(http: HttpClient) { super(http); }
+
+  getPrizes(params: any = {}): Observable<any> {
+    return this.http.get(`${this.apiUrl}/prizes`, { headers: this.getHeaders(), params });
+  }
+
+  createPrize(data: any): Observable<any> {
+    return this.http.post(`${this.apiUrl}/prizes`, data, { headers: this.getHeaders() });
+  }
+
+  updatePrize(id: number, data: any): Observable<any> {
+    return this.http.put(`${this.apiUrl}/prizes/${id}`, data, { headers: this.getHeaders() });
+  }
+
+  deletePrize(id: number): Observable<any> {
+    return this.http.delete(`${this.apiUrl}/prizes/${id}`, { headers: this.getHeaders() });
+  }
+}

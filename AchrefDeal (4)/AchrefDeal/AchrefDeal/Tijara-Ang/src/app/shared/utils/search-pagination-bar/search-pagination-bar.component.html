@@ -1,0 +1,49 @@
+<div class="card border-0 shadow-sm rounded-4 mb-4">
+  <div class="card-body py-3 px-4 d-flex align-items-center flex-wrap gap-3">
+
+    <!-- Recherche -->
+    <div class="input-group rounded-3 overflow-hidden shadow-sm" style="max-width:320px">
+      <span class="input-group-text bg-white border-0">
+        <i class="ri-search-line"></i>
+      </span>
+      <input type="text" class="form-control border-0" [placeholder]="searchPlaceholder"
+             [ngModel]="searchInput" (ngModelChange)="onSearchInputChange($event)">
+      @if (searchInput) {
+        <button class="btn border-0 bg-white" type="button" (click)="onClear()">
+          <i class="ri-close-line text-muted"></i>
+        </button>
+      }
+    </div>
+
+    <!-- Tri -->
+    <select class="form-select form-select-sm rounded-3" style="width:auto;min-width:160px"
+            [ngModel]="sortBy" (ngModelChange)="onSortByChange($event)">
+      @for (opt of sortOptions; track opt.value) {
+        <option [value]="opt.value">{{ opt.label }}</option>
+      }
+    </select>
+
+    <!-- Compteur -->
+    <span class="fw-semibold fs-14 ms-auto">
+      <span class="fw-bold">{{ totalResults }}</span> résultat(s) trouvé(s)
+    </span>
+  </div>
+</div>
+
+<!-- Pagination -->
+@if (totalPages > 1) {
+  <div class="d-flex justify-content-center align-items-center gap-2 mt-4 mb-2">
+    <button class="btn btn-sm btn-outline-secondary rounded-3" [disabled]="currentPage===1"
+            (click)="onGoToPage(currentPage-1)">
+      <i class="ri-arrow-left-s-line"></i>
+    </button>
+    @for (p of pagesArray; track p) {
+      <button class="btn btn-sm rounded-3" [class.btn-primary]="currentPage===p" [class.btn-outline-secondary]="currentPage!==p"
+              (click)="onGoToPage(p)">{{ p }}</button>
+    }
+    <button class="btn btn-sm btn-outline-secondary rounded-3" [disabled]="currentPage===totalPages"
+            (click)="onGoToPage(currentPage+1)">
+      <i class="ri-arrow-right-s-line"></i>
+    </button>
+  </div>
+}

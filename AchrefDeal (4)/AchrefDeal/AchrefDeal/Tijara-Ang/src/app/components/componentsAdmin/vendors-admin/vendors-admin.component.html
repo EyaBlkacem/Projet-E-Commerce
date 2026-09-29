@@ -1,0 +1,176 @@
+<app-breadcrumbs [title]="'Gestion Vendeurs'" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+@if (approveMsg) {
+  <div class="alert alert-success border-0 shadow-sm d-flex align-items-center gap-2 mb-3 rounded-3">
+    <i class="ri-checkbox-circle-fill"></i> {{ approveMsg }}
+  </div>
+}
+
+<!-- Stats -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-center py-3" style="border-radius:14px">
+      <i class="ri-store-2-line fs-24 text-primary mb-1"></i>
+      <h4 class="fw-bold mb-0">{{ counts.total }}</h4>
+      <small class="text-muted">Total vendeurs</small>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-center py-3" style="border-radius:14px;cursor:pointer"
+         (click)="filterStatus='actif'; applyFilter()">
+      <i class="ri-checkbox-circle-line fs-24 text-success mb-1"></i>
+      <h4 class="fw-bold mb-0 text-success">{{ counts.actif }}</h4>
+      <small class="text-muted">Actifs</small>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-center py-3" style="border-radius:14px;cursor:pointer"
+         (click)="filterStatus='en attente'; applyFilter()">
+      <i class="ri-time-line fs-24 text-warning mb-1"></i>
+      <h4 class="fw-bold mb-0 text-warning">{{ counts.attente }}</h4>
+      <small class="text-muted">En attente</small>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-center py-3" style="border-radius:14px;cursor:pointer"
+         (click)="filterStatus='suspendu'; applyFilter()">
+      <i class="ri-forbid-line fs-24 text-danger mb-1"></i>
+      <h4 class="fw-bold mb-0 text-danger">{{ counts.suspendu }}</h4>
+      <small class="text-muted">Suspendus</small>
+    </div>
+  </div>
+</div>
+
+<!-- Filtres -->
+<div class="card border-0 shadow-sm mb-3 rounded-3">
+  <div class="card-body p-3">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div class="input-group" style="width:260px">
+        <span class="input-group-text bg-white"><i class="ri-search-line text-muted"></i></span>
+        <input type="text" class="form-control border-start-0" placeholder="Boutique, email, ville..."
+               [(ngModel)]="searchTerm" (input)="applyFilter()">
+      </div>
+      <select class="form-select" style="width:170px" [(ngModel)]="filterStatus" (change)="applyFilter()">
+        <option value="tous">Tous les statuts</option>
+        <option value="actif">Actifs</option>
+        <option value="en attente">En attente</option>
+        <option value="suspendu">Suspendus</option>
+      </select>
+      @if (filterStatus !== 'tous' || searchTerm) {
+        <button class="btn btn-sm btn-soft-secondary"
+                (click)="filterStatus='tous'; searchTerm=''; applyFilter()">
+          <i class="ri-refresh-line me-1"></i>Réinitialiser
+        </button>
+      }
+      <span class="text-muted small ms-auto">{{ filteredVendors.length }} vendeur(s)</span>
+    </div>
+  </div>
+</div>
+
+<!-- Table -->
+<div class="card border-0 shadow-sm rounded-3">
+  <div class="card-body p-0">
+    @if (loading) {
+      <div class="text-center py-5">
+        <div class="spinner-border text-primary"></div>
+      </div>
+    } @else if (filteredVendors.length === 0) {
+      <div class="text-center py-5">
+        <i class="ri-store-2-line display-3 text-muted opacity-25"></i>
+        <h5 class="mt-3 text-muted">Aucun vendeur trouvé</h5>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0 fs-13">
+          <thead>
+            <tr style="background:#f8f9fc">
+              <th class="ps-4 py-3 fw-semibold text-muted border-0">Boutique / Point de vente</th>
+              <th class="py-3 fw-semibold text-muted border-0">Propriétaire</th>
+              <th class="py-3 fw-semibold text-muted border-0">Ville</th>
+              <th class="py-3 fw-semibold text-muted border-0 text-center">Produits</th>
+              <th class="py-3 fw-semibold text-muted border-0 text-center">Commandes</th>
+              <th class="py-3 fw-semibold text-muted border-0">Revenus</th>
+              <th class="py-3 fw-semibold text-muted border-0">Statut</th>
+              <th class="py-3 fw-semibold text-muted border-0">Inscrit le</th>
+              <th class="py-3 fw-semibold text-muted border-0 text-center pe-4">Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (v of filteredVendors; track v.id) {
+              <tr>
+                <!-- Boutique -->
+                <td class="ps-4">
+                  <div class="d-flex align-items-center gap-2">
+                    <div class="rounded-3 d-flex align-items-center justify-content-center text-white fw-bold flex-shrink-0"
+                         style="width:38px;height:38px;min-width:38px;font-size:12px;
+                                background:linear-gradient(135deg,#405189,#0ab39c)">
+                      {{ v.avatar }}
+                    </div>
+                    <div>
+                      <div class="fw-semibold text-dark">{{ v.shop }}</div>
+                      <div class="text-muted" style="font-size:11px">{{ v.email }}</div>
+                    </div>
+                  </div>
+                </td>
+                <!-- Propriétaire -->
+                <td>
+                  <div class="fw-medium">{{ v.owner }}</div>
+                  <div class="text-muted" style="font-size:11px">{{ v.phone }}</div>
+                </td>
+                <!-- Ville -->
+                <td>
+                  @if (v.ville !== '-') {
+                    <span class="d-flex align-items-center gap-1 text-muted">
+                      <i class="ri-map-pin-line text-primary fs-12"></i>{{ v.ville }}
+                    </span>
+                  } @else {
+                    <span class="text-muted">—</span>
+                  }
+                </td>
+                <!-- Produits -->
+                <td class="text-center fw-semibold">{{ v.products }}</td>
+                <!-- Commandes -->
+                <td class="text-center fw-semibold">{{ v.orders }}</td>
+                <!-- Revenus -->
+                <td class="fw-bold text-success">{{ v.revenue | number:'1.0-0' }} DT</td>
+                <!-- Statut -->
+                <td>
+                  <span class="badge rounded-pill px-2 py-1 {{ getStatusBadge(v.status) }}">
+                    @if (v.status === 'actif')      { <i class="ri-checkbox-circle-line me-1"></i> }
+                    @if (v.status === 'en attente') { <i class="ri-time-line me-1"></i> }
+                    @if (v.status === 'suspendu')   { <i class="ri-forbid-line me-1"></i> }
+                    {{ v.status }}
+                  </span>
+                </td>
+                <!-- Date -->
+                <td class="text-muted">{{ v.joined }}</td>
+                <!-- Actions -->
+                <td class="text-center pe-4">
+                  <div class="d-flex gap-1 justify-content-center">
+                    <button class="btn btn-sm btn-soft-primary" (click)="viewProfile(v)" ngbTooltip="Voir profil">
+                      <i class="ri-eye-line"></i>
+                    </button>
+                    @if (v.status === 'en attente') {
+                      <button class="btn btn-sm btn-soft-success" (click)="approve(v)" ngbTooltip="Approuver">
+                        <i class="ri-check-line"></i>
+                      </button>
+                      <button class="btn btn-sm btn-soft-danger" (click)="reject(v)" ngbTooltip="Rejeter">
+                        <i class="ri-close-line"></i>
+                      </button>
+                    } @else {
+                      <button class="btn btn-sm {{ v.status === 'actif' ? 'btn-soft-warning' : 'btn-soft-success' }}"
+                              (click)="suspend(v)"
+                              [ngbTooltip]="v.status === 'actif' ? 'Suspendre' : 'Réactiver'">
+                        <i class="ri-{{ v.status === 'actif' ? 'forbid' : 'check' }}-line"></i>
+                      </button>
+                    }
+                  </div>
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    }
+  </div>
+</div>

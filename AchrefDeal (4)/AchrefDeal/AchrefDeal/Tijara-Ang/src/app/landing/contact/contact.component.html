@@ -1,0 +1,115 @@
+﻿<!-- HERO -->
+<section style="background:linear-gradient(135deg,#405189,#0ab39c);padding:70px 0 50px;color:var(--surface-color)">
+  <div class="container text-center">
+    <i class="ri-customer-service-2-line fs-48 mb-3 d-block" style="opacity:0.85"></i>
+    <h1 class="fw-bold fs-32 mb-2">Contactez-nous</h1>
+    <p style="color:rgba(255,255,255,0.8);max-width:480px;margin:0 auto">
+      Notre équipe est là pour vous aider. Réponse garantie sous 24h ouvrables.
+    </p>
+  </div>
+</section>
+
+<section style="padding:60px 0;background:var(--page-bg)">
+  <div class="container">
+    <div class="row g-4">
+
+      <!-- Info cards -->
+      <div class="col-lg-4">
+        <div class="d-flex flex-column gap-3 mb-4">
+          @for (info of infos; track info.label) {
+            <div class="d-flex align-items-center gap-3 p-3 bg-white rounded-4 shadow-sm">
+              <div class="d-flex align-items-center justify-content-center rounded-3 flex-shrink-0"
+                   [style.background]="info.color + '20'"
+                   style="width:46px;height:46px">
+                <i class="{{ info.icon }} fs-20" [style.color]="info.color"></i>
+              </div>
+              <div>
+                <div class="fw-semibold fs-13">{{ info.label }}</div>
+                <div class="text-muted fs-13">{{ info.value }}</div>
+              </div>
+            </div>
+          }
+        </div>
+
+        <!-- Social -->
+        <div class="bg-white rounded-4 shadow-sm p-4">
+          <div class="fw-semibold mb-3">Suivez-nous</div>
+          <div class="d-flex gap-2">
+            @for (soc of [['ri-facebook-fill','#1877f2'],['ri-instagram-line','#e1306c'],['ri-linkedin-fill','#0077b5'],['ri-twitter-x-line','#000']] ; track $index) {
+              <a href="javascript:void(0)" class="d-flex align-items-center justify-content-center rounded-3"
+                 [style.background]="soc[1] + '15'" [style.color]="soc[1]"
+                 style="width:40px;height:40px;text-decoration:none;font-size:1.1rem">
+                <i class="{{ soc[0] }}"></i>
+              </a>
+            }
+          </div>
+        </div>
+      </div>
+
+      <!-- Contact form -->
+      <div class="col-lg-8">
+        <div class="bg-white rounded-4 shadow-sm p-4 p-lg-5">
+          <h4 class="fw-bold mb-4">Envoyer un message</h4>
+
+          @if (sent) {
+            <div class="alert alert-success d-flex align-items-center gap-3 rounded-3">
+              <i class="ri-checkbox-circle-fill fs-24 text-success"></i>
+              <div>
+                <div class="fw-semibold">Message envoyé !</div>
+                <div class="fs-13">Merci ! Nous vous répondrons dans les meilleurs délais.</div>
+              </div>
+            </div>
+          } @else {
+            <form [formGroup]="form" (ngSubmit)="submit()">
+              <div class="row g-3">
+                <div class="col-md-6">
+                  <label class="form-label fw-medium fs-13">Nom complet <span class="text-danger">*</span></label>
+                  <div class="position-relative">
+                    <i class="ri-user-3-line position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
+                    <input type="text" class="form-control ps-5" formControlName="name" placeholder="Votre nom"
+                           [ngClass]="{'is-invalid': submitted && f['name'].errors}">
+                  </div>
+                </div>
+                <div class="col-md-6">
+                  <label class="form-label fw-medium fs-13">Email <span class="text-danger">*</span></label>
+                  <div class="position-relative">
+                    <i class="ri-mail-line position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
+                    <input type="email" class="form-control ps-5" formControlName="email" placeholder="votre@email.com"
+                           [ngClass]="{'is-invalid': submitted && f['email'].errors}">
+                  </div>
+                </div>
+                <div class="col-12">
+                  <label class="form-label fw-medium fs-13">Sujet <span class="text-danger">*</span></label>
+                  <select class="form-select" formControlName="subject"
+                          [ngClass]="{'is-invalid': submitted && f['subject'].errors}">
+                    <option value="">— Choisir un sujet —</option>
+                    @for (s of subjects; track s) { <option [value]="s">{{ s }}</option> }
+                  </select>
+                </div>
+                <div class="col-12">
+                  <label class="form-label fw-medium fs-13">Message <span class="text-danger">*</span></label>
+                  <textarea rows="5" class="form-control" formControlName="message"
+                            placeholder="Décrivez votre demande en détail..."
+                            [ngClass]="{'is-invalid': submitted && f['message'].errors}"></textarea>
+                  @if (submitted && f['message'].errors?.['minlength']) {
+                    <div class="invalid-feedback">Le message doit contenir au moins 20 caractères.</div>
+                  }
+                </div>
+                <div class="col-12">
+                  <button type="submit" class="btn fw-semibold px-4 py-2"
+                          style="background:linear-gradient(135deg,#405189,#0ab39c);color:var(--surface-color);border:none;border-radius:10px"
+                          [disabled]="sending">
+                    @if (sending) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                    <i class="ri-send-plane-2-line me-2" *ngIf="!sending"></i>
+                    Envoyer le message
+                  </button>
+                </div>
+              </div>
+            </form>
+          }
+        </div>
+      </div>
+
+    </div>
+  </div>
+</section>

@@ -1,0 +1,263 @@
+<app-breadcrumbs title="Commandes" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+<div class="row g-3 mb-4">
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #299cdb">
+      <div class="card-body d-flex align-items-center gap-3 py-3">
+        <div class="avatar-md rounded-3 bg-info-subtle d-flex align-items-center justify-content-center">
+          <i class="ri-shopping-bag-3-line fs-22 text-info"></i>
+        </div>
+        <div><h3 class="mb-0 fw-bold text-info">{{ statTotal }}</h3>
+        <p class="mb-0 fs-12 text-muted">Total commandes</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #0ab39c">
+      <div class="card-body d-flex align-items-center gap-3 py-3">
+        <div class="avatar-md rounded-3 bg-success-subtle d-flex align-items-center justify-content-center">
+          <i class="ri-checkbox-circle-line fs-22 text-success"></i>
+        </div>
+        <div><h3 class="mb-0 fw-bold text-success">{{ statActive }}</h3>
+        <p class="mb-0 fs-12 text-muted">Actives</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #f7b84b">
+      <div class="card-body d-flex align-items-center gap-3 py-3">
+        <div class="avatar-md rounded-3 bg-warning-subtle d-flex align-items-center justify-content-center">
+          <i class="ri-close-circle-line fs-22 text-warning"></i>
+        </div>
+        <div><h3 class="mb-0 fw-bold text-warning">{{ statInactive }}</h3>
+        <p class="mb-0 fs-12 text-muted">Inactives</p></div>
+      </div>
+    </div>
+  </div>
+  <div class="col-6 col-md-3">
+    <div class="card border-0 shadow-sm h-100" style="border-left:4px solid #0ab39c">
+      <div class="card-body d-flex align-items-center gap-3 py-3">
+        <div class="avatar-md rounded-3 bg-success-subtle d-flex align-items-center justify-content-center">
+          <i class="ri-money-dollar-circle-line fs-22 text-success"></i>
+        </div>
+        <div><h3 class="mb-0 fw-bold text-success">{{ pageRevenue | number:'1.0-0' }}</h3>
+        <p class="mb-0 fs-12 text-muted">Total (page, TND)</p></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="card border-0 shadow-sm">
+  <div class="card-header bg-transparent d-flex flex-wrap align-items-center gap-2 py-3">
+    <h6 class="mb-0 fw-semibold flex-grow-1">
+      <i class="ri-shopping-bag-3-line me-2 text-info"></i>Toutes les commandes
+      <span class="badge bg-info-subtle text-info ms-2">{{ totalItems }}</span>
+    </h6>
+
+    <div class="input-group input-group-sm" style="max-width:240px">
+      <span class="input-group-text bg-white border-end-0"><i class="ri-search-line"></i></span>
+      <input type="text" class="form-control border-start-0" placeholder="N° commande, client, vendeur, produit… (page actuelle)"
+             [(ngModel)]="search" (ngModelChange)="recomputeDerived()" />
+    </div>
+    <select class="form-select form-select-sm" style="max-width:160px"
+            [(ngModel)]="filter" (change)="setFilter()">
+      <option value="">Toutes</option>
+      <option value="active">Actives</option>
+      <option value="inactive">Inactives</option>
+    </select>
+    <button class="btn btn-sm btn-light" (click)="exportCSV()" title="Export CSV (page actuelle)">
+      <i class="ri-file-excel-2-line text-success me-1"></i>Export
+    </button>
+  </div>
+
+  <div class="card-body p-0">
+    @if (loading) {
+      <div class="text-center py-5"><div class="spinner-border text-info"></div></div>
+    } @else if (visibleRows.length === 0) {
+      <div class="text-center py-5">
+        <i class="ri-shopping-bag-line display-3 text-muted opacity-50"></i>
+        <p class="text-muted mt-2 mb-0">Aucune commande ne correspond.</p>
+      </div>
+    } @else {
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="ps-3">N°</th>
+              <th>Client</th>
+              <th>Vendeur</th>
+              <th>Deal</th>
+              <th>Localisation</th>
+              <th class="text-end">Total</th>
+              <th class="text-center">Paiement</th>
+              <th class="text-center">Livraison</th>
+              <th>Date</th>
+              <th class="text-center">Active</th>
+              <th class="text-center">Colis</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (o of visibleRows; track o.id) {
+              <tr>
+                <td class="ps-3 fw-semibold text-info fs-13">#{{ o.id }}</td>
+                <td>
+                  <div class="fs-13 fw-semibold">{{ o.client }}</div>
+                  @if (o.email) { <div class="fs-11 text-muted">{{ o.email }}</div> }
+                </td>
+                <td class="fs-12">
+                  @if (o.multiVendor) {
+                    <div class="d-flex flex-column gap-1">
+                      @for (v of o.uniqueVendors; track v.vendorId) {
+                        <a href="javascript:void(0)" class="text-primary text-decoration-underline"
+                           (click)="goToVendor(v.vendorId)" title="Voir la fiche vendeur">{{ v.vendorName }}</a>
+                      }
+                    </div>
+                  } @else if (o.vendorId) {
+                    <a href="javascript:void(0)" class="text-primary text-decoration-underline"
+                       (click)="goToVendor(o.vendorId)" title="Voir la fiche vendeur">{{ o.vendor }}</a>
+                  } @else {
+                    <span class="text-muted">{{ o.vendor }}</span>
+                  }
+                </td>
+                <td class="fs-13" style="max-width:220px">
+                  @if (o.items.length > 1) {
+                    <span class="text-truncate d-block" [title]="o.items.length + ' articles'">
+                      {{ o.items.length }} articles
+                      <span *ngIf="o.multiVendor" class="badge bg-warning-subtle text-warning ms-1" style="font-size:10px">multi-vendeurs</span>
+                    </span>
+                  } @else {
+                    <span class="text-truncate d-block">{{ o.product }}</span>
+                  }
+                </td>
+                <td class="fs-12 text-muted">{{ o.location }}</td>
+                <td class="text-end fw-semibold">
+                  @if (o.total !== null) {
+                    <span [title]="o.totalIsEstimate
+                            ? 'Estimation calculée à partir des articles (hors taxe/livraison) — aucune facture en base pour cette commande'
+                            : 'Total facturé (TTC)'">
+                      @if (o.totalIsEstimate) { <span class="text-muted">~</span> }{{ o.total | number:'1.2-3' }} TND
+                    </span>
+                  } @else {
+                    —
+                  }
+                </td>
+                <td class="text-center">
+                  @if (o.invoiceStatus) {
+                    <span class="badge" [class]="'bg-' + statusColor(o.invoiceStatus) + '-subtle text-' + statusColor(o.invoiceStatus)">
+                      {{ o.invoiceStatus }}
+                    </span>
+                  } @else {
+                    <button class="btn btn-sm btn-outline-warning" (click)="regenerateInvoice(o)"
+                            [disabled]="o.regeneratingInvoice" title="Aucune facture trouvée pour cette commande — en générer une">
+                      @if (o.regeneratingInvoice) {
+                        <span class="spinner-border spinner-border-sm"></span>
+                      } @else {
+                        <i class="ri-file-add-line"></i> Générer
+                      }
+                    </button>
+                  }
+                </td>
+                <td class="text-center">
+                  @if (o.deliveryStatus) {
+                    <span class="badge" [class]="'bg-' + statusColor(o.deliveryStatus) + '-subtle text-' + statusColor(o.deliveryStatus)">
+                      {{ o.deliveryStatus }}
+                    </span>
+                  } @else { <span class="text-muted">—</span> }
+                </td>
+                <td class="fs-12 text-muted">{{ o.date }}</td>
+                <td class="text-center">
+                  <div class="form-check form-switch d-inline-block">
+                    <input class="form-check-input" type="checkbox" role="switch"
+                           [checked]="o.active" (change)="toggleActive(o)" />
+                  </div>
+                </td>
+                <td class="text-center">
+                  <button class="btn btn-sm btn-light" (click)="o.expanded = !o.expanded" title="Voir les colis">
+                    <i class="ri-box-3-line"></i> {{ o.items.length }}
+                  </button>
+                </td>
+              </tr>
+              @if (o.expanded) {
+                <tr>
+                  <td colspan="11" class="bg-light-subtle p-3">
+                    @if (o.items.length === 0) {
+                      <div class="text-muted fs-12">Commande basée sur un deal, pas de colis individuels.</div>
+                    } @else {
+                      <table class="table table-sm table-borderless mb-0">
+                        <thead>
+                          <tr class="fs-11 text-muted">
+                            <th>Produit</th>
+                            <th>Vendeur</th>
+                            <th>Qté</th>
+                            <th>Statut colis</th>
+                            <th>Changer le statut</th>
+                          </tr>
+                        </thead>
+                        <tbody>
+                          @for (it of o.items; track it.id) {
+                            <tr>
+                              <td class="fs-13">{{ it.productTitle }}</td>
+                              <td class="fs-13">{{ it.vendorName }}</td>
+                              <td class="fs-13">{{ it.quantity }}</td>
+                              <td>
+                                <span class="badge" [class]="'bg-' + itemStatusColor(it.status) + '-subtle text-' + itemStatusColor(it.status)">
+                                  {{ itemStatusLabel(it.status) }}
+                                </span>
+                              </td>
+                              <td>
+                                <select class="form-select form-select-sm" style="max-width:180px"
+                                        [ngModel]="it.status" (ngModelChange)="changeItemStatus(o, it, $event)">
+                                  <option value="pending">En attente</option>
+                                  <option value="accepted">Accepté</option>
+                                  <option value="rejected">Rejeté</option>
+                                  <option value="out_of_stock">Rupture de stock</option>
+                                  <option value="shipped">Expédié</option>
+                                  <option value="delivered">Livré</option>
+                                  <option value="cancelled">Annulé</option>
+                                  <option value="returned">Retourné</option>
+                                </select>
+                              </td>
+                            </tr>
+                          }
+                        </tbody>
+                      </table>
+                    }
+                  </td>
+                </tr>
+              }
+            }
+          </tbody>
+        </table>
+      </div>
+
+      <div class="d-flex align-items-center justify-content-between p-3 border-top flex-wrap gap-2">
+        <span class="fs-12 text-muted">Page {{ page }} / {{ totalPages }} — {{ totalItems }} commande(s)</span>
+        <nav aria-label="Pagination des commandes">
+          <ul class="pagination pagination-sm mb-0">
+            <li class="page-item" [class.disabled]="page <= 1">
+              <button class="page-link" (click)="goToPage(page - 1)" [disabled]="page <= 1" aria-label="Précédent">
+                <i class="ri-arrow-left-s-line"></i>
+              </button>
+            </li>
+            @for (p of pageNumbers; track $index) {
+              @if (p === ELLIPSIS) {
+                <li class="page-item disabled">
+                  <span class="page-link">…</span>
+                </li>
+              } @else {
+                <li class="page-item" [class.active]="p === page">
+                  <button class="page-link" (click)="goToPage(p)">{{ p }}</button>
+                </li>
+              }
+            }
+            <li class="page-item" [class.disabled]="page >= totalPages">
+              <button class="page-link" (click)="goToPage(page + 1)" [disabled]="page >= totalPages" aria-label="Suivant">
+                <i class="ri-arrow-right-s-line"></i>
+              </button>
+            </li>
+          </ul>
+        </nav>
+      </div>
+    }
+  </div>
+</div>

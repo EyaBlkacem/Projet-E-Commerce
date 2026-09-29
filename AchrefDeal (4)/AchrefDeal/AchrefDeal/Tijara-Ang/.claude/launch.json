@@ -1,0 +1,12 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "tijara-app",
+      "runtimeExecutable": "npx",
+      "runtimeArgs": ["ng", "serve", "--port", "4300", "--no-open"],
+      "port": 4300,
+      "cwd": "."
+    }
+  ]
+}

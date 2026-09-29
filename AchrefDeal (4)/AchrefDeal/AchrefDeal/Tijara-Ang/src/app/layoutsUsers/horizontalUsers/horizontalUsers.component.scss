@@ -1,0 +1,9 @@
+
+// --- FIX: eviter le double decalage avec .main-content ---
+// Le theme applique un margin-top fige (\-height = 70px) sur
+// .page-content en desktop. Comme HorizontalUsersComponent applique deja
+// dynamiquement le bon margin-top sur .main-content (parent), on neutralise
+// celui du theme sur .page-content pour ne pas cumuler les deux.
+:host ::ng-deep .page-content {
+    margin-top: 0 !important;
+}

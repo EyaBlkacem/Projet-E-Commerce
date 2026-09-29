@@ -1,0 +1,271 @@
+.detail-page {
+    background: var(--page-bg);
+    min-height: 100vh;
+    padding: 30px 0 60px;
+
+    .img-main {
+        border-radius: 16px;
+        overflow: hidden;
+        background: var(--border-color-soft);
+        height: 380px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        img { width: 100%; height: 100%; object-fit: cover; }
+        .placeholder-icon { font-size: 5rem; opacity: 0.2; }
+    }
+
+    .img-thumb {
+        width: 70px; height: 60px;
+        border-radius: 10px;
+        overflow: hidden;
+        border: 2px solid transparent;
+        cursor: pointer;
+        background: var(--border-color-soft);
+        display: flex; align-items: center; justify-content: center;
+        transition: border-color 0.15s;
+        &.active { border-color: #405189; }
+        img { width: 100%; height: 100%; object-fit: cover; }
+    }
+
+    .price-block {
+        .price-main  { font-size: 2rem; font-weight: 800; color: #0ab39c; }
+        .price-old   { text-decoration: line-through; color: #adb5bd; font-size: 1rem; }
+        .discount-badge { background: #fee2e2; color: #dc2626; padding: 0.2rem 0.6rem; border-radius: 20px; font-size: 0.82rem; font-weight: 700; }
+    }
+
+    .vendor-card {
+        background: var(--surface-color);
+        border-radius: 14px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        padding: 1.2rem;
+        .vendor-avatar { width: 50px; height: 50px; border-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 1.4rem; font-weight: 700; color: #fff; }
+    }
+
+    .info-card {
+        background: var(--surface-color);
+        border-radius: 14px;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.06);
+        padding: 1.4rem;
+    }
+
+    .similar-card {
+        background: var(--surface-color);
+        border-radius: 14px;
+        box-shadow: 0 2px 10px rgba(0,0,0,0.06);
+        overflow: hidden;
+        cursor: pointer;
+        transition: transform 0.2s, box-shadow 0.2s;
+        &:hover { transform: translateY(-3px); box-shadow: 0 8px 24px rgba(0,0,0,0.1); }
+        .sim-img { height: 150px; display: flex; align-items: center; justify-content: center; }
+        img.sim-img { object-fit: cover; width: 100%; }
+    }
+
+    .similar-boost-badge {
+        position: absolute;
+        top: 8px;
+        right: 8px;
+        display: inline-flex;
+        align-items: center;
+        background: linear-gradient(135deg, #f7b84b, #f06548);
+        color: #fff;
+        font-size: 0.62rem;
+        font-weight: 700;
+        padding: 0.2rem 0.5rem;
+        border-radius: 20px;
+        box-shadow: 0 3px 8px rgba(240, 101, 72, 0.35);
+        white-space: nowrap;
+        z-index: 2;
+
+        i { font-size: 0.68rem; }
+    }
+
+    .stars-filled { color: #f7b84b; }
+    .stars-empty  { color: var(--border-color); }
+
+    // ══ Deal countdown — compact, contenu dans sa carte, jamais de débordement ══
+    .deal-flip-timer {
+        display: flex;
+        align-items: center;
+        gap: 5px;
+        padding: 10px 10px;
+        border-radius: 12px;
+        background: #f8f9fa;
+        border: 1px solid #eef0f2;
+        position: relative;
+        width: 100%;
+        box-sizing: border-box;
+        overflow: hidden;
+
+        &::before {
+            content: '';
+            position: absolute;
+            left: 0; top: 0; bottom: 0;
+            width: 3px;
+            border-radius: 12px 0 0 12px;
+            background: linear-gradient(180deg, #405189, #0ab39c);
+        }
+
+        .deal-timer-label {
+            display: flex;
+            align-items: center;
+            gap: 4px;
+            color: #667085;
+            font-size: 11.5px;
+            font-weight: 600;
+            margin-right: 2px;
+            flex-shrink: 1;
+            min-width: 0;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+
+            i { color: #405189; font-size: 14px; flex-shrink: 0; }
+        }
+
+        .flip-unit {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex: 0 0 auto;
+            min-width: 34px;
+            padding: 5px 3px 4px;
+            border-radius: 8px;
+            background: var(--surface-color);
+            border: 1px solid #e5e7eb;
+
+            .flip-value {
+                font-size: 15px;
+                font-weight: 700;
+                color: #405189;
+                line-height: 1.1;
+                font-variant-numeric: tabular-nums;
+            }
+
+            .flip-label {
+                font-size: 9px;
+                font-weight: 600;
+                color: #98a2b3;
+                letter-spacing: 0.5px;
+                margin-top: 1px;
+            }
+        }
+
+        .flip-sep {
+            color: #d0d5dd;
+            font-weight: 700;
+            font-size: 13px;
+            line-height: 1;
+            align-self: flex-start;
+            padding-top: 10px;
+            flex-shrink: 0;
+        }
+
+        // ── État urgent (< 1h) ──
+        &.is-urgent {
+            border-color: #fecdca;
+            background: #fef4f3;
+
+            &::before { background: #f06548; }
+            .deal-timer-label i { color: #f06548; }
+
+            .flip-unit {
+                border-color: #fecdca;
+                .flip-value { color: #f06548; }
+            }
+
+            animation: timerSoftPulse 1.8s ease-in-out infinite;
+        }
+
+        // ── État expiré ──
+        &.is-expired {
+            justify-content: center;
+            background: #f2f3f5;
+
+            &::before { background: #98a2b3; }
+
+            .deal-timer-expired {
+                display: flex;
+                align-items: center;
+                color: #667085;
+                font-weight: 600;
+                font-size: 13.5px;
+            }
+        }
+
+        // En dessous de 360px de large, on masque le texte du label pour ne garder que l'icône
+        @media (max-width: 480px) {
+            padding: 8px 8px;
+            gap: 4px;
+
+            .deal-timer-label span { display: none; }
+            .flip-unit { min-width: 30px; padding: 4px 2px 3px; }
+            .flip-unit .flip-value { font-size: 13px; }
+            .flip-sep { padding-top: 8px; }
+        }
+    }
+}
+
+@keyframes timerSoftPulse {
+    0%, 100% { box-shadow: 0 0 0 rgba(240, 101, 72, 0); }
+    50%      { box-shadow: 0 0 0 4px rgba(240, 101, 72, 0.08); }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════════
+   DARK MODE — page détail (annonce / produit / deal / prize)
+   ═══════════════════════════════════════════════════════════════════════ */
+:host-context([data-bs-theme="dark"]) {
+
+    .detail-page {
+        background: #1a1d21;
+        color: #e9ecef;
+    }
+
+    .img-main,
+    .img-thumb {
+        background: #2a2e33;
+    }
+
+    .price-block {
+        .discount-badge { background: rgba(220, 38, 38, 0.18); color: #f87171; }
+    }
+
+    .vendor-card,
+    .info-card,
+    .similar-card {
+        background: #262a2e;
+        box-shadow: 0 2px 12px rgba(0,0,0,0.3);
+        color: #e9ecef;
+
+        .text-muted { color: #9ea5ab !important; }
+        h6, .fw-semibold, h4, h5 { color: #e9ecef; }
+    }
+
+    .stars-empty { color: #3a4045; }
+
+    // ── Deal countdown en dark mode ──
+    .deal-flip-timer {
+        background: #262a2e;
+        border-color: #32383e;
+
+        .deal-timer-label { color: #9ea5ab; }
+
+        .flip-unit {
+            background: #2a2e33;
+            border-color: #3a4045;
+        }
+
+        &.is-urgent {
+            background: rgba(240, 101, 72, 0.1);
+            border-color: rgba(240, 101, 72, 0.3);
+        }
+
+        &.is-expired {
+            background: #2a2e33;
+
+            .deal-timer-expired { color: #9ea5ab; }
+        }
+    }
+}

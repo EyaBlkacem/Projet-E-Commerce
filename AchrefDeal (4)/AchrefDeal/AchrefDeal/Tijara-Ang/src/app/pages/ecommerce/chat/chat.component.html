@@ -1,0 +1,629 @@
+<app-breadcrumbs
+  [title]="'Chat avec les Vendeurs'"
+  [breadcrumbItems]="breadCrumbItems">
+</app-breadcrumbs>
+
+
+<div
+  class="card border-0 shadow-sm overflow-hidden"
+  style="height:70vh">
+
+  <div class="row g-0 h-100">
+
+
+    <!-- ===================================================== -->
+    <!-- SIDEBAR CONVERSATIONS -->
+    <!-- ===================================================== -->
+
+    <div
+      class="col-md-4 col-lg-3 border-end h-100 d-flex flex-column">
+
+      <!-- Titre -->
+      <div class="p-3 border-bottom">
+
+        <h6 class="fw-bold mb-0">
+
+          <i
+            class="ri-message-3-line me-2 text-primary">
+          </i>
+
+          Mes conversations
+
+        </h6>
+
+      </div>
+
+
+      <!-- Loading -->
+      @if (loadingConversations) {
+
+        <div class="text-center p-4">
+
+          <div
+            class="spinner-border spinner-border-sm text-primary">
+          </div>
+
+          <div class="text-muted small mt-2">
+            Chargement...
+          </div>
+
+        </div>
+
+      }
+
+
+      <!-- Liste conversations -->
+      @if (!loadingConversations) {
+
+        <div class="overflow-auto flex-grow-1">
+
+
+          @for (
+            conversation of conversations;
+            track conversation.id
+          ) {
+
+            <div
+              class="d-flex align-items-center gap-3 p-3 border-bottom"
+              [class.bg-primary-subtle]="
+                conversation.id === activeConversation?.id
+              "
+              style="cursor:pointer"
+              (click)="selectConversation(conversation)">
+
+
+              <!-- Avatar -->
+              <div class="position-relative">
+
+                <div
+                  class="rounded-circle bg-primary
+                         d-flex align-items-center
+                         justify-content-center
+                         text-white fw-bold"
+                  style="
+                    width:42px;
+                    height:42px;
+                    min-width:42px;
+                    font-size:14px;
+                  ">
+
+                  {{
+                    (
+                      conversation.other_name || 'U'
+                    ).charAt(0).toUpperCase()
+                  }}
+
+                </div>
+
+              </div>
+
+
+              <!-- Informations -->
+              <div
+                class="flex-grow-1 overflow-hidden">
+
+                <div class="fw-semibold small">
+
+                  {{
+                    conversation.other_name ||
+                    conversation.vendor_name ||
+                    'Utilisateur'
+                  }}
+
+                </div>
+
+
+                <div
+                  class="text-muted text-truncate"
+                  style="font-size:11px">
+
+                  {{
+                    getLastMessage(conversation)
+                    | slice:0:35
+                  }}
+
+                  @if (
+                    getLastMessage(conversation).length > 35
+                  ) {
+                    ...
+                  }
+
+                </div>
+
+              </div>
+
+
+              <!-- Flèche -->
+              @if (
+                conversation.id === activeConversation?.id
+              ) {
+
+                <i
+                  class="ri-arrow-right-s-line
+                         text-primary">
+                </i>
+
+              }
+
+            </div>
+
+          }
+
+
+          <!-- Aucune conversation -->
+          @if (conversations.length === 0) {
+
+            <div
+              class="text-center text-muted p-4">
+
+              <i
+                class="ri-chat-3-line
+                       display-5
+                       d-block
+                       mb-2">
+              </i>
+
+              <div class="small">
+                Aucune conversation
+              </div>
+
+            </div>
+
+          }
+
+        </div>
+
+      }
+
+    </div>
+
+
+
+    <!-- ===================================================== -->
+    <!-- ZONE CHAT -->
+    <!-- ===================================================== -->
+
+    <div
+      class="col-md-8 col-lg-9
+             d-flex flex-column h-100">
+
+
+      <!-- ================================================= -->
+      <!-- HEADER -->
+      <!-- ================================================= -->
+
+      @if (activeConversation) {
+
+        <div
+          class="p-3 border-bottom
+                 d-flex align-items-center
+                 justify-content-between
+                 bg-white">
+
+
+          <div
+            class="d-flex align-items-center gap-3">
+
+
+            <!-- Avatar vendeur -->
+            <div
+              class="rounded-circle
+                     bg-primary
+                     d-flex align-items-center
+                     justify-content-center
+                     text-white fw-bold"
+              style="
+                width:42px;
+                height:42px;
+                font-size:14px;
+              ">
+
+              {{ activeVendorInitial }}
+
+            </div>
+
+
+            <!-- Nom -->
+            <div>
+
+              <div class="fw-bold">
+
+                {{ activeVendorName }}
+
+              </div>
+
+
+              <div
+                class="text-muted"
+                style="font-size:12px">
+
+                <span
+                  class="rounded-circle
+                         d-inline-block
+                         me-1"
+                  style="
+                    width:8px;
+                    height:8px;
+                    background:#0ab39c;
+                  ">
+                </span>
+
+                Conversation
+
+              </div>
+
+            </div>
+
+          </div>
+
+
+          <!-- Email -->
+          <div
+            class="text-muted small">
+
+            @if (activeConversation.other_email) {
+
+              <i class="ri-mail-line me-1"></i>
+
+              {{ activeConversation.other_email }}
+
+            }
+
+          </div>
+
+        </div>
+
+      }
+
+
+
+      <!-- ================================================= -->
+      <!-- MESSAGES -->
+      <!-- ================================================= -->
+
+      <div
+        #messagesContainer
+        class="flex-grow-1 overflow-auto p-3"
+        style="background:#f8f9fa">
+
+
+        <!-- Aucune conversation -->
+        @if (!activeConversation) {
+
+          <div
+            class="h-100
+                   d-flex
+                   flex-column
+                   align-items-center
+                   justify-content-center
+                   text-muted">
+
+            <i
+              class="ri-chat-3-line
+                     display-3
+                     d-block
+                     mb-3">
+            </i>
+
+            <div>
+              Sélectionnez une conversation
+            </div>
+
+          </div>
+
+        }
+
+
+
+        <!-- Conversation sélectionnée -->
+        @if (activeConversation) {
+
+
+          <!-- Loading messages -->
+          @if (loadingMessages) {
+
+            <div
+              class="h-100
+                     d-flex
+                     align-items-center
+                     justify-content-center">
+
+              <div class="text-center">
+
+                <div
+                  class="spinner-border
+                         text-primary
+                         mb-2">
+                </div>
+
+                <div class="text-muted small">
+                  Chargement des messages...
+                </div>
+
+              </div>
+
+            </div>
+
+          }
+
+
+
+          <!-- Messages chargés -->
+          @if (!loadingMessages) {
+
+
+            @for (
+              message of messages;
+              track message.id
+            ) {
+
+              <div
+                class="d-flex mb-3"
+                [class.justify-content-end]="
+                  isMyMessage(message)
+                "
+                [class.justify-content-start]="
+                  !isMyMessage(message)
+                ">
+
+
+                <!-- Avatar vendeur -->
+                @if (!isMyMessage(message)) {
+
+                  <div
+                    class="rounded-circle
+                           bg-primary
+                           d-flex
+                           align-items-center
+                           justify-content-center
+                           text-white
+                           fw-bold
+                           me-2
+                           flex-shrink-0"
+                    style="
+                      width:34px;
+                      height:34px;
+                      font-size:11px;
+                      align-self:flex-end;
+                    ">
+
+                    {{ activeVendorInitial }}
+
+                  </div>
+
+                }
+
+
+
+                <!-- Contenu -->
+                <div>
+
+
+                  <!-- Bulle -->
+                  <div
+                    class="rounded-3
+                           px-3
+                           py-2"
+                    [class.bg-primary]="
+                      isMyMessage(message)
+                    "
+                    [class.text-white]="
+                      isMyMessage(message)
+                    "
+                    [class.bg-white]="
+                      !isMyMessage(message)
+                    "
+                    [class.border]="
+                      !isMyMessage(message)
+                    "
+                    style="
+                      max-width:360px;
+                      word-wrap:break-word;
+                    ">
+
+                    <!-- IMPORTANT :
+                         Laravel utilise "body"
+                         et non "content" -->
+
+                    {{ message.body }}
+
+                  </div>
+
+
+
+                  <!-- Pièces jointes -->
+                  @if (
+                    message.attachments &&
+                    message.attachments.length > 0
+                  ) {
+
+                    <div class="mt-2">
+
+                      @for (
+                        attachment of message.attachments;
+                        track $index
+                      ) {
+
+                        <a
+                          [href]="
+                            messagesService.attachmentUrl(
+                              attachment.FilePath
+                            )
+                          "
+                          target="_blank"
+                          class="d-block small">
+
+                          <i
+                            class="ri-attachment-2 me-1">
+                          </i>
+
+                          {{
+                            attachment.OriginalName ||
+                            attachment.FileName ||
+                            'Pièce jointe'
+                          }}
+
+                        </a>
+
+                      }
+
+                    </div>
+
+                  }
+
+
+
+                  <!-- Heure -->
+                  <div
+                    class="text-muted mt-1"
+                    [class.text-end]="
+                      isMyMessage(message)
+                    "
+                    style="font-size:10px">
+
+                    {{ message.created_at | date:'HH:mm' }}
+
+                  </div>
+
+                </div>
+
+
+
+                <!-- Avatar utilisateur -->
+                @if (isMyMessage(message)) {
+
+                  <div
+                    class="rounded-circle
+                           bg-success
+                           d-flex
+                           align-items-center
+                           justify-content-center
+                           text-white
+                           fw-bold
+                           ms-2
+                           flex-shrink-0"
+                    style="
+                      width:34px;
+                      height:34px;
+                      font-size:11px;
+                      align-self:flex-end;
+                    ">
+
+                    {{ currentUserInitial }}
+
+                  </div>
+
+                }
+
+              </div>
+
+            }
+
+
+
+            <!-- Aucun message -->
+            @if (messages.length === 0) {
+
+              <div
+                class="h-100
+                       d-flex
+                       flex-column
+                       align-items-center
+                       justify-content-center
+                       text-muted">
+
+                <i
+                  class="ri-chat-3-line
+                         display-3
+                         d-block
+                         mb-3">
+                </i>
+
+                <div>
+                  Aucun message dans cette conversation.
+                </div>
+
+                <div class="small mt-1">
+                  Envoyez votre premier message.
+                </div>
+
+              </div>
+
+            }
+
+          }
+
+        }
+
+      </div>
+
+
+
+      <!-- ================================================= -->
+      <!-- INPUT -->
+      <!-- ================================================= -->
+
+      @if (activeConversation) {
+
+        <div
+          class="p-3 border-top bg-white">
+
+
+          <div class="d-flex gap-2">
+
+
+            <input
+              type="text"
+              class="form-control"
+              [(ngModel)]="newMessage"
+              placeholder="Écrivez votre message..."
+              [disabled]="sendingMessage"
+              (keydown.enter)="onEnter($event)"
+            />
+
+
+            <button
+              class="btn btn-primary px-3"
+              (click)="sendMessage()"
+              [disabled]="
+                !newMessage.trim() ||
+                sendingMessage
+              ">
+
+
+              @if (sendingMessage) {
+
+                <span
+                  class="spinner-border
+                         spinner-border-sm">
+                </span>
+
+              } @else {
+
+                <i class="ri-send-plane-fill"></i>
+
+              }
+
+            </button>
+
+          </div>
+
+
+          <div
+            class="text-muted mt-1"
+            style="font-size:11px">
+
+            Appuyez sur Entrée ou cliquez sur le bouton
+            pour envoyer
+
+          </div>
+
+        </div>
+
+      }
+
+    </div>
+
+  </div>
+
+</div>

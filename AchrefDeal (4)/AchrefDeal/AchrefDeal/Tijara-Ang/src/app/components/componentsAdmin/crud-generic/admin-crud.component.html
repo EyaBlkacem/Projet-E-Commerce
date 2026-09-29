@@ -1,0 +1,205 @@
+<app-breadcrumbs [title]="config.title" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+<!-- Stats -->
+<div class="row mb-3 g-3">
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="avatar-sm rounded bg-primary-subtle d-flex align-items-center justify-content-center">
+                    <i class="{{ config.icon }} fs-20 text-primary"></i>
+                </div>
+                <div>
+                    <div class="text-muted fs-13">Total</div>
+                    <div class="fs-20 fw-bold">{{ items.length }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="avatar-sm rounded bg-success-subtle d-flex align-items-center justify-content-center">
+                    <i class="ri-checkbox-circle-line fs-20 text-success"></i>
+                </div>
+                <div>
+                    <div class="text-muted fs-13">Actifs</div>
+                    <div class="fs-20 fw-bold text-success">{{ activeCount }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <div class="col-md-4">
+        <div class="card border-0 shadow-sm">
+            <div class="card-body d-flex align-items-center gap-3">
+                <div class="avatar-sm rounded bg-danger-subtle d-flex align-items-center justify-content-center">
+                    <i class="ri-close-circle-line fs-20 text-danger"></i>
+                </div>
+                <div>
+                    <div class="text-muted fs-13">Inactifs</div>
+                    <div class="fs-20 fw-bold text-danger">{{ inactiveCount }}</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Alerts -->
+@if (saveOk) { <div class="alert alert-success py-2">{{ saveOk }}</div> }
+
+<!-- Toolbar -->
+<div class="card border-0 shadow-sm mb-3">
+    <div class="card-body d-flex flex-wrap gap-2 align-items-center">
+        <div class="flex-fill" style="min-width:220px">
+            <div class="position-relative">
+                <i class="ri-search-line position-absolute top-50 translate-middle-y ms-3 text-muted"></i>
+                <input type="text" class="form-control ps-5" placeholder="Rechercher..."
+                       [(ngModel)]="searchTerm" (input)="applyFilters()">
+            </div>
+        </div>
+        <select class="form-select" style="width:auto" [(ngModel)]="statusFilter" (change)="applyFilters()">
+            <option value="all">Tous</option>
+            <option value="active">Actifs</option>
+            <option value="inactive">Inactifs</option>
+        </select>
+        <button type="button" class="btn btn-primary fw-semibold" (click)="openAdd()"
+                style="background:linear-gradient(135deg,#405189,#0ab39c);border:none">
+            <i class="ri-add-line me-1"></i> Ajouter
+        </button>
+    </div>
+</div>
+
+<!-- Form modal overlay -->
+@if (showForm) {
+    <div class="card border-primary shadow-sm mb-3">
+        <div class="card-header bg-primary-subtle">
+            <h6 class="mb-0">
+                <i class="{{ editingId ? 'ri-edit-line' : 'ri-add-line' }} me-2"></i>
+                {{ editingId ? 'Modifier' : 'Nouveau ' + config.title.toLowerCase() }}
+            </h6>
+        </div>
+        <div class="card-body">
+            @if (saveError) { <div class="alert alert-danger py-2 fs-13">{{ saveError }}</div> }
+            <form [formGroup]="form" (ngSubmit)="save()">
+                <div class="row g-3">
+                    @for (f of config.fields; track f.key) {
+                        <div [class]="'col-md-' + (f.colSize || 6)">
+                            <label class="form-label fw-medium fs-13">
+                                {{ f.label }}
+                                @if (f.required) { <span class="text-danger">*</span> }
+                            </label>
+
+                            @switch (f.type) {
+                                @case ('textarea') {
+                                    <textarea rows="3" class="form-control" [formControlName]="f.key"
+                                        [ngClass]="{'is-invalid': submitted && fc[f.key].errors}"></textarea>
+                                }
+                                @case ('boolean') {
+                                    <div class="form-check form-switch mt-2">
+                                        <input type="checkbox" class="form-check-input" role="switch"
+                                               [formControlName]="f.key" [id]="'sw-' + f.key">
+                                        <label class="form-check-label" [for]="'sw-' + f.key">
+                                            {{ fc[f.key].value ? 'Activé' : 'Désactivé' }}
+                                        </label>
+                                    </div>
+                                }
+                                @case ('number') {
+                                    <input type="number" class="form-control" [formControlName]="f.key"
+                                           [attr.min]="f.min" [attr.max]="f.max" [attr.step]="f.step || 1"
+                                           [ngClass]="{'is-invalid': submitted && fc[f.key].errors}">
+                                }
+                                @case ('date') {
+                                    <input type="date" class="form-control" [formControlName]="f.key"
+                                           [ngClass]="{'is-invalid': submitted && fc[f.key].errors}">
+                                }
+                                @case ('select') {
+                                    <select class="form-select" [formControlName]="f.key"
+                                            [ngClass]="{'is-invalid': submitted && fc[f.key].errors}">
+                                        <option [ngValue]="null">— Sélectionner —</option>
+                                        @for (o of f.options; track o.value) {
+                                            <option [ngValue]="o.value">{{ o.label }}</option>
+                                        }
+                                    </select>
+                                }
+                                @default {
+                                    <input [type]="f.type" class="form-control" [formControlName]="f.key"
+                                           [ngClass]="{'is-invalid': submitted && fc[f.key].errors}">
+                                }
+                            }
+                            @if (f.hint) { <small class="text-muted fs-12">{{ f.hint }}</small> }
+                            @if (submitted && fc[f.key].errors?.['required']) {
+                                <div class="invalid-feedback d-block fs-12">{{ f.label }} requis.</div>
+                            }
+                        </div>
+                    }
+                </div>
+                <div class="text-end mt-3">
+                    <button type="button" class="btn btn-light me-2" (click)="cancel()">Annuler</button>
+                    <button type="submit" class="btn btn-primary" [disabled]="saving">
+                        @if (saving) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                        {{ editingId ? 'Mettre à jour' : 'Créer' }}
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+}
+
+<!-- Table -->
+<div class="card border-0 shadow-sm">
+    <div class="card-body p-0">
+        @if (loading) {
+            <div class="text-center py-5"><div class="spinner-border text-primary"></div></div>
+        } @else if (filtered.length === 0) {
+            <div class="text-center py-5 text-muted">
+                <i class="{{ config.icon }} fs-48 opacity-25 d-block mb-2"></i>
+                Aucun élément. Cliquez sur <strong>Ajouter</strong> pour commencer.
+            </div>
+        } @else {
+            <div class="table-responsive">
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr>
+                            @for (col of config.listColumns; track col.key) {
+                                <th>{{ col.label }}</th>
+                            }
+                            <th class="text-end">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        @for (item of filtered; track getItemId(item)) {
+                            <tr>
+                                @for (col of config.listColumns; track col.key) {
+                                    <td>
+                                        @if (col.type === 'badge') {
+                                            <span class="badge"
+                                                  [class.bg-success]="item[col.key] ?? item.active ?? item.Active"
+                                                  [class.bg-secondary]="!(item[col.key] ?? item.active ?? item.Active)">
+                                                {{ (item[col.key] ?? item.active ?? item.Active) ? 'Actif' : 'Inactif' }}
+                                            </span>
+                                        } @else {
+                                            {{ formatCell(item, col) }}
+                                        }
+                                    </td>
+                                }
+                                <td class="text-end">
+                                    <button type="button" class="btn btn-sm btn-soft-primary me-1"
+                                            (click)="openEdit(item)" title="Modifier">
+                                        <i class="ri-edit-line"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-soft-warning me-1"
+                                            (click)="toggleActive(item)" title="Activer/Désactiver">
+                                        <i class="ri-toggle-line"></i>
+                                    </button>
+                                    <button type="button" class="btn btn-sm btn-soft-danger"
+                                            (click)="remove(item)" title="Supprimer">
+                                        <i class="ri-delete-bin-line"></i>
+                                    </button>
+                                </td>
+                            </tr>
+                        }
+                    </tbody>
+                </table>
+            </div>
+        }
+    </div>
+</div>

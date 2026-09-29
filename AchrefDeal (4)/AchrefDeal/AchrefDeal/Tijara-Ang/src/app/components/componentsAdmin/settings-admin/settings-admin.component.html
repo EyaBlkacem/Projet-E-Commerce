@@ -1,0 +1,406 @@
+<div class="settings-page">
+
+    <app-breadcrumbs title="Paramètres" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+    <!-- ══════════ Vrais paramètres (table adminsettings) ══════════ -->
+    <div class="card card-section mb-4">
+        <div class="section-header d-flex align-items-center justify-content-between">
+            <span><i class="ri-key-2-line"></i> Paramètres du site (données réelles)</span>
+            <button type="button" class="btn btn-sm btn-primary" (click)="showAddSetting = !showAddSetting">
+                <i class="ri-add-line me-1"></i>Nouveau
+            </button>
+        </div>
+        <div class="card-body p-0">
+            @if (realSettingsLoading) {
+                <div class="text-center py-4"><div class="spinner-border text-primary"></div></div>
+            } @else {
+                @if (showAddSetting) {
+                    <div class="p-3 border-bottom d-flex gap-2 align-items-center bg-light">
+                        <input type="text" class="form-control form-control-sm" placeholder="clé (ex: site_name)" [(ngModel)]="newKey" style="max-width:220px" />
+                        <input type="text" class="form-control form-control-sm" placeholder="valeur" [(ngModel)]="newValue" />
+                        <button class="btn btn-sm btn-success" (click)="addSetting()">Ajouter</button>
+                        <button class="btn btn-sm btn-light" (click)="showAddSetting = false">Annuler</button>
+                    </div>
+                }
+                <table class="table table-hover align-middle mb-0">
+                    <thead class="table-light">
+                        <tr><th class="ps-3">Clé</th><th>Valeur</th><th style="width:140px" class="text-end pe-3">Actions</th></tr>
+                    </thead>
+                    <tbody>
+                        @for (s of realSettings; track s.key) {
+                            <tr>
+                                <td class="ps-3 fs-13 fw-semibold">{{ s.key }}</td>
+                                <td class="fs-13">
+                                    @if (editingKey === s.key) {
+                                        <input type="text" class="form-control form-control-sm" [(ngModel)]="editValue" />
+                                    } @else {
+                                        {{ s.value }}
+                                    }
+                                </td>
+                                <td class="text-end pe-3">
+                                    @if (editingKey === s.key) {
+                                        <button class="btn btn-sm btn-success me-1" (click)="saveEditSetting(s)"><i class="ri-check-line"></i></button>
+                                        <button class="btn btn-sm btn-light" (click)="cancelEditSetting()"><i class="ri-close-line"></i></button>
+                                    } @else {
+                                        <button class="btn btn-sm btn-light me-1" (click)="startEditSetting(s)"><i class="ri-edit-line"></i></button>
+                                        <button class="btn btn-sm btn-light text-danger" (click)="deleteSetting(s)"><i class="ri-delete-bin-line"></i></button>
+                                    }
+                                </td>
+                            </tr>
+                        }
+                        @if (!realSettings.length) {
+                            <tr><td colspan="3" class="text-center text-muted py-4">Aucun paramètre.</td></tr>
+                        }
+                    </tbody>
+                </table>
+            }
+        </div>
+    </div>
+    <!-- ══════════ Fin vrais paramètres ══════════ -->
+
+    @if (loading) {
+        <div class="text-center py-5">
+            <div class="spinner-border text-primary"></div>
+            <p class="mt-2 text-muted">Chargement des paramètres...</p>
+        </div>
+    } @else {
+        <form [formGroup]="form" (ngSubmit)="save()">
+
+            <!-- Alerts -->
+            @if (saveError) {
+                <div class="alert alert-danger d-flex align-items-center gap-2">
+                    <i class="ri-error-warning-line"></i> {{ saveError }}
+                </div>
+            }
+            @if (saveOk) {
+                <div class="alert alert-success d-flex align-items-center gap-2">
+                    <i class="ri-checkbox-circle-line"></i> {{ saveOk }}
+                </div>
+            }
+
+            <div class="row">
+
+                <!-- ── FINANCIER ──────────────────────────────────────── -->
+                <div class="col-lg-6">
+                    <div class="card card-section">
+                        <div class="section-header"><i class="ri-money-dollar-circle-line"></i> Financier</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="field-label">Commission transfert monnaie (%)</label>
+                                <input type="number" step="0.01" class="form-control"
+                                       formControlName="money_transfer_commission_pct">
+                            </div>
+                            <div class="mb-0">
+                                <label class="field-label">Commission achat standard (%)</label>
+                                <input type="number" step="0.01" class="form-control"
+                                       formControlName="standard_purchase_commission_pct">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── ABONNEMENTS PRO ───────────────────────────────── -->
+                <div class="col-lg-6">
+                    <div class="card card-section">
+                        <div class="section-header"><i class="ri-vip-crown-line"></i> Abonnements PRO</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="field-label">Prix PRO User / mois</label>
+                                <input type="number" step="0.01" class="form-control"
+                                       formControlName="account_pro_user_month_price">
+                            </div>
+                            <div class="mb-3">
+                                <label class="field-label">Prix PRO Entreprise / mois</label>
+                                <input type="number" step="0.01" class="form-control"
+                                       formControlName="account_pro_entreprise_month_price">
+                            </div>
+                            <div class="mb-0">
+                                <label class="field-label">Durée d'abonnement minimum (1-12 mois)</label>
+                                <input type="number" min="1" max="12" class="form-control"
+                                       formControlName="min_subscription_months">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── DURÉES ANNONCES ───────────────────────────────── -->
+                <div class="col-lg-6">
+                    <div class="card card-section">
+                        <div class="section-header"><i class="ri-calendar-line"></i> Durées max annonces (jours)</div>
+                        <div class="card-body">
+                            <div class="mb-3">
+                                <label class="field-label">Jobs (1-366)</label>
+                                <input type="number" min="1" max="366" class="form-control"
+                                       formControlName="max_jobs_duration_days">
+                            </div>
+                            <div class="mb-3">
+                                <label class="field-label">Missions (1-366)</label>
+                                <input type="number" min="1" max="366" class="form-control"
+                                       formControlName="max_missions_duration_days">
+                            </div>
+                            <div class="mb-0">
+                                <label class="field-label">Freelance (1-366)</label>
+                                <input type="number" min="1" max="366" class="form-control"
+                                       formControlName="max_freelance_duration_days">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── LIMITES COMPTE STANDARD ───────────────────────── -->
+                <div class="col-lg-6">
+                    <div class="card card-section">
+                        <div class="section-header"><i class="ri-user-settings-line"></i> Limites compte Standard</div>
+                        <div class="card-body">
+                            <div class="row g-3">
+                                <div class="col-md-6">
+                                    <label class="field-label">Max magasins</label>
+                                    <input type="number" min="0" class="form-control"
+                                           formControlName="standard_max_magasin">
+                                </div>
+                                <div class="col-md-6">
+                                    <label class="field-label">Max points</label>
+                                    <input type="number" min="0" class="form-control"
+                                           formControlName="standard_max_points">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">Min pts annonce</label>
+                                    <input type="number" min="0" class="form-control"
+                                           formControlName="min_add_annonce_points">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">Min pts freelance</label>
+                                    <input type="number" min="0" class="form-control"
+                                           formControlName="min_add_freelance_points">
+                                </div>
+                                <div class="col-md-4">
+                                    <label class="field-label">Min pts produit</label>
+                                    <input type="number" min="0" class="form-control"
+                                           formControlName="min_add_products_points">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── FONCTIONNALITÉS (TOGGLES) ─────────────────────── -->
+                <div class="col-lg-6">
+                    <div class="card card-section">
+                        <div class="section-header"><i class="ri-toggle-line"></i> Fonctionnalités</div>
+                        <div class="card-body">
+                            <div class="toggle-row">
+                                <span class="label">Mode Magasin & Deals</span>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           formControlName="mode_magasin_deals_active">
+                                </div>
+                            </div>
+                            <div class="toggle-row">
+                                <span class="label">Boost Ads</span>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           formControlName="boost_ads_enabled">
+                                </div>
+                            </div>
+                            <div class="toggle-row">
+                                <span class="label">Upgrade Account</span>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           formControlName="upgrade_account_enabled">
+                                </div>
+                            </div>
+                            <div class="toggle-row">
+                                <span class="label">Buy Points</span>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           formControlName="buy_points_enabled">
+                                </div>
+                            </div>
+                            <div class="toggle-row">
+                                <span class="label">Premium Account</span>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           formControlName="premium_account_enabled">
+                                </div>
+                            </div>
+                            <div class="toggle-row">
+                                <span class="label">Rating preview (Standard)</span>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           formControlName="rating_preview_standard_enabled">
+                                </div>
+                            </div>
+                            <div class="toggle-row mb-0">
+                                <span class="label">Rating preview (global)</span>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           formControlName="rating_preview_enabled">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- ── COUPONS ───────────────────────────────────────── -->
+                <div class="col-lg-6">
+                    <div class="card card-section">
+                        <div class="section-header"><i class="ri-coupon-2-line"></i> Coupons</div>
+                        <div class="card-body">
+                            <div class="toggle-row">
+                                <span class="label">Coupon Boost Ads</span>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           formControlName="boost_ads_coupon_enabled">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="field-label">Prix coupon Boost Ads</label>
+                                <input type="number" step="0.01" min="0" class="form-control"
+                                       formControlName="boost_ads_coupon_price"
+                                       [attr.disabled]="!f['boost_ads_coupon_enabled'].value ? true : null">
+                            </div>
+                            <div class="toggle-row">
+                                <span class="label">Coupon Freelance</span>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" role="switch"
+                                           formControlName="freelance_coupon_enabled">
+                                </div>
+                            </div>
+                            <div class="mb-0">
+                                <label class="field-label">Prix coupon Freelance</label>
+                                <input type="number" step="0.01" min="0" class="form-control"
+                                       formControlName="freelance_coupon_price"
+                                       [attr.disabled]="!f['freelance_coupon_enabled'].value ? true : null">
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+            </div>
+
+            <div class="text-end mt-2 mb-4">
+                <button type="submit" class="btn btn-primary px-4 fw-semibold" [disabled]="saving">
+                    @if (saving) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                    <i class="ri-save-line me-1" *ngIf="!saving"></i>
+                    Enregistrer les paramètres
+                </button>
+            </div>
+        </form>
+
+        <!-- ═══ PACKETS DE POINTS (CRUD) ═══════════════════════════════ -->
+        <div class="card card-section">
+            <div class="section-header d-flex justify-content-between">
+                <span><i class="ri-coin-line"></i> Packets de points (soldes)</span>
+                <button type="button" class="btn btn-sm btn-light fw-semibold"
+                        (click)="openAddPacket()" *ngIf="!showPacketForm">
+                    <i class="ri-add-line"></i> Ajouter un packet
+                </button>
+            </div>
+            <div class="card-body">
+
+                <!-- Formulaire add/edit packet -->
+                @if (showPacketForm) {
+                    <form [formGroup]="packetForm" (ngSubmit)="savePacket()"
+                          class="border rounded p-3 mb-3 bg-light">
+                        <h6 class="mb-3">
+                            {{ editingPacketId ? 'Modifier le packet' : 'Nouveau packet' }}
+                        </h6>
+                        @if (packetError) {
+                            <div class="alert alert-danger py-2 fs-13">{{ packetError }}</div>
+                        }
+                        <div class="row g-3">
+                            <div class="col-md-6">
+                                <label class="field-label">Titre *</label>
+                                <input type="text" class="form-control" formControlName="title"
+                                       [ngClass]="{'is-invalid': packetSubmitted && pf['title'].errors}">
+                            </div>
+                            <div class="col-md-6">
+                                <label class="field-label">Nombre de points *</label>
+                                <input type="number" min="1" class="form-control" formControlName="points_count"
+                                       [ngClass]="{'is-invalid': packetSubmitted && pf['points_count'].errors}">
+                            </div>
+                            <div class="col-12">
+                                <label class="field-label">Description</label>
+                                <textarea rows="2" class="form-control" formControlName="description"></textarea>
+                            </div>
+                            <div class="col-md-4">
+                                <label class="field-label">Prix *</label>
+                                <input type="number" step="0.01" min="0" class="form-control" formControlName="price"
+                                       [ngClass]="{'is-invalid': packetSubmitted && pf['price'].errors}">
+                            </div>
+                            <div class="col-md-4">
+                                <label class="field-label">Remise (%)</label>
+                                <input type="number" step="0.01" min="0" max="100" class="form-control"
+                                       formControlName="discount">
+                            </div>
+                            <div class="col-md-4 d-flex align-items-end">
+                                <div class="form-check form-switch">
+                                    <input type="checkbox" class="form-check-input" role="switch"
+                                           formControlName="active" id="pkActive">
+                                    <label class="form-check-label" for="pkActive">Actif</label>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="text-end mt-3">
+                            <button type="button" class="btn btn-light me-2" (click)="cancelPacket()">Annuler</button>
+                            <button type="submit" class="btn btn-primary" [disabled]="packetSaving">
+                                @if (packetSaving) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                                {{ editingPacketId ? 'Mettre à jour' : 'Créer' }}
+                            </button>
+                        </div>
+                    </form>
+                }
+
+                <!-- Liste -->
+                @if (packetsLoading) {
+                    <div class="text-center py-3"><div class="spinner-border spinner-border-sm"></div></div>
+                } @else if (packets.length === 0) {
+                    <div class="text-center py-4 text-muted">
+                        <i class="ri-inbox-line fs-24 d-block mb-2"></i>
+                        Aucun packet. Cliquez sur <strong>Ajouter un packet</strong> pour en créer un.
+                    </div>
+                } @else {
+                    <div class="row g-3">
+                        @for (pk of packets; track (pk.id_packet ?? pk.idPacket)) {
+                            <div class="col-md-6 col-xl-4">
+                                <div class="packet-card" [class.inactive]="!pk.active">
+                                    <div class="d-flex justify-content-between mb-2">
+                                        <div class="packet-title">{{ pk.title }}</div>
+                                        <span class="badge" [class.bg-success]="pk.active" [class.bg-secondary]="!pk.active">
+                                            {{ pk.active ? 'Actif' : 'Inactif' }}
+                                        </span>
+                                    </div>
+                                    @if (pk.description) {
+                                        <div class="text-muted fs-12 mb-2">{{ pk.description }}</div>
+                                    }
+                                    <div class="d-flex justify-content-between align-items-center mb-2">
+                                        <span class="packet-points">
+                                            <i class="ri-coin-line"></i> {{ pk.points_count ?? pk.pointsCount }} pts
+                                        </span>
+                                        <span class="packet-price">{{ pk.price | number:'1.2-2' }} DT</span>
+                                    </div>
+                                    @if (pk.discount > 0) {
+                                        <div class="text-warning fs-12 mb-2">
+                                            <i class="ri-percent-line"></i> Remise {{ pk.discount }}%
+                                        </div>
+                                    }
+                                    <div class="d-flex gap-2 mt-2">
+                                        <button type="button" class="btn btn-sm btn-outline-primary flex-fill"
+                                                (click)="openEditPacket(pk)">
+                                            <i class="ri-edit-line"></i> Modifier
+                                        </button>
+                                        <button type="button" class="btn btn-sm btn-outline-danger"
+                                                (click)="deletePacket(pk)">
+                                            <i class="ri-delete-bin-line"></i>
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        }
+                    </div>
+                }
+
+            </div>
+        </div>
+    }
+</div>

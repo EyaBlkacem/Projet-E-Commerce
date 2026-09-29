@@ -1,0 +1,150 @@
+<!-- <p>addreclamation works! {{ n | convert }}</p> -->
+<div class="row">
+    <div class="col-12">
+        <div class="page-title-box d-sm-flex align-items-center justify-content-between">
+            <h4 class="mb-sm-0">Basic Elements</h4>
+            <div class="page-title-right">
+                <ol class="breadcrumb m-0">
+                    <li class="breadcrumb-item"><a>Forms</a></li>
+                    <li class="breadcrumb-item active">Basic Elements</li>
+                </ol>
+            </div>
+        </div>
+    </div>
+</div>
+
+<div class="row">
+    <form  action="javascript:void(0);"  [formGroup]="userForm"  >
+    <div class="col-lg-12">
+        <div class="card">
+            <div class="align-items-center d-flex card-header">
+                <h4 class="card-title mb-0 flex-grow-1">{{ 'MENUITEMS.MENU.Add' | translate }} {{ 'MENUITEMS.USERS.User' | translate }}</h4>
+                <div class="flex-shrink-0">
+                    <div class="form-check form-switch form-switch-right form-switch-md"><label
+                            class="form-label text-muted form-label">Show Code</label> <input
+                            class="form-check-input code-switcher" type="checkbox"></div>
+                </div>
+            </div>
+
+
+            <div class="card-body card-body">
+                <div *ngIf="alertMessage" class="alert alert-danger">
+                    {{ alertMessage }}
+                  </div>
+                <div class="live-preview">
+                    <div class="gy-4 row">
+                        <div class="col-md-6 col-xxl-3">
+                            <div>
+                                <label class="form-label form-label" for="basiInput">{{ 'MENUITEMS.USERS.FirstName' | translate }}</label> 
+                                <input  id="FirstName" class="form-control form-control" type="text" name="FirstName" placeholder="{{ 'HEADER.EnterFirstNamePlaceholder.TEXT' | translate }}" formControlName="FirstName"> 
+                                    <div *ngIf="userForm.controls['FirstName'].invalid && userForm.controls['FirstName'].touched">
+                                        <div *ngIf="userForm.controls['FirstName'].errors?.['required']"  style="color:red">FirstName is required.</div>
+                                        <div *ngIf="userForm.controls['FirstName'].errors?.['minlength']" style="color:red" >FirstName must be at least 3 characters long.</div>
+                                    </div>
+                            </div>
+                        </div>
+                        <div class="col-md-6 col-xxl-3">
+                            <div>
+                                <label class="form-label form-label" for="basiInput">{{ 'MENUITEMS.USERS.LastName' | translate }}</label> 
+                                <input  id="LastName" class="form-control form-control" type="text" name="LastName" placeholder="LastName" formControlName="LastName"> 
+                                    <div *ngIf="userForm.controls['LastName'].invalid && userForm.controls['LastName'].touched">
+                                        <div *ngIf="userForm.controls['LastName'].errors?.['required']"  style="color:red">LastName is required.</div>
+                                        <div *ngIf="userForm.controls['LastName'].errors?.['minlength']" style="color:red" >LastName must be at least 3 characters long.</div>
+                                    </div>
+                            </div>
+                        </div>
+
+                        
+
+                        <div class="col-md-6 col-xxl-3">
+                            <div>
+                                <label class="form-label form-label" for="basiInput">{{ 'MENUITEMS.USERS.Email' | translate }}</label> 
+                                <input  id="Email" class="form-control form-control" type="text" name="Email" placeholder="Email" formControlName="Email"> 
+                                    <div *ngIf="userForm.controls['Email'].invalid && userForm.controls['Email'].touched">
+                                        <div *ngIf="userForm.controls['Email'].errors?.['required']"  style="color:red" >Email is required.</div>
+                                        <div *ngIf="userForm.controls['Email'].errors?.['email']" style="color:red" >Email must be at least 3 characters long.</div>
+                                    </div> 
+                            </div>
+                        </div>
+
+                          
+
+                        <!-- SELECT rounded Role -->
+                        <div class="col-md-6 ">
+                            <label class="form-label form-label" for="basiInput">{{ 'MENUITEMS.USERS.Roles' | translate }}</label>
+
+                                <select class="form-select rounded-pill mb-3" aria-label="Default select example" name="IdRole" placeholder=" Role " formControlName="IdRole">
+                                    <!-- <option *ngFor="let item of Roles" [value]="item.idRole">{{item.roleUser}}</option> -->
+                                    <option value="1">Candidates</option>
+                                    <option value="2">Entreprise</option>
+                                    <option value="3">Admin</option>
+                                </select>
+                        </div>
+
+                        
+ 
+ 
+                        <!-- ***************** -->
+                        <div class="col-md-6 col-xxl-3">
+                            <div class="form-check form-switch form-switch-custom form-switch-secondary mb-3">
+                                <input class="form-check-input" type="checkbox" role="switch" id="Active"  formControlName="Active" (change)="changeIsActive()">
+                                <label class="form-check-label form-label" for="SwitchCheck10" >{{ 'MENUITEMS.USERS.Active' | translate }}</label>
+                            </div> 
+                        </div>
+
+
+                        <!-- Radio -->
+                        <div class="col-md-6 col-xxl-3">
+                            {{ 'MENUITEMS.USERS.Gender' | translate }}
+                            <div class="col-md-6 form-check form-radio-success mb-3">
+                                <input class="form-check-input" type="radio" name="Gender" id="genderMale" formControlName="Gender" value="male"  (change)="changeGender()">
+                                <label class="form-check-label form-label" for="formradioRight7">  {{ 'MENUITEMS.USERS.Male' | translate }} </label>
+                            </div>
+                            <div class=" col-md-6 form-check form-radio-success mb-3">
+                                <input class="form-check-input" type="radio" name="Gender" id="genderFemale" formControlName="Gender" value="female"  (change)="changeGender()">
+                                <label class="form-check-label form-label" for="formradioRight7"> {{ 'MENUITEMS.USERS.Femal' | translate }} </label>
+                            </div>
+                        </div>
+                         
+                        <!-- *********** -->
+                        <!-- <div class="col-md-4">
+                            <div class="input-group">
+                                    <input id="ProfilePicture" class="form-control " type="file"   name="ProfilePicture" placeholder=""  (change)="uploadPhotoProfile($event); "> 
+                                    <label class="input-group-text form-label" for="inputGroupFile02">{{ 'MENUITEMS.USERS.PROFILE' | translate }}</label><br>
+                                    
+                             </div>
+                             <img src="{{photoProfile}}" height="150px" width="200px">
+                            </div> -->
+
+                        <!-- ****** -->
+ 
+
+                        
+ 
+                        <div class="row">
+                            <div class="col-lg-12">
+                                <div class="text-end">
+                                  <div class="text-center">
+                                    <button type="button" class="btn btn-success mx-1 my-1" (click)="onSubmit()" rippleEffect>{{ 'MENUITEMS.APPS.Submit' | translate }}</button>
+                                    <button type="button" class="btn btn-danger mx-1 my-1" rippleEffect>{{ 'MENUITEMS.APPS.Reset' | translate }}</button>
+                                  </div> 
+                                </div>
+                              </div>
+                        </div>
+                         
+                    </div>
+                    <!-- gy -->
+                </div>
+                <!-- live-preview -->
+            </div>
+            <!-- card-body -->
+        </div>
+        <!-- card -->
+    </div>
+    <!-- col-lg-12 -->
+</form>
+</div>
+<!-- row -->
+ 
+
+

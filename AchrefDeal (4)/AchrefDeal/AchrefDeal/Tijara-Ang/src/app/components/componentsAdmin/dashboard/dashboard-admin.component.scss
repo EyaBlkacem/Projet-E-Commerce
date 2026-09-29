@@ -1,0 +1,337 @@
+/* ================= GLOBAL ================= */
+
+.card {
+  border: none;
+  border-radius: 18px;
+  box-shadow: 0 3px 15px rgba(0,0,0,.05);
+  transition: .3s;
+}
+
+.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 10px 35px rgba(0,0,0,.08);
+}
+
+.card-header {
+  background: transparent;
+  border-bottom: 1px solid #eef2f7;
+  padding: 1rem 1.4rem;
+}
+
+/* ================= BANNER ================= */
+
+.dashboard-banner {
+  background: linear-gradient(
+    135deg,
+    #1a2d6e 0%,
+    #405189 50%,
+    #0ab39c 100%
+  );
+
+  position: relative;
+  overflow: hidden;
+}
+
+.dashboard-logo {
+  width: 70px;
+  height: 70px;
+  border-radius: 16px;
+  background: rgba(255,255,255,.15);
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 30px;
+  color: white;
+}
+
+.dashboard-filter .btn {
+  background: rgba(255,255,255,.12);
+  color: white;
+  border: none;
+}
+
+.dashboard-filter .active {
+  background: white;
+  color: #405189;
+}
+
+/* ================= KPI ================= */
+
+.kpi-card {
+  cursor: pointer;
+}
+
+.kpi-icon {
+  width: 55px;
+  height: 55px;
+  border-radius: 14px;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 24px;
+}
+
+.kpi-label {
+  font-size: 13px;
+  color: #878a99;
+  font-weight: 600;
+}
+
+.kpi-value {
+  font-size: 28px;
+  font-weight: 700;
+  margin-top: 5px;
+}
+
+.kpi-progress {
+  height: 6px;
+  border-radius: 999px;
+  background: #eef2f7;
+}
+
+.kpi-progress-bar {
+  height: 100%;
+  border-radius: 999px;
+  background: linear-gradient(
+    90deg,
+    #405189,
+    #0ab39c
+  );
+}
+
+/* ================= ALERT ================= */
+
+.pending-alert {
+  background: #fff8ec;
+  border-left: 4px solid #f7b84b;
+  padding: 16px 20px;
+  border-radius: 14px;
+}
+
+/* ================= CHART ================= */
+
+.chart-wrapper {
+  height: 280px;
+
+  display: flex;
+  align-items: flex-end;
+  gap: 12px;
+}
+
+.chart-bar-wrapper {
+  flex: 1;
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+
+.chart-bar {
+  width: 100%;
+  border-radius: 12px 12px 0 0;
+
+  background: linear-gradient(
+    180deg,
+    #405189,
+    #0ab39c
+  );
+
+  transition: .4s;
+}
+
+.chart-bar.active {
+  background: #f7b84b;
+}
+
+.chart-label {
+  margin-top: 8px;
+  font-size: 12px;
+}
+
+.chart-label.active {
+  color: #405189;
+  font-weight: 700;
+}
+
+.chart-value {
+  font-size: 12px;
+  margin-bottom: 6px;
+  color: #878a99;
+}
+
+/* ================= STATUS ================= */
+
+.status-item {
+  margin-bottom: 15px;
+}
+
+/* ================= VENDORS ================= */
+
+.vendor-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+
+  padding: 18px 22px;
+
+  border-bottom: 1px solid #f1f3f7;
+}
+
+.vendor-avatar {
+  width: 42px;
+  height: 42px;
+
+  border-radius: 12px;
+
+  background: linear-gradient(
+    135deg,
+    #405189,
+    #0ab39c
+  );
+
+  color: white;
+  font-weight: 700;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+/* ================= TABLE ================= */
+
+.table th {
+  color: #878a99;
+  font-size: 12px;
+}
+
+.table td {
+  vertical-align: middle;
+}
+
+.mini-avatar {
+  width: 32px;
+  height: 32px;
+
+  border-radius: 50%;
+
+  background: #405189;
+  color: white;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-size: 11px;
+  font-weight: 700;
+}
+
+/* ================= TOP VENDORS ================= */
+
+.top-vendor-card {
+  position: relative;
+
+  text-align: center;
+
+  padding: 25px;
+
+  border-radius: 16px;
+
+  background: #f8fafc;
+}
+
+.rank-badge {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+
+  background: #f7b84b;
+  color: white;
+
+  padding: 5px 10px;
+
+  border-radius: 999px;
+
+  font-size: 12px;
+}
+
+.top-avatar {
+  width: 65px;
+  height: 65px;
+
+  border-radius: 50%;
+
+  background: linear-gradient(
+    135deg,
+    #405189,
+    #0ab39c
+  );
+
+  color: white;
+
+  margin: auto;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  font-weight: 700;
+}
+
+.vendor-revenue {
+  font-size: 24px;
+  font-weight: 700;
+  color: #0ab39c;
+}
+
+/* ================= ACTIVITY ================= */
+
+.activity-item {
+  display: flex;
+  align-items: center;
+  gap: 15px;
+
+  padding: 15px 0;
+
+  border-bottom: 1px dashed #e9ebec;
+}
+
+.activity-item:last-child {
+  border-bottom: none;
+}
+
+.activity-icon {
+  width: 42px;
+  height: 42px;
+
+  border-radius: 50%;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.activity-text {
+  font-size: 14px;
+  font-weight: 500;
+}
+
+/* ================= EMPTY ================= */
+
+.empty-state,
+.empty-chart {
+  text-align: center;
+  padding: 50px 20px;
+  color: #878a99;
+}
+
+.empty-state i,
+.empty-chart i {
+  font-size: 48px;
+  opacity: .4;
+  margin-bottom: 10px;
+  display: block;
+}

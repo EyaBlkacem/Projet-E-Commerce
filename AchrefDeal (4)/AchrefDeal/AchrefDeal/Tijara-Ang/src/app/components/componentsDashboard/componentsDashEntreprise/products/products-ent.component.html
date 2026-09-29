@@ -1,0 +1,448 @@
+<app-breadcrumbs [title]="'Mes Produits'" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+<!-- -- KPI -------------------------------------------------------------------- -->
+<div class="row g-3 mb-4">
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-center py-3" style="border-radius:14px">
+      <div class="mx-auto mb-2 kpi-icon" style="background:#405189"><i class="ri-box-3-line text-white fs-20"></i></div>
+      <h3 class="fw-bold mb-0">{{ products.length }}</h3>
+      <small class="text-muted">Total produits</small>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-center py-3" style="border-radius:14px">
+      <div class="mx-auto mb-2 kpi-icon" style="background:#0ab39c"><i class="ri-checkbox-circle-line text-white fs-20"></i></div>
+      <h3 class="fw-bold mb-0 text-success">{{ activeCount }}</h3>
+      <small class="text-muted">Actifs</small>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-center py-3" style="border-radius:14px">
+      <div class="mx-auto mb-2 kpi-icon" style="background:#f7b84b"><i class="ri-time-line text-white fs-20"></i></div>
+      <h3 class="fw-bold mb-0 text-warning">{{ pendingCount }}</h3>
+      <small class="text-muted">En attente</small>
+    </div>
+  </div>
+  <div class="col-6 col-xl-3">
+    <div class="card border-0 shadow-sm text-center py-3" style="border-radius:14px">
+      <div class="mx-auto mb-2 kpi-icon" style="background:#f06548"><i class="ri-eye-off-line text-white fs-20"></i></div>
+      <h3 class="fw-bold mb-0 text-danger">{{ inactiveCount }}</h3>
+      <small class="text-muted">Inactifs</small>
+    </div>
+  </div>
+</div>
+
+<!-- -- FORMULAIRE AJOUT / ÉDITION ------------------------------------------- -->
+@if (showForm) {
+  <div class="card border-0 shadow mb-4 rounded-4 overflow-hidden product-form-card">
+    <div class="px-4 py-3 d-flex align-items-center gap-2"
+         style="background:linear-gradient(90deg,#405189,#3a4caa)">
+      <i class="{{editMode ? 'ri-edit-line' : 'ri-add-circle-line'}} text-white fs-18"></i>
+      <h6 class="fw-bold text-white mb-0">{{ editMode ? 'Modifier le produit' : 'Ajouter un produit' }}</h6>
+      <button class="btn btn-sm ms-auto text-white opacity-75"
+              style="background:rgba(255,255,255,.15);border-radius:8px"
+              (click)="cancelForm()"><i class="ri-close-line"></i></button>
+    </div>
+
+    <div class="px-4 pt-3">
+      <div class="d-flex align-items-center justify-content-between mb-1">
+        <span class="fs-12 fw-semibold text-muted">
+          <i class="ri-flag-line me-1"></i>Progression du formulaire
+        </span>
+        <span class="fs-12 fw-semibold" style="color:#405189">
+          Étape {{ f['name'].valid ? (f['description'].valid ? (selectedCategId ? 3 : 2) : 1) : 1 }} / 3
+        </span>
+      </div>
+      <div class="progress" style="height:6px;border-radius:4px">
+        <div class="progress-bar bg-primary" role="progressbar"
+             [style.width.%]="(f['name'].valid ? 33 : 0) + (f['description'].valid ? 33 : 0) + (selectedCategId ? 34 : 0)"
+             style="transition:width .3s ease"></div>
+      </div>
+    </div>
+
+    <div class="card-body p-4">
+      <div class="row g-4">
+
+        <div class="col-lg-7">
+          <form [formGroup]="productForm" (ngSubmit)="saveProduct()">
+            <div class="row g-4">
+
+              <div class="col-12">
+                <label class="form-label fw-semibold">Titre du produit <span class="text-danger">*</span></label>
+                <input id="productNameInput" type="text" class="form-control form-control-lg rounded-3"
+                       formControlName="name" [maxlength]="titleMaxLength"
+                       placeholder="Ex: Chaussures Nike Air Max 90"
+                       [class.is-invalid]="f['name'].invalid && f['name'].touched"
+                       [class.is-valid]="f['name'].valid && f['name'].touched">
+                <div class="d-flex justify-content-between mt-1">
+                  <div class="invalid-feedback d-block" [class.d-none]="!(f['name'].invalid && f['name'].touched)">
+                    Minimum 3 caractères.
+                  </div>
+                  <span class="fs-12 text-muted ms-auto">
+                    {{ (f['name'].value || '').length }}/{{ titleMaxLength }} caractères
+                  </span>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold">Description <span class="text-danger">*</span></label>
+                <div [class.is-valid-wrapper]="f['description'].valid && f['description'].touched">
+                  <ckeditor
+                    [editor]="Editor"
+                    [config]="editorConfig"
+                    formControlName="description">
+                  </ckeditor>
+                </div>
+                @if (f['description'].invalid && f['description'].touched) {
+                  <div class="text-danger fs-12 mt-1">Minimum 10 caractères.</div>
+                }
+              </div>
+
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">Prix (DT) <span class="text-danger">*</span></label>
+                <div class="input-group">
+                  <input type="text" class="form-control rounded-3" formControlName="price"
+                         placeholder="Ex: 150.000"
+                         [class.is-invalid]="f['price'].invalid && f['price'].touched"
+                         [class.is-valid]="f['price'].valid && f['price'].touched">
+                  <span class="input-group-text">DT</span>
+                </div>
+                @if (f['price'].invalid && f['price'].touched) {
+                  <div class="text-danger fs-12 mt-1">Prix invalide (ex: 150 ou 150.500).</div>
+                }
+              </div>
+
+              <div class="col-sm-6">
+                <label class="form-label fw-semibold">Stock disponible</label>
+                <input type="number" class="form-control rounded-3" formControlName="stock"
+                       placeholder="0" min="0">
+              </div>
+
+              <div class="col-12">
+                <!--
+                  ?? CORRIGÉ — la catégorie est désormais obligatoire (voir
+                  products-ent.component.ts : category_id a Validators.required).
+                  La colonne IdCateg est NOT NULL + FK vers Categories en base ;
+                  laisser croire que le champ est "recommandé" (optionnel)
+                  provoquait un 500 backend (Column 'IdCateg' cannot be null)
+                  dès que l'utilisateur validait sans choisir de catégorie.
+                -->
+                <label class="form-label fw-semibold">
+                  Catégorie <span class="text-danger">*</span>
+                </label>
+                <select class="form-select rounded-3" formControlName="category_id"
+                        [class.is-invalid]="f['category_id'].invalid && f['category_id'].touched"
+                        [class.is-valid]="f['category_id'].valid && f['category_id'].touched">
+                  <option [ngValue]="null">-- Choisir une catégorie --</option>
+                  @for (cat of categories; track cat.id) {
+                    <option [ngValue]="cat.id">{{ cat.name_fr }}</option>
+                  }
+                </select>
+                @if (f['category_id'].invalid && f['category_id'].touched) {
+                  <div class="text-danger fs-12 mt-1">La catégorie est obligatoire.</div>
+                } @else {
+                  <div class="fs-12 text-muted mt-1">
+                    <i class="ri-information-line me-1"></i>
+                    Choisir une catégorie affiche des champs adaptés (couleur, taille, marque...).
+                  </div>
+                }
+              </div>
+
+              @if (featureControls.length > 0) {
+                <div class="col-12">
+                  <div class="p-3 bg-light rounded-3 border">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                      <label class="form-label fw-semibold mb-0 text-secondary">
+                        <i class="ri-settings-3-line me-1"></i>Caractéristiques spécifiques
+                      </label>
+                      <span class="fs-12 text-muted">Remplissez les champs utiles.</span>
+                    </div>
+                    <div formArrayName="features" class="row g-3">
+                      @for (feature of featureControls; track $index) {
+                        <div class="col-md-6" [formGroupName]="$index">
+                          <label class="form-label fs-13 text-muted">{{ getFeatureControl($index).value.key }}</label>
+                          @if (getFeatureControl($index).value.inputType === 'number') {
+                            <input type="number" class="form-control rounded-3"
+                                   [placeholder]="getFeatureControl($index).value.key"
+                                   formControlName="value">
+                          } @else {
+                            <input type="text" class="form-control rounded-3"
+                                   [placeholder]="getFeatureControl($index).value.key"
+                                   formControlName="value">
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                </div>
+              } @else if (selectedCategId) {
+                <div class="col-12">
+                  <div class="alert alert-info rounded-3 py-3 mb-0">
+                    <i class="ri-information-line me-1"></i>
+                    Cette catégorie ne contient pas de caractéristiques supplémentaires à renseigner.
+                  </div>
+                </div>
+              }
+
+              <div class="col-12">
+                <label class="form-label fw-semibold">Photo principale</label>
+                <div class="d-flex align-items-start gap-3">
+                  <div class="rounded-3 overflow-hidden border d-flex align-items-center justify-content-center flex-shrink-0"
+                       [class.dropzone-active]="isDragOver"
+                       style="width:100px;height:100px;background:#f8f9fa;border-style:dashed!important;transition:background .2s,border-color .2s"
+                       (dragover)="onDragOver($event)"
+                       (dragleave)="onDragLeave($event)"
+                       (drop)="onDrop($event)">
+                    @if (imagePreview) {
+                      <img [src]="imagePreview" class="w-100 h-100" style="object-fit:cover">
+                    } @else {
+                      <i class="ri-image-add-line fs-2 text-muted"></i>
+                    }
+                  </div>
+                  <div class="d-flex flex-column gap-2" style="padding-top:8px">
+                    <label for="prodImg" class="btn btn-outline-primary rounded-3" style="cursor:pointer;width:fit-content">
+                      <i class="ri-upload-cloud-2-line me-1"></i>Choisir une image
+                    </label>
+                    <input type="file" id="prodImg" class="d-none" accept="image/*" (change)="onImageSelected($event)">
+                    @if (imagePreview) {
+                      <button type="button" class="btn btn-outline-danger btn-sm rounded-3" (click)="removeImage()">
+                        <i class="ri-delete-bin-line me-1"></i>Supprimer
+                      </button>
+                    }
+                    <span class="text-muted fs-12">JPG, PNG, WEBP • Max 3 MB • glissez-déposez aussi</span>
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold">Galerie photos <span class="fs-12 fw-normal text-muted">(optionnel, {{ maxGalleryImages }} photos maximum)</span></label>
+                <p class="text-muted fs-12 mb-2">Ajoutez des photos complémentaires du produit.</p>
+                <label for="prodGallery" class="btn btn-outline-primary rounded-3">
+                  <i class="ri-gallery-line me-1"></i>Ajouter des photos
+                </label>
+                <input type="file" id="prodGallery" class="d-none" accept="image/jpeg,image/png,image/webp" multiple (change)="onGallerySelected($event)">
+                @if (galleryError) { <div class="text-danger fs-12 mt-2">{{ galleryError }}</div> }
+                @if (galleryPreviews.length > 0) {
+                  <div class="d-flex flex-wrap gap-2 mt-3">
+                    @for (preview of galleryPreviews; track $index; let i = $index) {
+                      <div class="position-relative border rounded-3 overflow-hidden" style="width:92px;height:92px">
+                        <img [src]="preview" [alt]="'Photo ' + (i + 1)" class="w-100 h-100" style="object-fit:cover">
+                        <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 p-1 lh-1" (click)="removeGalleryImage(i)" [attr.aria-label]="'Supprimer la photo ' + (i + 1)">
+                          <i class="ri-close-line"></i>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              @if (saveError) {
+                <div class="col-12">
+                  <div class="alert alert-danger rounded-3 py-2 fs-13 mb-0">
+                    <i class="ri-error-warning-line me-1"></i>{{ saveError }}
+                  </div>
+                </div>
+              }
+
+              <div class="col-12 d-flex gap-3">
+                <button type="submit" class="btn px-5 py-2 rounded-3 fw-medium"
+                        [class.btn-primary]="productForm.valid && !saving"
+                        [class.btn-secondary]="!productForm.valid || saving"
+                        [style.opacity]="productForm.valid ? 1 : 0.6"
+                        [disabled]="productForm.invalid || saving">
+                  @if (saving) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                  <i class="ri-send-plane-line me-1"></i>
+                  {{ editMode ? 'Enregistrer les modifications' : (productForm.valid ? 'Publier le produit' : 'Complétez le formulaire') }}
+                </button>
+                <button type="button" class="btn btn-outline-secondary px-4 rounded-3" (click)="cancelForm()">
+                  Annuler
+                </button>
+              </div>
+
+            </div>
+          </form>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="position-sticky" style="top:20px">
+            <div class="fs-12 fw-semibold text-muted mb-2">
+              <i class="ri-eye-line me-1"></i>Aperçu en direct
+            </div>
+            <div class="card border-0 shadow-sm rounded-4 h-100 d-flex flex-column overflow-hidden">
+              @if (imagePreview) {
+                <div style="height:160px;overflow:hidden">
+                  <img [src]="imagePreview" class="w-100 h-100" style="object-fit:cover">
+                </div>
+              } @else {
+                <div class="d-flex align-items-center justify-content-center text-muted"
+                     style="height:120px;background:#f8f9fa">
+                  <i class="ri-image-line fs-2"></i>
+                </div>
+              }
+              <div class="card-body p-3 d-flex flex-column">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  @if (selectedCategoryName) {
+                    <span class="badge rounded-pill px-2 py-1 fs-10 ms-auto" style="background:#e8edff;color:#405189">
+                      {{ selectedCategoryName }}
+                    </span>
+                  }
+                </div>
+                <h6 class="fw-bold mb-1 fs-14">
+                  {{ f['name'].value || 'Titre du produit...' }}
+                </h6>
+                @if (f['price'].value) {
+                  <div class="fw-bold fs-13 mb-1" style="color:#0ab39c">{{ f['price'].value }} DT</div>
+                }
+                <div class="text-muted fs-12" style="line-height:1.6; display:-webkit-box; -webkit-line-clamp:3; line-clamp:3; -webkit-box-orient:vertical; overflow:hidden">
+                  <span [innerHTML]="f['description'].value || 'La description apparaîtra ici pendant que vous écrivez...'"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+}
+
+<!-- -- BARRE FILTRE + AJOUT --------------------------------------------------- -->
+<div class="card border-0 shadow-sm mb-3">
+  <div class="card-body p-3">
+    <div class="d-flex align-items-center gap-3 flex-wrap">
+      <div class="input-group" style="max-width:280px">
+        <span class="input-group-text bg-white border-end-0"><i class="ri-search-line text-muted"></i></span>
+        <input type="text" class="form-control border-start-0 ps-0"
+               placeholder="Rechercher un produit..."
+               [(ngModel)]="searchTerm" (input)="applyFilter()">
+      </div>
+      <select class="form-select" style="width:160px" [(ngModel)]="filterStatus" (change)="applyFilter()">
+        <option value="tous">Tous les statuts</option>
+        <option value="actif">Actifs</option>
+        <option value="inactif">Inactifs</option>
+      </select>
+      <span class="text-muted small ms-auto me-2">{{ filteredProducts.length }} produit(s)</span>
+      <button class="btn btn-primary" (click)="openAdd()">
+        <i class="ri-add-line me-1"></i>Nouveau produit
+      </button>
+    </div>
+  </div>
+</div>
+
+<!-- -- GRILLE PRODUITS -------------------------------------------------------- -->
+@if (loading) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary"></div>
+    <p class="text-muted mt-2">Chargement...</p>
+  </div>
+} @else if (filteredProducts.length === 0) {
+  <div class="text-center py-5">
+    <i class="ri-box-3-line display-3 text-muted opacity-25"></i>
+    <h5 class="mt-3 text-muted">Aucun produit trouvé</h5>
+    @if (products.length === 0) {
+      <p class="text-muted">Commencez par ajouter votre premier produit.</p>
+      <button class="btn btn-primary mt-2" (click)="openAdd()">
+        <i class="ri-add-line me-1"></i>Ajouter un produit
+      </button>
+    }
+  </div>
+} @else {
+  <div class="row g-4">
+    @for (p of filteredProducts; track p.id) {
+      <div class="col-sm-6 col-xl-4 col-xxl-3">
+        <div class="card border-0 shadow-sm product-card h-100">
+
+          <div class="product-card-img">
+            @if (p.image) {
+              <img [src]="p.image" [alt]="p.name" class="img-fluid w-100 h-100 object-fit-cover">
+            } @else {
+              <div class="d-flex align-items-center justify-content-center h-100 bg-light">
+                <i class="ri-image-line fs-36 text-muted opacity-50"></i>
+              </div>
+            }
+            <div class="position-absolute top-0 start-0 p-2 d-flex gap-1 flex-wrap">
+              <span class="badge bg-dark bg-opacity-75 fs-10">{{ getCategoryName(p) }}</span>
+              @if (p.images.length > 1) {
+                <span class="badge bg-primary bg-opacity-75 fs-10">
+                  <i class="ri-image-2-line me-1"></i>{{ p.images.length }}
+                </span>
+              }
+            </div>
+            <div class="position-absolute top-0 end-0 p-2">
+              <span class="{{ getApprovalBadge(p.approvalStatus) }} fs-10">
+                {{ getApprovalLabel(p.approvalStatus) }}
+              </span>
+            </div>
+          </div>
+
+          <div class="card-body p-3">
+            <h6 class="fw-semibold mb-1 text-truncate" title="{{ p.name }}">{{ p.name }}</h6>
+            <p class="text-muted fs-12 mb-2 product-desc-preview" [innerHTML]="p.description"></p>
+
+            @if (p.features?.length > 0) {
+              <div class="d-flex flex-wrap gap-1 mb-2">
+                @for (feat of p.features; track feat.key) {
+                  <span class="badge rounded-pill px-2 py-1 fs-10" style="background:#eef5ff;color:#405189">
+                    {{ feat.key }}: {{ feat.value }}
+                  </span>
+                }
+              </div>
+            }
+
+            <div class="d-flex align-items-center justify-content-between mb-3">
+              <span class="fw-bold text-primary fs-16">{{ p.price | number:'1.2-3' }} DT</span>
+              <span class="badge" [class.bg-success-subtle]="p.stock > 5"
+                    [class.text-success]="p.stock > 5"
+                    [class.bg-warning-subtle]="p.stock <= 5 && p.stock > 0"
+                    [class.text-warning]="p.stock <= 5 && p.stock > 0"
+                    [class.bg-danger-subtle]="p.stock === 0"
+                    [class.text-danger]="p.stock === 0">
+                <i class="ri-archive-line me-1"></i>{{ p.stock }} en stock
+              </span>
+            </div>
+            <div class="d-flex align-items-center gap-3 mb-2 text-muted fs-13">
+              <span><i class="ri-eye-line me-1"></i>{{ p.ViewCount || 0 }} vues</span>
+              <span><i class="ri-heart-3-line me-1 text-danger"></i>{{ p.LikeCount || 0 }} J'aime</span>
+            </div>
+
+            <div class="d-flex gap-2">
+              <button class="btn btn-sm btn-soft-primary flex-grow-1" (click)="openEdit(p)">
+                <i class="ri-edit-line me-1"></i>Modifier
+              </button>
+                <a class="btn btn-sm btn-soft-success flex-grow-1"
+                   [routerLink]="['/ent/boost-packs']"
+                   [queryParams]="{ type: 'product', id: p.id, label: p.name }">
+                  <i class="ri-rocket-2-line me-1"></i>Booster
+                </a>
+              @if (deleteConfirmId === p.id) {
+                <button class="btn btn-sm btn-danger" (click)="deleteProduct(p.id)">
+                  <i class="ri-check-line"></i>
+                </button>
+                <button class="btn btn-sm btn-soft-secondary" (click)="cancelDelete()">
+                  <i class="ri-close-line"></i>
+                </button>
+              } @else {
+                <button class="btn btn-sm btn-soft-danger" (click)="confirmDelete(p.id)">
+                  <i class="ri-delete-bin-line"></i>
+                </button>
+              }
+            </div>
+          </div>
+        </div>
+      </div>
+    }
+  </div>
+}
+
+<style>
+.kpi-icon { width:44px;height:44px;border-radius:12px;display:flex;align-items:center;justify-content:center; }
+.product-form-card { border-left:4px solid #405189 !important; }
+.dropzone-active { border-color:#405189 !important; background:#f0f4ff !important; }
+.product-card { border-radius:14px; transition:box-shadow .2s,transform .2s; }
+.product-card:hover { box-shadow:0 8px 25px rgba(0,0,0,.12)!important; transform:translateY(-2px); }
+.product-card-img { height:180px; overflow:hidden; border-radius:14px 14px 0 0; position:relative; }
+.product-desc-preview {
+  display:-webkit-box; -webkit-line-clamp:2; -webkit-box-orient:vertical;
+  overflow:hidden; line-height:1.4;
+}
+</style>

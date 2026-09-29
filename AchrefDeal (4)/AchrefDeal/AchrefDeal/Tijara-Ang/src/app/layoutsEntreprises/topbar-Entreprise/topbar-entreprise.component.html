@@ -1,0 +1,318 @@
+﻿<header id="page-topbar" data-scroll-header (window:scroll)="windowScroll()">
+    <div class="layout-width">
+        <div class="navbar-header">
+
+            <!-- ─── LEFT : Logo + hamburger + search ─────────────────────────── -->
+            <div class="d-flex align-items-center">
+                <div class="navbar-brand-box horizontal-logo">
+                    <a routerLink="/ent/dashboard" class="logo logo-dark">
+                        <span class="logo-sm fw-bold fs-18 text-primary">T</span>
+                        <span class="logo-lg fw-bold fs-20" style="color:#405189;font-family:'Segoe UI',sans-serif">
+                            <i class="ri-shopping-bag-3-fill me-1" style="color:#0ab39c"></i>Tijara
+                            <span class="badge bg-primary-subtle text-primary fs-10 ms-1 align-middle">Vendeur</span>
+                        </span>
+                    </a>
+                    <a routerLink="/ent/dashboard" class="logo logo-light">
+                        <span class="logo-sm fw-bold fs-18 text-white">T</span>
+                        <span class="logo-lg fw-bold fs-20 text-white" style="font-family:'Segoe UI',sans-serif">
+                            <i class="ri-shopping-bag-3-fill me-1" style="color:#0ab39c"></i>Tijara
+                        </span>
+                    </a>
+                </div>
+
+                <button type="button"
+                        class="btn btn-sm px-3 fs-16 header-item vertical-menu-btn topnav-hamburger"
+                        id="topnav-hamburger-icon" (click)="toggleMobileMenu($event)">
+                    <span class="hamburger-icon"><span></span><span></span><span></span></span>
+                </button>
+
+                <!-- Search -->
+                <form class="app-search d-none d-md-block">
+                    <div class="position-relative">
+                        <input type="text" class="form-control" placeholder="Rechercher dans mon catalogue…"
+                               autocomplete="off" id="search-options" (keyup)="Search()" />
+                        <span class="mdi mdi-magnify search-widget-icon"></span>
+                        <span class="mdi mdi-close-circle search-widget-icon search-widget-icon-close d-none"
+                              id="search-close-options" (click)="closeBtn()"></span>
+                    </div>
+                    <div class="dropdown-menu dropdown-menu-lg p-0" id="search-dropdown">
+                        <div class="dropdown-header">
+                            <h6 class="text-muted mb-0 text-uppercase fs-11">Raccourcis vendeur</h6>
+                        </div>
+                        <a routerLink="/ent/products" class="dropdown-item notify-item">
+                            <i class="ri-shopping-bag-3-line align-middle fs-18 text-muted me-2"></i>
+                            <span>Mes produits</span>
+                        </a>
+                        <a routerLink="/ent/orders" class="dropdown-item notify-item">
+                            <i class="ri-file-list-3-line align-middle fs-18 text-muted me-2"></i>
+                            <span>Mes commandes</span>
+                        </a>
+                        <a routerLink="/ent/deliveries" class="dropdown-item notify-item">
+                            <i class="ri-truck-line align-middle fs-18 text-muted me-2"></i>
+                            <span>Mes livraisons</span>
+                        </a>
+                        <a routerLink="/ent/invoices" class="dropdown-item notify-item">
+                            <i class="ri-file-text-line align-middle fs-18 text-muted me-2"></i>
+                            <span>Mes factures</span>
+                        </a>
+                        <a routerLink="/ent/boost-packs" class="dropdown-item notify-item">
+                            <i class="ri-rocket-2-line align-middle fs-18 text-warning me-2"></i>
+                            <span>Packs Boost</span>
+                        </a>
+                    </div>
+                </form>
+            </div>
+
+            <!-- ─── RIGHT : Actions ────────────────────────────────────────────── -->
+            <div class="d-flex align-items-center">
+
+                <!-- Premium status / upsell -->
+                <div class="ms-1 header-item d-none d-sm-flex">
+                    <a routerLink="/ent/premium"
+                       class="btn btn-sm rounded-pill px-3 d-flex align-items-center gap-1"
+                       [ngClass]="isPremium ? 'btn-soft-warning' : 'btn-warning'"
+                       [title]="isPremium ? 'Vous etes Premium' : 'Passer Premium'">
+                        <i class="ri-vip-crown-2-line"></i>
+                        <span class="fw-semibold d-none d-md-inline">{{ isPremium ? 'Premium' : 'Passer Premium' }}</span>
+                    </a>
+                </div>
+
+                <!-- Mobile search trigger -->
+                <div class="dropdown d-md-none topbar-head-dropdown header-item" ngbDropdown>
+                    <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle"
+                            ngbDropdownToggle>
+                        <i class="bx bx-search fs-22"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-3" ngbDropdownMenu>
+                        <div class="input-group">
+                            <input type="text" class="form-control" placeholder="Rechercher…" />
+                            <button class="btn btn-primary" type="submit"><i class="mdi mdi-magnify"></i></button>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Quick actions -->
+                <div class="dropdown ms-1 topbar-head-dropdown header-item d-none d-sm-flex" ngbDropdown>
+                    <button type="button"
+                            class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle position-relative"
+                            ngbDropdownToggle ngbTooltip="Actions rapides">
+                        <i class="ri-flashlight-line fs-22 text-warning"></i>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-2" ngbDropdownMenu>
+                        <h6 class="dropdown-header fw-semibold text-uppercase fs-11 text-muted">Actions rapides</h6>
+                        <a routerLink="/ent/products" [queryParams]="{ action: 'add' }"
+                           class="dropdown-item d-flex align-items-center gap-2 py-2">
+                            <span class="avatar-xs rounded bg-primary-subtle d-flex align-items-center justify-content-center">
+                                <i class="ri-add-circle-line text-primary"></i>
+                            </span>
+                            <span class="flex-grow-1">
+                                <span class="d-block fw-semibold fs-13">Nouveau produit</span>
+                                <span class="d-block fs-11 text-muted">Mettre en vente</span>
+                            </span>
+                        </a>
+                        <a routerLink="/ent/dashboard"
+                           class="dropdown-item d-flex align-items-center gap-2 py-2">
+                            <span class="avatar-xs rounded bg-info-subtle d-flex align-items-center justify-content-center">
+                                <i class="ri-dashboard-2-line text-info"></i>
+                            </span>
+                            <span class="flex-grow-1">
+                                <span class="d-block fw-semibold fs-13">Tableau de bord</span>
+                                <span class="d-block fs-11 text-muted">Stats du jour</span>
+                            </span>
+                        </a>
+                        <a routerLink="/ent/orders"
+                           class="dropdown-item d-flex align-items-center gap-2 py-2">
+                            <span class="avatar-xs rounded bg-warning-subtle d-flex align-items-center justify-content-center">
+                                <i class="ri-time-line text-warning"></i>
+                            </span>
+                            <span class="flex-grow-1">
+                                <span class="d-block fw-semibold fs-13">Commandes en attente</span>
+                                <span class="d-block fs-11 text-muted">À traiter rapidement</span>
+                            </span>
+                        </a>
+                        <a routerLink="/ent/boost-packs"
+                           class="dropdown-item d-flex align-items-center gap-2 py-2">
+                            <span class="avatar-xs rounded bg-danger-subtle d-flex align-items-center justify-content-center">
+                                <i class="ri-rocket-2-line text-danger"></i>
+                            </span>
+                            <span class="flex-grow-1">
+                                <span class="d-block fw-semibold fs-13">Booster mes ventes</span>
+                                <span class="d-block fs-11 text-muted">Packs visibilité</span>
+                            </span>
+                        </a>
+                    </div>
+                </div>
+
+                <!-- Language -->
+                <div class="dropdown ms-1 topbar-head-dropdown header-item" ngbDropdown>
+                    <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle"
+                            ngbDropdownToggle>
+                        @if(flagvalue === undefined){
+                            <img src="{{valueset}}" alt="Langue" height="20" class="rounded">
+                        }@else {
+                            <img src="{{flagvalue}}" alt="Langue" height="20" class="rounded">
+                        }
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end" ngbDropdownMenu>
+                        @for(item of listLang;track $index){
+                            <a href="javascript:void(0);" class="dropdown-item notify-item language py-2"
+                               (click)="setLanguage(item.text, item.lang, item.flag)"
+                               [ngClass]="{'active': cookieValue === item.lang}">
+                                <img src="{{item.flag}}" alt="" class="me-2 rounded" height="18">
+                                <span class="align-middle">{{ item.text }}</span>
+                            </a>
+                        }
+                    </div>
+                </div>
+
+                <!-- Fullscreen -->
+                <div class="ms-1 header-item d-none d-sm-flex">
+                    <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle"
+                            (click)="fullscreen()" ngbTooltip="Plein écran">
+                        <i class="bx bx-fullscreen fs-22"></i>
+                    </button>
+                </div>
+
+                <!-- Dark mode -->
+                <div class="ms-1 header-item d-none d-sm-flex">
+                    <button type="button" class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle light-dark-mode"
+                            ngbTooltip="Mode sombre / clair">
+                        <i class="bx bx-moon fs-22" (click)="changeMode('dark')"></i>
+                        <i class="bx bx-sun fs-22" (click)="changeMode('light')"></i>
+                    </button>
+                </div>
+
+                <!-- Notifications ── CORRIGÉ ───────────────────────────────────── -->
+                <div ngbDropdown class="dropdown topbar-head-dropdown ms-1 header-item">
+                    <button type="button" ngbDropdownToggle
+                            class="btn btn-icon btn-topbar btn-ghost-secondary rounded-circle position-relative">
+                        <i class="bx bx-bell fs-22"></i>
+                        @if(unreadNotifications > 0){
+                            <span class="position-absolute topbar-badge fs-10 translate-middle badge rounded-pill bg-danger">
+                                {{ unreadNotifications }}
+                            </span>
+                        }
+                    </button>
+                    <div ngbDropdownMenu class="dropdown-menu dropdown-menu-lg dropdown-menu-end p-0">
+                        <div class="dropdown-head bg-secondary bg-pattern rounded-top">
+                            <div class="p-3">
+                                <div class="row align-items-center">
+                                    <div class="col">
+                                        <h6 class="m-0 fs-16 fw-semibold text-white">Notifications</h6>
+                                    </div>
+                                    <div class="col-auto">
+                                        <span class="badge bg-light-subtle text-body fs-13">
+                                            {{ unreadNotifications || 0 }} non lues
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        <ngx-simplebar style="max-height:320px">
+                            @if(notifications && notifications.length > 0){
+                                @for(n of notifications; track $index){
+                                    <a class="dropdown-item d-flex align-items-start gap-2 py-2 border-bottom"
+                                       style="cursor:pointer"
+                                       [class.bg-light]="!n.isRead"
+                                       (click)="onNotificationClick(n)">
+                                        <div class="avatar-xs flex-shrink-0">
+                                            <span class="avatar-title bg-info-subtle text-info rounded-circle fs-16">
+                                                <i class="ri-notification-2-line"></i>
+                                            </span>
+                                        </div>
+                                        <div class="flex-grow-1">
+                                            <div class="fs-13 fw-semibold">{{ n.title }}</div>
+                                            <div class="fs-11 text-muted">{{ n.desc }}</div>
+                                            <div class="fs-10 text-muted">{{ n.time }}</div>
+                                        </div>
+                                    </a>
+                                }
+                            } @else {
+                                <div class="text-center py-4">
+                                    <i class="ri-notification-off-line display-5 text-muted opacity-50"></i>
+                                    <h6 class="fs-14 mt-3">Pas de notification</h6>
+                                </div>
+                            }
+                        </ngx-simplebar>
+                        @if(unreadNotifications > 0){
+                            <div class="p-2 border-top text-center">
+                                <button class="btn btn-sm btn-link" (click)="markAllRead()">
+                                    <i class="ri-check-double-line me-1"></i>Tout marquer comme lu
+                                </button>
+                            </div>
+                        }
+                    </div>
+                </div>
+                <!-- /Notifications -->
+
+                <!-- User -->
+                <div class="dropdown ms-sm-3 header-item topbar-user" ngbDropdown>
+                    <button type="button" class="btn" ngbDropdownToggle>
+                        <span class="d-flex align-items-center">
+                            <span class="rounded-circle header-profile-user d-flex align-items-center justify-content-center text-white fw-bold"
+                                  style="width:36px;height:36px;font-size:14px;background:linear-gradient(135deg,#405189,#0ab39c)">
+                              {{ (userData?.shopName || userData?.firstName || 'V')[0]?.toUpperCase() }}
+                            </span>
+                            <span class="text-start ms-xl-2">
+                                <span class="d-none d-xl-inline-block ms-1 fw-medium user-name-text">
+                                  {{ displayName }}
+                                </span>
+                                <span class="d-none d-xl-block ms-1 fs-12 text-muted user-name-sub-text">
+                                  <i class="ri-store-2-line"></i> Boutique vendeur
+                                </span>
+                            </span>
+                        </span>
+                    </button>
+                    <div class="dropdown-menu dropdown-menu-end" ngbDropdownMenu style="min-width:240px">
+                        <div class="px-3 py-2 border-bottom">
+                            <div class="fw-semibold text-truncate">{{ displayName }}</div>
+                            <div class="fs-11 text-muted text-truncate">{{ userData?.email || 'Vendeur Tijara' }}</div>
+                        </div>
+                        <a class="dropdown-item py-2" routerLink="/ent/profile">
+                            <i class="ri-user-settings-line text-muted fs-16 align-middle me-2"></i>
+                            <span class="align-middle">Profil boutique</span>
+                        </a>
+                        <a class="dropdown-item py-2" routerLink="/ent/dashboard">
+                            <i class="ri-dashboard-2-line text-muted fs-16 align-middle me-2"></i>
+                            <span class="align-middle">Tableau de bord</span>
+                        </a>
+                        <a class="dropdown-item py-2" routerLink="/ent/orders">
+                            <i class="ri-file-list-3-line text-muted fs-16 align-middle me-2"></i>
+                            <span class="align-middle">Mes commandes</span>
+                        </a>
+                        <a class="dropdown-item py-2" routerLink="/ent/messages">
+                            <i class="ri-chat-3-line text-muted fs-16 align-middle me-2"></i>
+                            <span class="align-middle">Messagerie</span>
+                        </a>
+                        <a class="dropdown-item py-2" routerLink="/ent/reclamations">
+                            <i class="ri-customer-service-2-line text-muted fs-16 align-middle me-2"></i>
+                            <span class="align-middle">Réclamations</span>
+                        </a>
+                        <div class="dropdown-divider"></div>
+                        <a class="dropdown-item py-2 text-danger" href="javascript:void(0)" (click)="logout()">
+                            <i class="ri-logout-box-r-line fs-16 align-middle me-2"></i>
+                            <span class="align-middle">Déconnexion</span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Notification confirm -->
+<ng-template #removenotification let-modal>
+    <div class="modal-content">
+        <div class="modal-header">
+            <button type="button" class="btn-close" (click)="modal.dismiss('Cross click')"></button>
+        </div>
+        <div class="modal-body text-center">
+            <h4 class="mt-3">Confirmer la suppression ?</h4>
+            <p class="text-muted">Cette notification sera définitivement supprimée.</p>
+            <div class="d-flex gap-2 justify-content-center mt-4 mb-2">
+                <button type="button" class="btn btn-light" (click)="modal.dismiss('Cross click')">Annuler</button>
+                <button type="button" class="btn btn-danger" (click)="notificationDelete()">Supprimer</button>
+            </div>
+        </div>
+    </div>
+</ng-template>

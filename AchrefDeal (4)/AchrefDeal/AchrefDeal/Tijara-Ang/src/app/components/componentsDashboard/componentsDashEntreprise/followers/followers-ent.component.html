@@ -1,0 +1,141 @@
+﻿<app-breadcrumbs [title]="'Mes Abonnés'" [breadcrumbItems]="breadCrumbItems"></app-breadcrumbs>
+
+<!-- Stat banner -->
+<div class="row g-3 mb-4">
+  <div class="col-12">
+    <div class="card border-0 shadow-sm rounded-4 overflow-hidden">
+      <div class="card-body p-4 d-flex align-items-center gap-4"
+           style="background:linear-gradient(135deg,#405189 0%,#0ab39c 100%)">
+        <div class="rounded-circle bg-white bg-opacity-25 d-flex align-items-center justify-content-center flex-shrink-0"
+             style="width:64px;height:64px">
+          <i class="ri-user-heart-line fs-28 text-white"></i>
+        </div>
+        <div class="text-white">
+          <div class="fs-32 fw-bold lh-1">{{ total }}</div>
+          <div class="fs-15 opacity-75 mt-1">
+            {{ total === 0 ? 'Aucun abonné pour le moment' :
+               total === 1 ? 'client vous suit' : 'clients vous suivent' }}
+          </div>
+        </div>
+        <div class="ms-auto d-none d-md-block opacity-25">
+          <i class="ri-group-line" style="font-size:72px;color:var(--surface-color)"></i>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- Search bar -->
+@if (total > 0) {
+  <div class="mb-3">
+    <div class="position-relative">
+      <i class="ri-search-line position-absolute top-50 translate-middle-y ms-3 text-muted fs-16"></i>
+      <input type="text" class="form-control rounded-3 ps-5"
+             placeholder="Rechercher un abonné..."
+             [(ngModel)]="search">
+    </div>
+  </div>
+}
+
+<!-- Loading -->
+@if (loading) {
+  <div class="text-center py-5">
+    <div class="spinner-border text-primary" style="width:2.5rem;height:2.5rem"></div>
+    <p class="text-muted mt-3">Chargement des abonnés...</p>
+  </div>
+}
+
+<!-- Empty state -->
+@if (!loading && total === 0) {
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-body text-center py-5">
+      <div class="mb-3 opacity-15" style="font-size:72px">👥</div>
+      <h5 class="fw-semibold">Aucun abonné pour l'instant</h5>
+      <p class="text-muted fs-14 mb-0">
+        Lorsque des clients s'abonnent à votre boutique, ils apparaîtront ici.
+      </p>
+    </div>
+  </div>
+}
+
+<!-- Followers list -->
+@if (!loading && total > 0) {
+  <div class="card border-0 shadow-sm rounded-4">
+    <div class="card-header border-0 bg-transparent px-4 pt-4 pb-2 d-flex align-items-center justify-content-between">
+      <h6 class="fw-semibold mb-0">
+        <i class="ri-group-line me-2 text-primary"></i>
+        Liste des abonnés
+        @if (search) {
+          <span class="text-muted fw-normal fs-13 ms-2">({{ filtered.length }} résultat(s))</span>
+        }
+      </h6>
+    </div>
+    <div class="card-body p-0">
+      <div class="table-responsive">
+        <table class="table table-hover align-middle mb-0">
+          <thead class="table-light">
+            <tr>
+              <th class="px-4 py-3 fw-semibold fs-13 text-muted">Client</th>
+              <th class="py-3 fw-semibold fs-13 text-muted">Téléphone</th>
+              <th class="py-3 fw-semibold fs-13 text-muted">Email</th>
+              <th class="py-3 fw-semibold fs-13 text-muted">Abonné depuis</th>
+            </tr>
+          </thead>
+          <tbody>
+            @for (f of filtered; track f.id) {
+              <tr>
+                <td class="px-4 py-3">
+                  <div class="d-flex align-items-center gap-3">
+                    @if (f.profile_picture) {
+                      <img [src]="f.profile_picture" class="rounded-circle object-fit-cover flex-shrink-0"
+                           style="width:42px;height:42px" [alt]="f.full_name">
+                    } @else {
+                      <div class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0 fw-bold text-white fs-14"
+                           style="width:42px;height:42px;background:linear-gradient(135deg,#405189,#0ab39c)">
+                        {{ initials(f) }}
+                      </div>
+                    }
+                    <div>
+                      <div class="fw-semibold fs-14">{{ f.full_name }}</div>
+                      @if (f.username) {
+                        <div class="text-muted fs-12">{{ f.username }}</div>
+                      }
+                    </div>
+                  </div>
+                </td>
+                <td class="py-3">
+                  @if (f.phone) {
+                    <span class="d-flex align-items-center gap-1 text-muted fs-13">
+                      <i class="ri-phone-line"></i>{{ f.phone }}
+                    </span>
+                  } @else {
+                    <span class="text-muted fs-12">—</span>
+                  }
+                </td>
+                <td class="py-3">
+                  @if (f.email) {
+                    <span class="text-muted fs-13">{{ f.email }}</span>
+                  } @else {
+                    <span class="text-muted fs-12">—</span>
+                  }
+                </td>
+                <td class="py-3">
+                  <span class="badge bg-primary-subtle text-primary rounded-pill px-3 py-2 fs-12">
+                    <i class="ri-calendar-line me-1"></i>{{ f.followed_at || '—' }}
+                  </span>
+                </td>
+              </tr>
+            }
+            @if (filtered.length === 0 && search) {
+              <tr>
+                <td colspan="4" class="text-center py-4 text-muted fs-14">
+                  <i class="ri-search-line me-1"></i>Aucun résultat pour "{{ search }}"
+                </td>
+              </tr>
+            }
+          </tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+}

@@ -1,0 +1,1209 @@
+<app-breadcrumbs title="Annonces & Communauté" [breadcrumbItems]="breadcrumbItems"></app-breadcrumbs>
+
+@if (submitSuccess) {
+  <div class="alert border-0 shadow-sm d-flex align-items-center gap-3 mb-4 rounded-3"
+       style="background:linear-gradient(90deg,#e8f8f5,#d5f5e3);border-left:4px solid #0ab39c!important">
+    <div class="rounded-circle d-flex align-items-center justify-content-center text-white flex-shrink-0"
+         style="width:36px;height:36px;background:#0ab39c">
+      <i class="ri-checkbox-circle-fill fs-18"></i>
+    </div>
+    <div>
+      <div class="fw-semibold text-success">Publication soumise !</div>
+      <div class="fs-13 text-muted">{{ submitSuccess }}</div>
+    </div>
+    <button class="btn-close ms-auto" (click)="submitSuccess=''" aria-label="Fermer"></button>
+  </div>
+}
+
+<!-- ? NOUVEAU — bandeau informatif pour les comptes non-Entreprise,
+     affiché en permanence en haut de page (pas seulement au moment
+     de la soumission), pour éviter que l'utilisateur découvre la
+     restriction seulement après avoir rempli tout le formulaire. -->
+@if (!canPublish) {
+  <div class="alert border-0 shadow-sm d-flex align-items-center gap-3 mb-4 rounded-3"
+       style="background:#fdecea;border-left:4px solid #f06548!important">
+    <div class="rounded-circle d-flex align-items-center justify-content-center text-white flex-shrink-0"
+         style="width:36px;height:36px;background:#f06548">
+      <i class="ri-error-warning-fill fs-18"></i>
+    </div>
+    <div>
+      <div class="fw-semibold" style="color:#c0392b">Publication réservée aux comptes Entreprise</div>
+      <div class="fs-13 text-muted">Vous pouvez consulter les annonces, mais la création est réservée aux comptes Entreprise.</div>
+    </div>
+  </div>
+}
+
+<div class="row mb-0">
+  <div class="col-12">
+    <div class="rounded-4 overflow-hidden position-relative"
+         style="background:linear-gradient(135deg,#405189 0%,#3a4caa 55%,#0ab39c 100%)">
+      <div class="px-4 py-4">
+        <div class="d-flex align-items-center gap-3 mb-3">
+          <div class="rounded-circle bg-white bg-opacity-25 d-flex align-items-center justify-content-center flex-shrink-0"
+               style="width:44px;height:44px">
+            <i class="ri-megaphone-line text-white fs-20"></i>
+          </div>
+          <div class="text-white">
+            <h5 class="fw-bold mb-0 fs-20" style="color:var(--surface-color)!important">Espace Annonces</h5>
+            <p class="mb-0 opacity-75 fs-13" style="color:var(--surface-color)!important">Partagez vos annonces avec la communauté Tijara</p>
+          </div>
+          <!-- ? NOUVEAU : bouton désactivé + tooltip si !canPublish -->
+          <button class="btn btn-light fw-medium ms-auto rounded-3 px-4"
+                  style="color:#405189"
+                  [disabled]="!canPublish"
+                  [title]="!canPublish ? 'Réservé aux comptes Entreprise' : ''"
+                  (click)="openForm()">
+            <i class="ri-add-line me-1"></i>Publier
+          </button>
+        </div>
+
+        <div class="d-flex align-items-center rounded-pill overflow-hidden shadow-sm mb-3"
+             style="max-width:650px;height:56px;background:rgba(255,255,255,.18);backdrop-filter:blur(2px)">
+          <span class="d-flex align-items-center justify-content-center flex-shrink-0"
+                style="width:56px;height:56px">
+            <i class="ri-search-line text-white" style="font-size:20px"></i>
+          </span>
+          <input type="text" class="border-0 bg-transparent text-white flex-fill annonce-search-input"
+                 style="height:56px;font-size:16px;outline:none;box-shadow:none"
+                 placeholder="Rechercher une annonce..."
+                 [(ngModel)]="searchInput" [ngModelOptions]="{standalone: true}" (ngModelChange)="onSearchChange()">
+          @if (searchInput) {
+            <button class="border-0 bg-transparent text-white pe-4 flex-shrink-0" type="button" (click)="clearSearch()"
+                    style="height:56px">
+              <i class="ri-close-line fs-18"></i>
+            </button>
+          }
+        </div>
+
+        <div class="d-flex flex-wrap gap-2">
+          <span class="badge rounded-pill px-3 py-2 fs-13 fw-medium"
+                style="background:rgba(255,255,255,.22);color:var(--surface-color)">
+            <i class="ri-equalizer-line me-1"></i>
+            {{ activeTab === 'toutes' ? filteredAnnonces.length : filteredMyAnnonces.length }} résultat(s)
+          </span>
+          <span class="badge rounded-pill px-3 py-2 fs-13 fw-medium" style="background:rgba(255,255,255,.22);color:var(--surface-color)">
+            Page {{ currentPage }} / {{ activeTab === 'toutes' ? totalPages : totalPagesMine }}
+          </span>
+          @if (activeFiltersCount > 0) {
+            <span class="badge rounded-pill px-3 py-2 fs-13 fw-medium" style="background:rgba(255,255,255,.22);color:var(--surface-color)">
+              <i class="ri-filter-3-line me-1"></i>{{ activeFiltersCount }} filtre(s) actif(s)
+            </span>
+          }
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  .annonce-search-input::placeholder {
+    color: rgba(255, 255, 255, 0.8);
+    opacity: 1;
+  }
+  .annonce-search-input::-webkit-input-placeholder {
+    color: rgba(255, 255, 255, 0.8);
+  }
+  .annonce-search-input::-moz-placeholder {
+    color: rgba(255, 255, 255, 0.8);
+    opacity: 1;
+  }
+  .dropzone-active {
+    border-color: #405189 !important;
+    background: #f0f4ff !important;
+  }
+
+  /* -- Filtre sidebar "carte" premium ------------------- */
+  .filter-sidebar {
+    background: #ffffff;
+    border-radius: 20px;
+    padding: 28px 24px;
+    box-shadow: 0 4px 24px rgba(64, 81, 137, 0.06);
+    border: 1px solid rgba(64, 81, 137, 0.06);
+    position: sticky;
+    top: 20px;
+  }
+
+  .filter-block {
+    margin-bottom: 24px;
+  }
+  .filter-block:last-of-type {
+    margin-bottom: 0;
+  }
+
+  .filter-label {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.06em;
+    text-transform: uppercase;
+    color: #8992a3;
+    margin-bottom: 10px;
+  }
+  .filter-label i {
+    font-size: 15px;
+    color: #405189;
+  }
+
+  .filter-dropdown {
+    position: relative;
+  }
+  .filter-dropdown-trigger {
+    width: 100%;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: #f7f8fb;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    padding: 14px 16px;
+    cursor: pointer;
+    transition: border-color .2s, background .2s;
+  }
+  .filter-dropdown-trigger:hover {
+    border-color: rgba(64, 81, 137, 0.25);
+    background: #ffffff;
+  }
+  .filter-dropdown-value {
+    font-weight: 700;
+    font-size: 16px;
+    color: #405189;
+    flex: 1;
+    text-align: left;
+  }
+  .filter-dropdown-count {
+    background: #eef0f5;
+    color: #6c7686;
+    font-size: 12px;
+    font-weight: 700;
+    padding: 3px 9px;
+    border-radius: 999px;
+  }
+  .filter-dropdown-arrow {
+    color: #8992a3;
+    transition: transform .2s;
+  }
+  .filter-dropdown-arrow.open {
+    transform: rotate(180deg);
+  }
+
+  .filter-dropdown-menu {
+    position: absolute;
+    top: calc(100% + 8px);
+    left: 0;
+    right: 0;
+    background: var(--surface-color);
+    border-radius: 14px;
+    box-shadow: 0 12px 32px rgba(20, 25, 45, 0.14);
+    border: 1px solid rgba(64, 81, 137, 0.08);
+    max-height: 280px;
+    overflow-y: auto;
+    z-index: 20;
+    padding: 6px;
+  }
+  .filter-dropdown-item {
+    width: 100%;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    background: transparent;
+    border: none;
+    padding: 10px 12px;
+    border-radius: 10px;
+    font-size: 14px;
+    color: #333;
+    cursor: pointer;
+    transition: background .15s;
+  }
+  .filter-dropdown-item:hover {
+    background: #f0f4ff;
+  }
+  .filter-dropdown-item.active {
+    background: #e8edff;
+    color: #405189;
+    font-weight: 700;
+  }
+  .filter-dropdown-item-count {
+    font-size: 12px;
+    color: #9aa2b1;
+  }
+
+  .filter-input, .filter-select {
+    width: 100%;
+    background: #f7f8fb;
+    border: 1px solid transparent;
+    border-radius: 14px;
+    padding: 12px 14px;
+    font-size: 14px;
+    color: #333;
+    transition: border-color .2s, background .2s;
+  }
+  .filter-input:focus, .filter-select:focus {
+    outline: none;
+    border-color: #405189;
+    background: var(--surface-color);
+  }
+  .filter-price-row {
+    display: flex;
+    gap: 10px;
+  }
+  .filter-price-row .filter-input {
+    flex: 1;
+  }
+  .filter-hint {
+    font-size: 11px;
+    color: #9aa2b1;
+    margin-top: 6px;
+  }
+
+  .filter-chips {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 20px;
+    padding-top: 4px;
+  }
+  .filter-chip {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    background: linear-gradient(135deg, #eef1ff, #e3f9f6);
+    color: #405189;
+    font-size: 12px;
+    font-weight: 600;
+    padding: 6px 12px;
+    border-radius: 999px;
+  }
+  .filter-chip i {
+    cursor: pointer;
+    font-size: 13px;
+    opacity: 0.6;
+  }
+  .filter-chip i:hover {
+    opacity: 1;
+  }
+
+  .filter-reset-btn {
+    width: 100%;
+    background: var(--surface-color);
+    border: 1.5px solid #405189;
+    color: #405189;
+    font-weight: 700;
+    font-size: 14px;
+    padding: 12px;
+    border-radius: 14px;
+    cursor: pointer;
+    transition: background .2s, color .2s;
+  }
+  .filter-reset-btn:hover {
+    background: #405189;
+    color: var(--surface-color);
+  }
+</style>
+
+<div class="row g-3 my-4">
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm rounded-4 text-center py-3 h-100">
+      <div class="fw-bold fs-24 text-primary mb-0">{{ annonces.length }}</div>
+      <div class="text-muted fs-13">Annonces publiques</div>
+    </div>
+  </div>
+  <div class="col-md-6">
+    <div class="card border-0 shadow-sm rounded-4 text-center py-3 h-100">
+      <div class="fw-bold fs-24 text-success mb-0">{{ myAnnonces.length }}</div>
+      <div class="text-muted fs-13">Mes publications</div>
+    </div>
+  </div>
+</div>
+
+<div class="d-flex align-items-center justify-content-between mb-4 flex-wrap gap-3">
+  <div class="position-relative d-flex rounded-pill p-1 shadow-sm" style="background:#eef0f5;width:fit-content">
+    <div class="position-absolute rounded-pill bg-white shadow-sm"
+         style="top:4px;bottom:4px;width:calc(50% - 4px);transition:left .3s cubic-bezier(.4,0,.2,1)"
+         [style.left]="activeTab==='toutes' ? '4px' : 'calc(50% + 0px)'"></div>
+
+    <button class="btn btn-sm px-4 py-2 fw-semibold rounded-pill position-relative d-flex align-items-center gap-2"
+            style="z-index:1;transition:color .25s;border:none"
+            [style.color]="activeTab==='toutes' ? '#405189' : '#8992a3'"
+            (click)="setActiveTab('toutes')">
+      <span class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+            style="width:26px;height:26px;transition:background .25s"
+            [style.background]="activeTab==='toutes' ? '#e8edff' : 'transparent'">
+        <i class="ri-global-line" style="font-size:14px"></i>
+      </span>
+      Fil communautaire
+      <span class="badge rounded-pill"
+            style="min-width:22px;padding:4px 7px;font-size:11px;transition:background .25s,color .25s"
+            [style.background]="activeTab==='toutes' ? '#405189' : '#dfe2ea'"
+            [style.color]="activeTab==='toutes' ? 'var(--surface-color)' : '#8992a3'">
+        {{ annonces.length }}
+      </span>
+    </button>
+
+    <button class="btn btn-sm px-4 py-2 fw-semibold rounded-pill position-relative d-flex align-items-center gap-2"
+            style="z-index:1;transition:color .25s;border:none"
+            [style.color]="activeTab==='miennes' ? '#0ab39c' : '#8992a3'"
+            (click)="setActiveTab('miennes')">
+      <span class="rounded-circle d-flex align-items-center justify-content-center flex-shrink-0"
+            style="width:26px;height:26px;transition:background .25s"
+            [style.background]="activeTab==='miennes' ? '#e3f9f6' : 'transparent'">
+        <i class="ri-user-line" style="font-size:14px"></i>
+      </span>
+      Mes publications
+      <span class="badge rounded-pill"
+            style="min-width:22px;padding:4px 7px;font-size:11px;transition:background .25s,color .25s"
+            [style.background]="activeTab==='miennes' ? '#0ab39c' : '#dfe2ea'"
+            [style.color]="activeTab==='miennes' ? 'var(--surface-color)' : '#8992a3'">
+        {{ myAnnonces.length }}
+      </span>
+    </button>
+  </div>
+
+  <div class="d-flex align-items-center gap-2">
+    <button type="button"
+            class="btn btn-sm rounded-3 d-flex align-items-center gap-2"
+            [class.btn-primary]="showAdvancedFilters || activeFiltersCount > 0"
+            [class.btn-outline-secondary]="!showAdvancedFilters && activeFiltersCount === 0"
+            (click)="toggleAdvancedFilters()">
+      <i class="ri-filter-3-line"></i>
+      Filtres avancés
+      @if (activeFiltersCount > 0) {
+        <span class="badge rounded-pill bg-white text-primary">{{ activeFiltersCount }}</span>
+      }
+    </button>
+
+    <!-- ? NOUVEAU : bouton désactivé + tooltip si !canPublish -->
+    <button class="btn btn-primary rounded-3 px-4 fw-medium"
+            [disabled]="!canPublish"
+            [title]="!canPublish ? 'Réservé aux comptes Entreprise' : ''"
+            (click)="openForm()">
+      <i class="ri-megaphone-line me-2"></i>Nouvelle annonce
+    </button>
+  </div>
+</div>
+
+<!-- ------------------ FORMULAIRE DE CRÉATION ------------------ -->
+<!-- ? NOUVEAU : le formulaire complet ne s'affiche que si canPublish
+     est vrai. S'il est ouvert malgré tout (ex: query param ?create=true
+     alors que le rôle a changé entre-temps), on affiche un message clair
+     à la place plutôt que le formulaire. -->
+@if (showForm) {
+  <div class="card border-0 shadow mb-4 rounded-4 overflow-hidden">
+    <div class="px-4 py-3 d-flex align-items-center gap-2"
+         style="background:linear-gradient(90deg,#405189,#3a4caa)">
+      <i class="ri-megaphone-line text-white fs-18"></i>
+      <h6 class="fw-bold text-white mb-0">Créer une nouvelle annonce</h6>
+      <button class="btn btn-sm ms-auto text-white opacity-75"
+              style="background:rgba(255,255,255,.15);border-radius:8px"
+              (click)="showForm=false"><i class="ri-close-line"></i></button>
+    </div>
+
+    @if (!canPublish) {
+      <div class="p-4">
+        <div class="alert alert-danger rounded-3 mb-0 d-flex align-items-center gap-2">
+          <i class="ri-error-warning-line fs-18"></i>
+          <div>
+            La publication d'annonces est réservée aux comptes <strong>Entreprise</strong>.
+            Contactez le support ou mettez à niveau votre compte pour publier.
+          </div>
+        </div>
+      </div>
+    } @else {
+
+    <div class="px-4 pt-3">
+      <div class="d-flex align-items-center justify-content-between mb-1">
+        <span class="fs-12 fw-semibold text-muted">
+          <i class="ri-flag-line me-1"></i>Progression du formulaire
+        </span>
+        <span class="fs-12 fw-semibold" style="color:#405189">
+          Étape {{ f['title'].valid ? (f['content'].valid ? (selectedCategId ? 3 : 2) : 1) : 1 }} / 3
+        </span>
+      </div>
+      <div class="progress" style="height:6px;border-radius:4px">
+        <div class="progress-bar bg-primary" role="progressbar"
+             [style.width.%]="(f['title'].valid ? 33 : 0) + (f['content'].valid ? 33 : 0) + (selectedCategId ? 34 : 0)"
+             style="transition:width .3s ease"></div>
+      </div>
+    </div>
+
+    <div class="card-body p-4">
+      <div class="row g-4">
+
+        <div class="col-lg-7">
+          <form [formGroup]="annonceForm" (ngSubmit)="submit()">
+            <div class="row g-4">
+
+              <div class="col-12">
+                <label class="form-label fw-semibold">Titre de l'annonce <span class="text-danger">*</span></label>
+                <input type="text" class="form-control form-control-lg rounded-3" formControlName="title"
+                       [maxlength]="titleMaxLength"
+                       placeholder="Ex: Recherche colocataire, Vends vélo état neuf..."
+                       [class.is-invalid]="f['title'].invalid && f['title'].touched"
+                       [class.is-valid]="f['title'].valid && f['title'].touched">
+                <div class="d-flex justify-content-between mt-1">
+                  <div class="invalid-feedback d-block" [class.d-none]="!(f['title'].invalid && f['title'].touched)">
+                    Minimum 5 caractères.
+                  </div>
+                  <span class="fs-12 text-muted ms-auto">
+                    {{ (f['title'].value || '').length }}/{{ titleMaxLength }} caractères
+                  </span>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold">Description <span class="text-danger">*</span></label>
+                <div [class.is-valid-wrapper]="f['content'].valid && f['content'].touched">
+                  <ckeditor
+                    [editor]="Editor"
+                    [config]="editorConfig"
+                    formControlName="content">
+                  </ckeditor>
+                </div>
+                @if (f['content'].invalid && f['content'].touched) {
+                  <div class="text-danger fs-12 mt-1">Minimum 10 caractères.</div>
+                }
+              </div>
+
+              <!-- ? NOUVEAU : champ Prix, correspond à PriceAd en base -->
+              <div class="col-12 col-md-6">
+                <label class="form-label fw-semibold">Prix (TND) <span class="text-danger">*</span></label>
+                <input type="text" class="form-control rounded-3" formControlName="price"
+                       placeholder="Ex: 150.00"
+                       [class.is-invalid]="f['price'].invalid && f['price'].touched"
+                       [class.is-valid]="f['price'].valid && f['price'].touched">
+                @if (f['price'].invalid && f['price'].touched) {
+                  <div class="text-danger fs-12 mt-1">Prix invalide (nombre requis, ex: 150 ou 150.50).</div>
+                }
+              </div>
+
+              <!-- ? NOUVEAU : champ Détails, correspond à DetailsAd en base -->
+              <div class="col-12">
+                <label class="form-label fw-semibold">
+                  Détails supplémentaires
+                  <span class="fs-12 fw-normal text-muted">(optionnel)</span>
+                </label>
+                <textarea class="form-control rounded-3" rows="3" formControlName="details"
+                          placeholder="Infos complémentaires (dimensions, accessoires inclus...)"></textarea>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold">
+                  Catégorie
+                  <span class="fs-12 fw-normal text-muted">(recommandé)</span>
+                </label>
+                <select class="form-select rounded-3" formControlName="categoryId">
+                  <option [ngValue]="null">-- Choisir une catégorie --</option>
+                  @for (cat of categories; track cat.id) {
+                    <option [ngValue]="cat.id">{{ cat.name_fr }}</option>
+                  }
+                </select>
+                <div class="fs-12 text-muted mt-1">
+                  <i class="ri-information-line me-1"></i>
+                  Choisir une catégorie affiche des champs adaptés (état, taille, marque...).
+                </div>
+              </div>
+
+              @if (featureControls.length > 0) {
+                <div class="col-12">
+                  <div class="p-3 bg-light rounded-3 border">
+                    <div class="d-flex align-items-center justify-content-between mb-3">
+                      <label class="form-label fw-semibold mb-0 text-secondary">
+                        <i class="ri-settings-3-line me-1"></i>Caractéristiques spécifiques
+                      </label>
+                      <span class="fs-12 text-muted">Remplissez les champs utiles.</span>
+                    </div>
+                    <div formArrayName="features" class="row g-3">
+                      @for (feature of featureControls; track $index) {
+                        <div class="col-md-6" [formGroupName]="$index">
+                          <label class="form-label fs-13 text-muted">{{ getFeatureControl($index).value.key }}</label>
+                          @if (getFeatureControl($index).value.inputType === 'number') {
+                            <input type="number" class="form-control rounded-3"
+                                   [placeholder]="getFeatureControl($index).value.key"
+                                   formControlName="value">
+                          } @else {
+                            <input type="text" class="form-control rounded-3"
+                                   [placeholder]="getFeatureControl($index).value.key"
+                                   formControlName="value">
+                          }
+                        </div>
+                      }
+                    </div>
+                  </div>
+                </div>
+              } @else if (selectedCategId) {
+                <div class="col-12">
+                  <div class="alert alert-info rounded-3 py-3 mb-0">
+                    <i class="ri-information-line me-1"></i>
+                    Cette catégorie ne contient pas de caractéristiques supplémentaires à renseigner.
+                  </div>
+                </div>
+              }
+
+              <div class="col-12">
+                <label class="form-label fw-semibold">Photo (optionnel)</label>
+                <div class="d-flex align-items-start gap-3">
+                  <div class="rounded-3 overflow-hidden border d-flex align-items-center justify-content-center flex-shrink-0"
+                       [class.dropzone-active]="isDragOver"
+                       style="width:100px;height:100px;background:#f8f9fa;border-style:dashed!important;transition:background .2s,border-color .2s"
+                       (dragover)="onDragOver($event)"
+                       (dragleave)="onDragLeave($event)"
+                       (drop)="onDrop($event)">
+                    @if (imagePreview) {
+                      <img [src]="imagePreview" class="w-100 h-100" style="object-fit:cover">
+                    } @else {
+                      <i class="ri-image-add-line fs-2 text-muted"></i>
+                    }
+                  </div>
+                  <div class="d-flex flex-column gap-2" style="padding-top:8px">
+                    <label for="annImg" class="btn btn-outline-primary rounded-3" style="cursor:pointer;width:fit-content">
+                      <i class="ri-upload-cloud-2-line me-1"></i>Choisir une image
+                    </label>
+                    <input type="file" id="annImg" class="d-none" accept="image/*" (change)="onImageSelected($event)">
+                    @if (imagePreview) {
+                      <button type="button" class="btn btn-outline-danger btn-sm rounded-3"
+                              (click)="imagePreview=''; selectedImageFile=null;">
+                        <i class="ri-delete-bin-line me-1"></i>Supprimer
+                      </button>
+                    }
+                    <span class="text-muted fs-12">JPG, PNG, WEBP • Max 2 MB • glissez-déposez aussi</span>
+                    @if (imageError) {
+                      <div class="text-danger fs-12 mt-2">{{ imageError }}</div>
+                    }
+                  </div>
+                </div>
+              </div>
+
+              <div class="col-12">
+                <label class="form-label fw-semibold">Galerie photos <span class="fs-12 fw-normal text-muted">(optionnel, {{ maxGalleryImages }} photos maximum)</span></label>
+                <p class="text-muted fs-12 mb-2">Ajoutez des photos complémentaires. L'image de couverture reste celle choisie ci-dessus.</p>
+                <label for="annGallery" class="btn btn-outline-primary rounded-3">
+                  <i class="ri-gallery-line me-1"></i>Ajouter des photos
+                </label>
+                <input type="file" id="annGallery" class="d-none" accept="image/jpeg,image/png,image/webp" multiple (change)="onGallerySelected($event)">
+                @if (galleryError) { <div class="text-danger fs-12 mt-2">{{ galleryError }}</div> }
+                @if (galleryPreviews.length > 0) {
+                  <div class="d-flex flex-wrap gap-2 mt-3">
+                    @for (preview of galleryPreviews; track $index; let i = $index) {
+                      <div class="position-relative border rounded-3 overflow-hidden" style="width:92px;height:92px">
+                        <img [src]="preview" [alt]="'Photo ' + (i + 1)" class="w-100 h-100" style="object-fit:cover">
+                        <button type="button" class="btn btn-danger btn-sm position-absolute top-0 end-0 m-1 p-1 lh-1" (click)="removeGalleryImage(i)" [attr.aria-label]="'Supprimer la photo ' + (i + 1)">
+                          <i class="ri-close-line"></i>
+                        </button>
+                      </div>
+                    }
+                  </div>
+                }
+              </div>
+
+              @if (submitError) {
+                <div class="col-12">
+                  <div class="alert alert-danger rounded-3 py-2 fs-13 mb-0">
+                    <i class="ri-error-warning-line me-1"></i>{{ submitError }}
+                  </div>
+                </div>
+              }
+
+              <div class="col-12 d-flex gap-3">
+                <button type="submit" class="btn px-5 py-2 rounded-3 fw-medium"
+                        [class.btn-primary]="annonceForm.valid && !submitting"
+                        [class.btn-secondary]="!annonceForm.valid || submitting"
+                        [style.opacity]="annonceForm.valid ? 1 : 0.6"
+                        [disabled]="annonceForm.invalid || submitting">
+                  @if (submitting) { <span class="spinner-border spinner-border-sm me-2"></span> }
+                  <i class="ri-send-plane-line me-1"></i>
+                  {{ annonceForm.valid ? 'Soumettre pour validation' : 'Complétez le formulaire' }}
+                </button>
+                <button type="button" class="btn btn-outline-secondary px-4 rounded-3" (click)="cancelForm()">
+                  Annuler
+                </button>
+              </div>
+
+            </div>
+          </form>
+        </div>
+
+        <div class="col-lg-5">
+          <div class="position-sticky" style="top:20px">
+            <div class="fs-12 fw-semibold text-muted mb-2">
+              <i class="ri-eye-line me-1"></i>Aperçu en direct
+            </div>
+            <div class="card border-0 shadow-sm rounded-4 h-100 d-flex flex-column overflow-hidden">
+              @if (imagePreview) {
+                <div style="height:160px;overflow:hidden">
+                  <img [src]="imagePreview" class="w-100 h-100" style="object-fit:cover">
+                </div>
+              } @else {
+                <div class="d-flex align-items-center justify-content-center text-muted"
+                     style="height:120px;background:#f8f9fa">
+                  <i class="ri-image-line fs-2"></i>
+                </div>
+              }
+              <div class="card-body p-3 d-flex flex-column">
+                <div class="d-flex align-items-center gap-2 mb-2">
+                  <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white flex-shrink-0 fs-12"
+                       style="width:32px;height:32px;background:#0ab39c">
+                    {{ currentUserId ? 'U' : '?' }}
+                  </div>
+                  <div class="text-muted fs-11">Vous — à l'instant</div>
+                  @if (selectedCategoryName) {
+                    <span class="badge rounded-pill px-2 py-1 fs-10 ms-auto" style="background:#e8edff;color:#405189">
+                      {{ selectedCategoryName }}
+                    </span>
+                  }
+                </div>
+                <h6 class="fw-bold mb-1 fs-14">
+                  {{ f['title'].value || 'Titre de votre annonce...' }}
+                </h6>
+                <!-- ? NOUVEAU : aperçu du prix en direct -->
+                @if (f['price'].value) {
+                  <div class="fw-bold fs-13 mb-1" style="color:#0ab39c">{{ f['price'].value }} TND</div>
+                }
+                <div class="text-muted fs-12" style="line-height:1.6; display:-webkit-box; -webkit-line-clamp:3; line-clamp:3; -webkit-box-orient:vertical; overflow:hidden">
+                  <span [innerHTML]="f['content'].value || 'La description apparaîtra ici pendant que vous écrivez...'"></span>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+    }
+  </div>
+}
+
+<!-- ------------------ ZONE PRINCIPALE : SIDEBAR + RÉSULTATS ------------------ -->
+<div class="row g-4">
+
+  @if (showAdvancedFilters) {
+    <div class="col-lg-3">
+      <div class="filter-sidebar">
+
+        <!-- -- Catégorie : vrai dropdown cliquable -------------- -->
+        <div class="filter-block">
+          <div class="filter-label">
+            <i class="ri-menu-line"></i>
+            <span>Catégorie</span>
+          </div>
+
+          <div class="filter-dropdown">
+            <button type="button" class="filter-dropdown-trigger"
+                    (click)="toggleCategoryDropdown()">
+              <span class="filter-dropdown-value">
+                {{ filterCategoryId ? selectedFilterCategoryName : 'Toutes' }}
+              </span>
+              <span class="filter-dropdown-count">{{ getCategoryCount(filterCategoryId) }}</span>
+              <i class="ri-arrow-down-s-line filter-dropdown-arrow" [class.open]="categoryDropdownOpen"></i>
+            </button>
+
+            @if (categoryDropdownOpen) {
+              <div class="filter-dropdown-menu">
+                <button type="button" class="filter-dropdown-item"
+                        [class.active]="filterCategoryId === null"
+                        (click)="selectFilterCategory(null)">
+                  <span>Toutes</span>
+                  <span class="filter-dropdown-item-count">{{ getCategoryCount(null) }}</span>
+                </button>
+                @for (cat of categories; track cat.id) {
+                  <button type="button" class="filter-dropdown-item"
+                          [class.active]="filterCategoryId === cat.id"
+                          (click)="selectFilterCategory(cat.id)">
+                    <span>{{ cat.name_fr }}</span>
+                    <span class="filter-dropdown-item-count">{{ getCategoryCount(cat.id) }}</span>
+                  </button>
+                }
+              </div>
+            }
+          </div>
+        </div>
+
+        <!-- -- Prix ---------------------------------------------- -->
+        <div class="filter-block">
+          <div class="filter-label">
+            <i class="ri-price-tag-3-line"></i>
+            <span>Prix (TND)</span>
+          </div>
+          <div class="filter-price-row">
+            <input type="number" min="0" class="filter-input"
+                   placeholder="Min"
+                   [(ngModel)]="filterPriceMin" [ngModelOptions]="{standalone: true}"
+                   (ngModelChange)="onFilterPriceChange()">
+            <input type="number" min="0" class="filter-input"
+                   placeholder="Max"
+                   [(ngModel)]="filterPriceMax" [ngModelOptions]="{standalone: true}"
+                   (ngModelChange)="onFilterPriceChange()">
+          </div>
+        </div>
+
+        <!-- -- État ---------------------------------------------- -->
+        <div class="filter-block">
+          <div class="filter-label">
+            <i class="ri-shield-check-line"></i>
+            <span>État</span>
+          </div>
+          <select class="filter-select"
+                  [(ngModel)]="filterCondition" [ngModelOptions]="{standalone: true}"
+                  (ngModelChange)="onFilterConditionChange()">
+            <option value="">Tous les états</option>
+            @for (cond of availableConditions; track cond) {
+              <option [value]="cond">{{ cond }}</option>
+            }
+          </select>
+          @if (availableConditions.length === 0) {
+            <div class="filter-hint">Aucune info d'état disponible.</div>
+          }
+        </div>
+
+        <!-- -- Type ---------------------------------------------- -->
+        <div class="filter-block">
+          <div class="filter-label">
+            <i class="ri-price-tag-2-line"></i>
+            <span>Type</span>
+          </div>
+          <select class="filter-select"
+                  [(ngModel)]="filterType" [ngModelOptions]="{standalone: true}"
+                  (ngModelChange)="onFilterTypeChange()">
+            <option value="">Tous types</option>
+            <option value="annonce">Annonce</option>
+            <option value="deal">Deal</option>
+          </select>
+        </div>
+
+        <!-- -- Dates --------------------------------------------- -->
+        <div class="filter-block">
+          <div class="filter-label">
+            <i class="ri-calendar-line"></i>
+            <span>Période</span>
+          </div>
+          <div class="filter-price-row">
+            <input type="date" class="filter-input"
+                   [(ngModel)]="filterDateFrom" [ngModelOptions]="{standalone: true}"
+                   (ngModelChange)="onFilterDateChange()">
+            <input type="date" class="filter-input"
+                   [(ngModel)]="filterDateTo" [ngModelOptions]="{standalone: true}"
+                   (ngModelChange)="onFilterDateChange()">
+          </div>
+        </div>
+
+        <!-- -- Features dynamiques (si catégorie choisie) ------- -->
+        @if (loadingFilterFeatures) {
+          <div class="filter-block">
+            <div class="d-flex align-items-center gap-2 text-muted fs-13">
+              <span class="spinner-border spinner-border-sm"></span>
+              Chargement des caractéristiques...
+            </div>
+          </div>
+        } @else if (filterCategoryFeatures.length > 0) {
+          <div class="filter-block">
+            <div class="filter-label">
+              <i class="ri-settings-3-line"></i>
+              <span>{{ selectedFilterCategoryName }}</span>
+            </div>
+            <div class="d-flex flex-column gap-2">
+              @for (feat of filterCategoryFeatures; track feat.id) {
+                <input type="text" class="filter-input"
+                       [placeholder]="feat.nameFr"
+                       [(ngModel)]="filterFeatures[feat.nameFr]"
+                       [ngModelOptions]="{standalone: true}"
+                       (ngModelChange)="onFilterFeatureChange()">
+              }
+            </div>
+          </div>
+        }
+
+        <!-- -- Trier par ----------------------------------------- -->
+        <div class="filter-block">
+          <div class="filter-label">
+            <i class="ri-sort-desc"></i>
+            <span>Trier par</span>
+          </div>
+          <select class="filter-select"
+                  [(ngModel)]="sortBy" [ngModelOptions]="{standalone: true}" (ngModelChange)="onSortChange()">
+            <option value="recent">Plus récent</option>
+            <option value="oldest">Plus ancien</option>
+            <option value="likes">Plus aimées</option>
+          </select>
+        </div>
+
+        <!-- -- Chips filtres actifs ------------------------------ -->
+        @if (activeFiltersCount > 0) {
+          <div class="filter-chips">
+            @if (filterCategoryId) {
+              <span class="filter-chip">
+                {{ selectedFilterCategoryName }}
+                <i class="ri-close-line" (click)="selectFilterCategory(null)"></i>
+              </span>
+            }
+            @if (filterPriceMin != null) {
+              <span class="filter-chip">
+                Min {{ filterPriceMin }} TND
+                <i class="ri-close-line" (click)="filterPriceMin=null; onFilterPriceChange()"></i>
+              </span>
+            }
+            @if (filterPriceMax != null) {
+              <span class="filter-chip">
+                Max {{ filterPriceMax }} TND
+                <i class="ri-close-line" (click)="filterPriceMax=null; onFilterPriceChange()"></i>
+              </span>
+            }
+            @if (filterCondition) {
+              <span class="filter-chip">
+                {{ filterCondition }}
+                <i class="ri-close-line" (click)="filterCondition=''; onFilterConditionChange()"></i>
+              </span>
+            }
+            @if (filterType) {
+              <span class="filter-chip">
+                {{ filterType === 'annonce' ? 'Annonce' : 'Deal' }}
+                <i class="ri-close-line" (click)="filterType=''; onFilterTypeChange()"></i>
+              </span>
+            }
+            @if (filterDateFrom) {
+              <span class="filter-chip">
+                Depuis {{ filterDateFrom }}
+                <i class="ri-close-line" (click)="filterDateFrom=''; onFilterDateChange()"></i>
+              </span>
+            }
+            @if (filterDateTo) {
+              <span class="filter-chip">
+                Jusqu'au {{ filterDateTo }}
+                <i class="ri-close-line" (click)="filterDateTo=''; onFilterDateChange()"></i>
+              </span>
+            }
+            @for (fk of activeFeatureFilterKeys; track fk) {
+              <span class="filter-chip">
+                {{ fk }}: {{ filterFeatures[fk] }}
+                <i class="ri-close-line" (click)="clearFeatureFilter(fk)"></i>
+              </span>
+            }
+          </div>
+        }
+
+        <!-- -- Réinitialiser ------------------------------------- -->
+        <button type="button" class="filter-reset-btn" (click)="resetAdvancedFilters()">
+          <i class="ri-refresh-line me-2"></i>Réinitialiser
+        </button>
+      </div>
+    </div>
+  }
+
+  <div [class]="showAdvancedFilters ? 'col-lg-9' : 'col-lg-12'">
+
+    <!-- ------------------ FIL COMMUNAUTAIRE ------------------ -->
+    @if (activeTab === 'toutes') {
+      @if (loading) {
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" style="width:2.5rem;height:2.5rem"></div>
+        </div>
+      } @else if (annonces.length === 0) {
+        <div class="card border-0 shadow-sm rounded-4">
+          <div class="card-body text-center py-5">
+            <div class="mb-3" style="font-size:60px;opacity:.15">??</div>
+            <h5 class="fw-semibold">Aucune annonce pour le moment</h5>
+            <p class="text-muted fs-14 mb-4">Soyez le premier à publier une annonce dans la communauté !</p>
+            <button class="btn btn-primary px-4 rounded-3"
+                    [disabled]="!canPublish"
+                    [title]="!canPublish ? 'Réservé aux comptes Entreprise' : ''"
+                    (click)="openForm()">
+              <i class="ri-add-line me-1"></i>Publier une annonce
+            </button>
+          </div>
+        </div>
+      } @else if (filteredAnnonces.length === 0) {
+        <div class="card border-0 shadow-sm rounded-4">
+          <div class="card-body text-center py-5">
+            <div class="mb-3" style="font-size:50px;opacity:.15">??</div>
+            <h6 class="fw-semibold">Aucun résultat pour ces critères</h6>
+            @if (activeFiltersCount > 0) {
+              <button class="btn btn-outline-secondary btn-sm rounded-3 mt-2" (click)="resetAdvancedFilters()">
+                Réinitialiser les filtres
+              </button>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="row g-4">
+          @for (ann of paginatedAnnonces; track ann.id) {
+            <div class="col-lg-6 col-xl-4">
+              <div class="card border-0 shadow-sm rounded-4 h-100 d-flex flex-column overflow-hidden">
+                @if (ann.image_url) {
+                  <div style="height:200px;overflow:hidden;position:relative">
+                    <!-- ? CORRIGÉ — ann.image_url est désormais une URL absolue
+                         déjà résolue par mapAd()/resolveFirstImage() côté .ts
+                         (le backend renvoie le champ ImageAd, pas image_url).
+                         On l'utilise donc directement, sans concaténer imgBase. -->
+                    <img [src]="ann.image_url" alt="Photo de l'annonce" class="w-100 h-100" style="object-fit:cover"
+                         (error)="ann.image_url = ''">
+                    <button class="btn btn-sm position-absolute top-0 end-0 m-2 rounded-circle p-1 d-flex align-items-center justify-content-center"
+                            style="width:32px;height:32px;background:rgba(255,255,255,.9);border:none"
+                            (click)="toggleWishlist(ann)"
+                            [attr.aria-label]="isWishlisted(ann.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+                            [title]="isWishlisted(ann.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'">
+                      <i [class]="isWishlisted(ann.id) ? 'ri-heart-3-fill' : 'ri-heart-3-line'"
+                         [style.color]="isWishlisted(ann.id) ? '#e74c3c' : 'var(--text-muted)'"></i>
+                    </button>
+                  </div>
+                }
+                <div class="card-body p-4 d-flex flex-column flex-fill">
+                  <div class="d-flex align-items-center gap-3 mb-3">
+                    <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white flex-shrink-0 fs-14"
+                         [style.background]="ann.author_role==='vendor' ? '#405189' : '#0ab39c'"
+                         style="width:42px;height:42px">
+                      {{ ann.author_name?.[0] || '?' }}
+                    </div>
+                    <div class="flex-fill">
+                      <div class="fw-semibold fs-14 d-flex align-items-center gap-2">
+                        {{ ann.author_name }}
+                        @if (ann.author_role === 'vendor') {
+                          <span class="badge rounded-pill px-2 py-1 fs-10" style="background:#e8edff;color:#405189">
+                            <i class="ri-store-2-line me-1"></i>Vendeur
+                          </span>
+                        }
+                      </div>
+                      <div class="text-muted fs-12">
+                        {{ ann.shop_name || (ann.author_role === 'vendor' ? 'Boutique' : 'Client') }}
+                        • {{ safeDate(ann.created_at) | date:'dd MMM yyyy' }}
+                      </div>
+                    </div>
+                    @if (ann.type === 'deal') {
+                      <span class="badge rounded-pill px-3" style="background:#fff3cd;color:#c07800">
+                        <i class="ri-price-tag-3-line me-1"></i>Deal
+                      </span>
+                    }
+                    @if (!ann.image_url) {
+                      <button class="btn btn-sm rounded-circle p-1 d-flex align-items-center justify-content-center flex-shrink-0"
+                              style="width:32px;height:32px;background:#f8f9fa;border:none"
+                              (click)="toggleWishlist(ann)"
+                              [attr.aria-label]="isWishlisted(ann.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'"
+                              [title]="isWishlisted(ann.id) ? 'Retirer des favoris' : 'Ajouter aux favoris'">
+                        <i [class]="isWishlisted(ann.id) ? 'ri-heart-3-fill' : 'ri-heart-3-line'"
+                           [style.color]="isWishlisted(ann.id) ? '#e74c3c' : 'var(--text-muted)'"></i>
+                      </button>
+                    }
+                  </div>
+                  <h5 class="fw-bold mb-2 fs-15">
+                    @for (part of highlightParts(ann.title); track $index) {
+                      <span [style.background]="part.match ? '#fff3cd' : 'transparent'"
+                            [style.padding]="part.match ? '0 2px' : '0'"
+                            [style.border-radius]="part.match ? '3px' : '0'">{{ part.text }}</span>
+                    }
+                  </h5>
+                  <!-- ? NOUVEAU : affichage du prix dans le fil communautaire -->
+                  @if (ann.price) {
+                    <div class="fw-bold fs-14 mb-2" style="color:#0ab39c">{{ ann.price }} TND</div>
+                  }
+                  <div class="text-muted fs-13 flex-fill mb-3" style="line-height:1.7; display:-webkit-box; -webkit-line-clamp:3; line-clamp:3; -webkit-box-orient:vertical; overflow:hidden"
+                       [innerHTML]="ann.content"></div>
+                  @if (ann.features?.length > 0) {
+                    <div class="mb-3">
+                      <div class="d-flex flex-wrap gap-2">
+                        @for (feat of ann.features; track feat.key) {
+                          <span class="badge rounded-pill px-3 py-2 fs-12"
+                                style="background:#eef5ff;color:#405189">
+                            {{ feat.key }} : {{ feat.value }}
+                          </span>
+                        }
+                      </div>
+                    </div>
+                  }
+                  <div class="d-flex align-items-center gap-2 pt-3 border-top">
+                    <button class="btn btn-sm rounded-pill px-3 d-flex align-items-center gap-2"
+                            style="background:#fff0f0;color:#e74c3c;border:1px solid #ffd5d5"
+                            (click)="like(ann)"
+                            [disabled]="liking[ann.id]"
+                            [attr.aria-label]="liking[ann.id] ? 'Action en cours' : 'Aimer l\'annonce'"
+                            [title]="liking[ann.id] ? 'Action en cours' : 'Aimer l\'annonce'">
+                      <i class="ri-heart-3-line"></i>
+                      <span class="badge bg-transparent text-danger border-0 p-0">{{ ann.LikeCount || 0 }}</span>
+                    </button>
+                    <button class="btn btn-sm rounded-pill px-3 d-flex align-items-center gap-1"
+                            style="background:#f0f4ff;color:#405189;border:1px solid #dce4ff"
+                            (click)="toggleComments(ann)">
+                      <i class="ri-chat-3-line"></i>
+                      <span>{{ ann.comments_count || 0 }}</span>
+                    </button>
+                    @if (ann.author_role === 'vendor' && ann.user_id) {
+                      <a [routerLink]="['/shop/seller-details', ann.user_id]"
+                         class="btn btn-sm rounded-pill px-3 ms-auto"
+                         style="background:#f0f4ff;color:#405189;border:1px solid #dce4ff">
+                        <i class="ri-store-2-line me-1"></i>Profil
+                      </a>
+                    }
+                  </div>
+                  @if (expandedComments[ann.id]) {
+                    <div class="mt-3 pt-3 border-top">
+                      @for (c of (comments[ann.id] || []); track c.id) {
+                        <div class="d-flex gap-2 mb-2">
+                          <div class="rounded-circle d-flex align-items-center justify-content-center fw-bold text-white flex-shrink-0 fs-11"
+                               style="width:30px;height:30px;background:var(--text-muted);min-width:30px">
+                            {{ c.author_name?.[0] || '?' }}
+                          </div>
+                          <div class="flex-fill bg-light rounded-3 px-3 py-2">
+                            <div class="fw-semibold fs-12">{{ c.author_name }}</div>
+                            <div class="fs-13 text-muted">{{ c.content }}</div>
+                          </div>
+                        </div>
+                      }
+                      <div class="d-flex gap-2 mt-2">
+                        <input type="text" class="form-control form-control-sm rounded-pill"
+                               placeholder="Commenter..." [(ngModel)]="commentText[ann.id]"
+                               (keyup.enter)="postComment(ann)">
+                        <button class="btn btn-sm btn-primary rounded-pill px-3" (click)="postComment(ann)">
+                          <i class="ri-send-plane-line"></i>
+                        </button>
+                      </div>
+                    </div>
+                  }
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        @if (totalPages > 1) {
+          <div class="d-flex justify-content-center align-items-center gap-2 mt-4">
+            <button class="btn btn-sm btn-outline-secondary rounded-3" [disabled]="currentPage===1" (click)="goToPage(currentPage-1)">
+              <i class="ri-arrow-left-s-line"></i>
+            </button>
+            @for (p of pagesArray; track p) {
+              <button class="btn btn-sm rounded-3" [class.btn-primary]="currentPage===p" [class.btn-outline-secondary]="currentPage!==p"
+                      (click)="goToPage(p)">{{ p }}</button>
+            }
+            <button class="btn btn-sm btn-outline-secondary rounded-3" [disabled]="currentPage===totalPages" (click)="goToPage(currentPage+1)">
+              <i class="ri-arrow-right-s-line"></i>
+            </button>
+          </div>
+        }
+      }
+    }
+
+    <!-- ------------------ MES PUBLICATIONS ------------------ -->
+    @if (activeTab === 'miennes') {
+      @if (loadingMine) {
+        <div class="text-center py-5">
+          <div class="spinner-border text-primary" style="width:2.5rem;height:2.5rem"></div>
+        </div>
+      } @else if (myAnnonces.length === 0) {
+        <div class="card border-0 shadow-sm rounded-4">
+          <div class="card-body text-center py-5">
+            <div class="mb-3" style="font-size:60px;opacity:.15">??</div>
+            <h5 class="fw-semibold">Aucune publication</h5>
+            <p class="text-muted fs-14 mb-4">Vous n'avez pas encore publié d'annonce.</p>
+            <button class="btn btn-primary px-4 rounded-3"
+                    [disabled]="!canPublish"
+                    [title]="!canPublish ? 'Réservé aux comptes Entreprise' : ''"
+                    (click)="openForm();setActiveTab('miennes')">
+              <i class="ri-add-line me-1"></i>Créer ma première annonce
+            </button>
+          </div>
+        </div>
+      } @else if (filteredMyAnnonces.length === 0) {
+        <div class="card border-0 shadow-sm rounded-4">
+          <div class="card-body text-center py-5">
+            <div class="mb-3" style="font-size:50px;opacity:.15">??</div>
+            <h6 class="fw-semibold">Aucun résultat pour ces critères</h6>
+            @if (activeFiltersCount > 0) {
+              <button class="btn btn-outline-secondary btn-sm rounded-3 mt-2" (click)="resetAdvancedFilters()">
+                Réinitialiser les filtres
+              </button>
+            }
+          </div>
+        </div>
+      } @else {
+        <div class="d-flex flex-column gap-3">
+          @for (ann of paginatedMyAnnonces; track ann.id) {
+            <div class="card border-0 shadow-sm rounded-4 overflow-hidden"
+                 style="cursor:pointer"
+                 [style.border-left]="'4px solid ' + (ann.status==='approved' ? '#0ab39c' : ann.status==='pending' ? '#f7b84b' : '#f06548') + '!important'"
+                 [routerLink]="['/landing/annonces', ann.id]">
+              <div class="card-body p-4">
+                <div class="d-flex justify-content-between align-items-start gap-3">
+                  <div class="flex-fill">
+                    <div class="d-flex flex-wrap align-items-center gap-2 mb-2">
+                      <h5 class="fw-bold mb-0 fs-15">{{ ann.title }}</h5>
+                      <span class="badge rounded-pill px-3 py-1" [ngClass]="getStatusClass(ann.status)">
+                        @if (ann.status==='approved') { <i class="ri-checkbox-circle-line me-1"></i> }
+                        @if (ann.status==='pending')  { <i class="ri-time-line me-1"></i> }
+                        @if (ann.status==='rejected') { <i class="ri-close-circle-line me-1"></i> }
+                        {{ getStatusLabel(ann.status) }}
+                      </span>
+                    </div>
+                    @if (ann.status === 'pending') {
+                      <div class="d-flex align-items-center gap-1 text-warning fs-12 mb-2">
+                        <i class="ri-information-line"></i>
+                        En attente de validation par l'administrateur
+                      </div>
+                    }
+                    @if (ann.status === 'rejected' && ann.rejection_reason) {
+                      <div class="d-flex align-items-center gap-1 text-danger fs-12 mb-2">
+                        <i class="ri-error-warning-line"></i>{{ ann.rejection_reason }}
+                      </div>
+                    }
+                    <!-- ? NOUVEAU : affichage du prix dans "Mes publications" -->
+                    @if (ann.price) {
+                      <div class="fw-bold fs-14 mb-2" style="color:#0ab39c">{{ ann.price }} TND</div>
+                    }
+                    <div class="text-muted fs-14 mb-3" style="line-height:1.6" [innerHTML]="ann.content"></div>
+                    @if (ann.features?.length > 0) {
+                      <div class="row g-2 mb-3">
+                        @for (feat of ann.features; track feat.key) {
+                          <div class="col-6">
+                            <div class="rounded-3 px-3 py-2" style="background:#f8f9fa">
+                              <div class="fs-12 text-muted">{{ feat.key }}</div>
+                              <div class="fw-semibold fs-13">{{ feat.value }}</div>
+                            </div>
+                          </div>
+                        }
+                      </div>
+                    }
+                    @if (ann.image_url) {
+                      <!-- ? CORRIGÉ — même correctif que dans le fil communautaire :
+                           ann.image_url est déjà une URL absolue résolue côté .ts,
+                           on ne concatène plus imgBase devant. -->
+                      <img [src]="ann.image_url" alt="Image de l'annonce" class="rounded-3 mb-3"
+                           style="max-height:200px;max-width:100%;object-fit:cover"
+                           (error)="ann.image_url = ''">
+                    }
+                    <div class="d-flex align-items-center gap-4 pt-2 border-top text-muted fs-13">
+                      <span><i class="ri-heart-3-line me-1 text-danger"></i>{{ ann.LikeCount || 0 }}</span>
+                      <span><i class="ri-eye-line me-1"></i>{{ ann.ViewCount || 0 }}</span>
+                      <span><i class="ri-chat-3-line me-1 text-primary"></i>{{ ann.comments_count || 0 }}</span>
+                      <span class="ms-auto"><i class="ri-calendar-line me-1"></i>{{ safeDate(ann.created_at) | date:'dd MMM yyyy' }}</span>
+                    </div>
+                  </div>
+                    <a class="btn btn-sm btn-soft-success rounded-3 flex-shrink-0 me-2"
+                       [routerLink]="['/ent/boost-packs']"
+                       [queryParams]="{ type: 'ad', id: ann.id, label: ann.title }"
+                       (click)="$event.stopPropagation()">
+                      <i class="ri-rocket-2-line"></i>
+                    </a>
+                  <button class="btn btn-sm btn-outline-danger rounded-3 flex-shrink-0"
+                          (click)="$event.stopPropagation(); deleteAnnonce(ann.id)">
+                    <i class="ri-delete-bin-line"></i>
+                  </button>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+
+        @if (totalPagesMine > 1) {
+          <div class="d-flex justify-content-center align-items-center gap-2 mt-4">
+            <button class="btn btn-sm btn-outline-secondary rounded-3" [disabled]="currentPage===1" (click)="goToPage(currentPage-1)">
+              <i class="ri-arrow-left-s-line"></i>
+            </button>
+            @for (p of pagesArrayMine; track p) {
+              <button class="btn btn-sm rounded-3" [class.btn-primary]="currentPage===p" [class.btn-outline-secondary]="currentPage!==p"
+                      (click)="goToPage(p)">{{ p }}</button>
+            }
+            <button class="btn btn-sm btn-outline-secondary rounded-3" [disabled]="currentPage===totalPagesMine" (click)="goToPage(currentPage+1)">
+              <i class="ri-arrow-right-s-line"></i>
+            </button>
+          </div>
+        }
+      }
+    }
+
+  </div>
+</div>

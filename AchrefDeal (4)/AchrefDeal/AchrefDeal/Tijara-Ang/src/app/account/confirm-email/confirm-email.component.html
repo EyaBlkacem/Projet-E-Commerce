@@ -1,0 +1,85 @@
+<div class="auth-page-wrapper pt-5">
+    <div class="auth-one-bg-position auth-one-bg" id="auth-particles">
+        <div class="bg-overlay"></div>
+        <div class="shape">
+            <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1440 120">
+                <path d="M 0,36 C 144,53.6 432,123.2 720,124 C 1008,124.8 1296,56.8 1440,40L1440 140L0 140z"></path>
+            </svg>
+        </div>
+    </div>
+
+    <div class="auth-page-content">
+        <div class="container">
+            <div class="row">
+                <div class="col-lg-12">
+                    <div class="text-center mt-sm-5 mb-4 text-white-50">
+                        <a routerLink="/landing" class="d-inline-block">
+                            <span class="fw-bold fs-24 text-white" style="font-family:'Segoe UI',sans-serif;letter-spacing:1px">
+                                <i class="ri-shopping-bag-3-fill me-2" style="color:#0ab39c"></i>Tijara
+                            </span>
+                        </a>
+                    </div>
+                </div>
+            </div>
+
+            <div class="row justify-content-center">
+                <div class="col-md-8 col-lg-6 col-xl-5">
+                    <div class="card mt-4 border-0 shadow-lg" style="border-radius:20px;overflow:hidden">
+
+                        <!-- Chargement -->
+                        @if (state === 'loading') {
+                        <div class="card-body p-5 text-center">
+                            <div class="spinner-border text-primary mb-4" style="width:3rem;height:3rem"></div>
+                            <h5 class="fw-bold">Vérification en cours…</h5>
+                            <p class="text-muted fs-14">Validation de votre adresse e-mail, veuillez patienter.</p>
+                        </div>
+                        }
+
+                        <!-- Succès -->
+                        @if (state === 'success') {
+                        <div style="background:linear-gradient(135deg,#405189,#0ab39c);padding:40px 32px;text-align:center">
+                            <div style="width:72px;height:72px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+                                <i class="ri-checkbox-circle-line text-white" style="font-size:40px"></i>
+                            </div>
+                            <h4 class="text-white fw-bold mb-1">Email confirmé !</h4>
+                            <p class="mb-0" style="color:rgba(255,255,255,0.8);font-size:14px">Votre compte est maintenant actif</p>
+                        </div>
+                        <div class="card-body p-4 text-center">
+                            <p class="text-muted fs-14 mb-4">
+                                Félicitations ! Votre adresse e-mail a été confirmée avec succès.<br>
+                                Vous allez être redirigé vers la page de connexion…
+                            </p>
+                            <button class="btn btn-primary w-100 rounded-pill fw-semibold py-2" (click)="goLogin()">
+                                <i class="ri-login-circle-line me-2"></i>Se connecter maintenant
+                            </button>
+                        </div>
+                        }
+
+                        <!-- Erreur -->
+                        @if (state === 'error') {
+                        <div style="background:linear-gradient(135deg,#f06548,#e11d48);padding:40px 32px;text-align:center">
+                            <div style="width:72px;height:72px;background:rgba(255,255,255,0.2);border-radius:50%;display:flex;align-items:center;justify-content:center;margin:0 auto 16px">
+                                <i class="ri-close-circle-line text-white" style="font-size:40px"></i>
+                            </div>
+                            <h4 class="text-white fw-bold mb-1">Lien invalide</h4>
+                            <p class="mb-0" style="color:rgba(255,255,255,0.8);font-size:14px">Ce lien est expiré ou déjà utilisé</p>
+                        </div>
+                        <div class="card-body p-4 text-center">
+                            <div class="alert alert-danger border-0 fs-13 text-start" style="border-radius:12px">
+                                <i class="ri-error-warning-line me-2"></i>{{ message }}
+                            </div>
+                            <p class="text-muted fs-13 mb-4">
+                                Si votre lien a expiré, vous pouvez en demander un nouveau depuis la page de connexion.
+                            </p>
+                            <button class="btn btn-primary w-100 rounded-pill fw-semibold py-2" (click)="goLogin()">
+                                <i class="ri-arrow-left-line me-2"></i>Retour à la connexion
+                            </button>
+                        </div>
+                        }
+
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>

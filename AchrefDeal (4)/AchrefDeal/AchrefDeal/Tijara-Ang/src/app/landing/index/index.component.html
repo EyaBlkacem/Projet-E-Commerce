@@ -1,0 +1,1406 @@
+﻿<div appScrollspy [spiedTags]="['SECTION']" (sectionChange)="onSectionChange($event)">
+<div class="layout-wrapper landing">
+
+  <!-- -------- TOAST — Connexion requise -------- -->
+  @if (showLoginToast) {
+  <div class="position-fixed bottom-0 end-0 p-3" style="z-index:9999">
+    <div class="toast show border-0 shadow-lg" style="border-radius:14px;min-width:320px">
+      <div class="toast-body p-4">
+        <div class="d-flex align-items-start gap-3">
+          <div class="d-flex align-items-center justify-content-center flex-shrink-0 rounded-circle"
+               style="width:42px;height:42px;background:linear-gradient(135deg,#405189,#0ab39c)">
+            <i class="ri-lock-2-line text-white fs-18"></i>
+          </div>
+          <div class="flex-fill">
+            <div class="fw-semibold fs-14 mb-1">Connexion requise</div>
+            <div class="text-muted fs-13">Connectez-vous pour ajouter des produits au panier et passer commande.</div>
+            <div class="d-flex gap-2 mt-3">
+              <button class="btn btn-primary btn-sm rounded-pill px-3 fw-medium" (click)="goToLogin()">
+                <i class="ri-login-box-line me-1"></i>Se connecter
+              </button>
+              <a routerLink="/auth/register" class="btn btn-outline-secondary btn-sm rounded-pill px-3">
+                S'inscrire
+              </a>
+            </div>
+          </div>
+          <button type="button" class="btn-close ms-auto" (click)="dismissToast()"></button>
+        </div>
+      </div>
+    </div>
+  </div>
+  }
+
+  <!-- ------------------------------------------------------------
+       HEADER — bloc unifié : logo + icône menu + recherche + catégories
+  ------------------------------------------------------------ -->
+  <header class="tijara-header fixed-top" id="navbar" (window:scroll)="windowScroll()">
+
+    <nav class="navbar navbar-landing">
+      <div class="container d-flex align-items-center justify-content-between">
+        <a class="navbar-brand d-flex align-items-center gap-2" routerLink="/landing">
+          <div class="tijara-logo-nav d-flex align-items-center gap-1">
+            <div style="width:34px;height:34px;background:linear-gradient(135deg,#405189,#0ab39c);border-radius:8px;display:flex;align-items:center;justify-content:center;">
+              <i class="ri-shopping-bag-3-fill text-white fs-18"></i>
+            </div>
+            <span class="fw-bold fs-20" style="color:var(--surface-color);letter-spacing:0.5px;font-family:'Segoe UI',sans-serif">Tijara</span>
+          </div>
+        </a>
+
+        <div class="d-flex align-items-center gap-2">
+          @if (isLoggedIn) {
+          <div class="user-menu-holder" (mouseleave)="closeUserMenu()">
+            <button type="button" class="user-menu-trigger" (click)="toggleUserMenu($event)">
+              <span class="user-avatar">{{ currentUser?.firstName?.charAt(0) | uppercase }}</span>
+              <span class="user-name d-none d-md-inline">{{ currentUser?.firstName }}</span>
+              <i class="ri-arrow-down-s-line user-menu-arrow" [class.open]="userMenuOpen"></i>
+            </button>
+
+            @if (userMenuOpen) {
+              <div class="user-menu-panel">
+                <div class="user-menu-header">
+                  <span class="user-avatar user-avatar-lg">{{ currentUser?.firstName?.charAt(0) | uppercase }}</span>
+                  <div>
+                    <div class="fw-semibold fs-14 text-dark">{{ currentUser?.firstName }} {{ currentUser?.lastName }}</div>
+                    <div class="fs-12 text-muted">{{ currentUser?.email }}</div>
+                  </div>
+                </div>
+                <div class="user-menu-divider"></div>
+                <a routerLink="/users/dashboard" class="user-menu-item" (click)="closeUserMenu()">
+                  <i class="ri-dashboard-line"></i>Tableau de bord
+                </a>
+
+                <a routerLink="/users/orders" class="user-menu-item" (click)="closeUserMenu()">
+                  <i class="ri-shopping-bag-3-line"></i>Mes commandes
+                </a>
+                <a routerLink="/users/settings" class="user-menu-item" (click)="closeUserMenu()">
+                  <i class="ri-settings-3-line"></i>Paramètres
+                </a>
+                <div class="user-menu-divider"></div>
+                <button type="button" class="user-menu-item user-menu-item-danger" (click)="logout()">
+                  <i class="ri-logout-box-line"></i>Déconnexion
+                </button>
+              </div>
+              <div class="user-menu-overlay" (click)="closeUserMenu()"></div>
+            }
+          </div>
+          } @else {
+          <div class="d-none d-md-flex gap-2">
+            <a routerLink="/auth/login"    class="btn btn-ghost-light btn-sm fw-medium">Se connecter</a>
+            <a routerLink="/auth/register" class="btn btn-warning btn-sm fw-medium">
+              <i class="ri-user-add-line me-1"></i>S'inscrire
+            </a>
+          </div>
+          }
+
+          <button type="button" class="tj-menu-toggle" [class.is-open]="mobileMenuOpen" (click)="toggleMenu()" aria-label="Menu">
+            <i class="mdi mdi-menu"></i>
+          </button>
+        </div>
+      </div>
+    </nav>
+
+    <div class="tj-nav-panel" [class.show]="mobileMenuOpen" (click)="closeMenuOnBackdrop($event)">
+      <div class="tj-nav-panel-inner">
+        <button type="button" class="tj-nav-panel-close" (click)="closeMenu()" aria-label="Fermer">
+          <i class="ri-close-line"></i>
+        </button>
+        <ul class="navbar-nav" id="navbar-example">
+          <li class="nav-item">
+            <a class="nav-link" [ngClass]="{'active': currentSection==='hero'}" [ngxScrollTo]="'#hero'" href="javascript:void(0);" (click)="closeMenu()">
+              <i class="ri-home-4-line me-2"></i>Accueil
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [ngClass]="{'active': currentSection==='products'}" [ngxScrollTo]="'#products'" href="javascript:void(0);" (click)="closeMenu()">
+              <i class="ri-shopping-bag-3-line me-2"></i>Produits
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" routerLink="/landing/annonces" (click)="closeMenu()">
+              <i class="ri-price-tag-3-line me-2"></i>Catalogue
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [ngClass]="{'active': currentSection==='how'}" [ngxScrollTo]="'#how'" href="javascript:void(0);" (click)="closeMenu()">
+              <i class="ri-question-line me-2"></i>Comment ça marche
+            </a>
+          </li>
+          <li class="nav-item">
+            <a class="nav-link" [ngClass]="{'active': currentSection==='reviews'}" [ngxScrollTo]="'#reviews'" href="javascript:void(0);" (click)="closeMenu()">
+              <i class="ri-chat-quote-line me-2"></i>Témoignages
+            </a>
+          </li>
+        </ul>
+
+        @if (!isLoggedIn) {
+          <div class="d-flex d-md-none gap-2 mt-3 px-3">
+            <a routerLink="/auth/login" class="btn btn-ghost-light flex-fill" (click)="closeMenu()">Se connecter</a>
+            <a routerLink="/auth/register" class="btn btn-warning flex-fill" (click)="closeMenu()">S'inscrire</a>
+          </div>
+        }
+      </div>
+    </div>
+
+    <div class="tj-search-row">
+      <div class="container">
+        <div class="tj-search-bar">
+          <div class="tj-search-select">
+            <select class="tj-select" [(ngModel)]="searchCategoryId">
+              <option value="">Toutes les catégories</option>
+              @for (cat of categories; track cat.idCateg) {
+                <option [value]="cat.idCateg">{{ cat.name }}</option>
+              }
+            </select>
+          </div>
+          <input type="text" class="tj-search-input"
+                 placeholder="Rechercher un produit, une marque..."
+                 [(ngModel)]="searchQuery"
+                 (keyup.enter)="onSearch()">
+          <button type="button" class="tj-search-btn" (click)="onSearch()">
+            <i class="ri-search-line"></i>
+          </button>
+        </div>
+      </div>
+    </div>
+
+    <div class="category-strip" (mouseleave)="closeMegaMenu()">
+      <div class="container">
+        @if (categoriesLoading) {
+          <div class="py-2 text-center">
+            <div class="spinner-border spinner-border-sm text-warning"></div>
+            <span class="text-white-50 ms-2 fs-13">Chargement des catégories…</span>
+          </div>
+        } @else {
+          <ul class="category-strip-list">
+            @for (cat of categories; track cat.idCateg) {
+              <li class="category-strip-item"
+                  [class.active]="cat.idCateg === searchCategoryId"
+                  (mouseenter)="openMegaMenu(cat.idCateg)">
+                <a href="javascript:void(0)" (click)="goToCategory(cat.idCateg)">
+                  <i class="{{ cat.icon }} me-1"></i>{{ cat.name }}
+                </a>
+              </li>
+            }
+          </ul>
+        }
+      </div>
+
+      @if (megaMenuCategoryId !== null && getCategoryGroups(megaMenuCategoryId).length > 0) {
+        <div class="mega-menu-columns-panel" (mouseenter)="keepMegaMenuOpen()" (mouseleave)="closeMegaMenu()">
+          <div class="container">
+            <div class="mega-columns">
+              @for (group of getCategoryGroups(megaMenuCategoryId); track group.title) {
+                <div class="mega-group">
+                  <h6 class="mega-group-title"><span>{{ group.title }}</span></h6>
+                  <ul class="mega-group-list">
+                    @for (item of group.items; track item) {
+                      <li>
+                        <a href="javascript:void(0)" (click)="goToSubcategory(megaMenuCategoryId, item)">{{ item }}</a>
+                      </li>
+                    }
+                  </ul>
+                </div>
+              }
+            </div>
+          </div>
+        </div>
+        <div class="mega-menu-overlay" (click)="closeMegaMenu()"></div>
+      }
+    </div>
+  </header>
+
+  <!-- ------------------------------------------------------------
+       HERO — carrousel de deals ET items boostés à droite
+  ------------------------------------------------------------ -->
+  <section class="section pb-0 hero-section position-relative" id="hero" style="background:linear-gradient(135deg,#1a2d6e 0%,#405189 45%,#0a7d6e 100%);overflow:hidden">
+
+    <div class="hero-blob hero-blob-1"></div>
+    <div class="hero-blob hero-blob-2"></div>
+    <div class="hero-blob hero-blob-3"></div>
+
+    <div class="container tj-hero-offset position-relative">
+      <div class="row align-items-start gy-5">
+        <div class="col-lg-6">
+          <div class="hero-eyebrow mb-3">
+            <span class="hero-eyebrow-badge">Nouveau</span>
+            <span class="hero-eyebrow-text">+500 produits ajoutés cette semaine</span>
+          </div>
+
+          <h1 class="hero-heading mb-3">
+            La marketplace <span class="hero-heading-accent">n°1</span> en Tunisie
+          </h1>
+          <p class="hero-subtext mb-4">
+            Achetez, vendez et échangez en toute confiance. Des milliers de produits,
+            des vendeurs vérifiés, livrés partout en Tunisie.
+          </p>
+
+          <div class="d-flex flex-wrap gap-3 mb-5 hero-cta-row">
+            <a routerLink="/landing/annonces" class="btn btn-warning btn-lg rounded-pill fw-semibold px-4 hero-cta-btn hero-cta-btn-primary">
+              <i class="ri-shopping-bag-3-line me-2"></i>Commencer à acheter
+            </a>
+            <a routerLink="/auth/register" class="btn btn-lg rounded-pill fw-medium px-4 hero-cta-btn hero-cta-btn-ghost">
+              <i class="ri-store-2-line me-2"></i>Devenir vendeur
+            </a>
+          </div>
+
+          <div class="hero-stats-bar">
+            @for (stat of stats; track stat.label) {
+              <div class="hero-stat-item">
+                <i class="{{ stat.icon }} hero-stat-icon"></i>
+                <div>
+                  <div class="hero-stat-value">{{ stat.value }}</div>
+                  <div class="hero-stat-label">{{ stat.label }}</div>
+                </div>
+              </div>
+            }
+          </div>
+        </div>
+
+        <div class="col-lg-6 d-none d-lg-block">
+          <div class="hero-product-wrapper">
+
+            @if (heroLoading) {
+              <div class="card border-0 hero-product-card d-flex align-items-center justify-content-center" style="height:340px">
+                <div class="spinner-border text-warning"></div>
+              </div>
+            } @else if (heroCarouselItems.length > 0) {
+              <div class="hero-deal-carousel">
+                @for (item of heroCarouselItems; track item.kind + '-' + item.id) {
+                  <div class="hero-deal-slide" [class.active]="$index === currentDealIndex">
+                    <div class="card border-0 hero-product-card" [class.is-urgent]="isDealUrgent(item)" [class.is-expired]="isDealExpired(item)">
+                      <div class="hero-deal-media" [style.background]="item.image ? 'transparent' : (item.bgColor + '33')">
+                        @if (item.image) {
+                          <img [src]="item.image" [alt]="item.title" (error)="item.image = null">
+                        } @else {
+                          <i class="ri-price-tag-3-fill" [style.color]="item.bgColor"></i>
+                        }
+                        @if (item.kind === 'deal' && item.discount) {
+                          <span class="hero-deal-badge">-{{ item.discount }}%</span>
+                        }
+                        @if (item.kind === 'boosted') {
+                          <span class="hero-deal-badge"><i class="ri-rocket-2-fill me-1"></i>{{ item.badgeLabel }}</span>
+                        }
+                        @if (item.kind === 'deal' && isDealExpired(item)) {
+                          <span class="hero-deal-expired-badge"><i class="ri-close-circle-line me-1"></i>Offre terminee</span>
+                        } @else if (item.kind === 'deal' && isDealUrgent(item)) {
+                          <span class="hero-deal-urgent-badge"><i class="ri-timer-flash-fill me-1"></i>Se termine bientot</span>
+                        }
+                        <div class="hero-deal-caption">
+                          <div class="fs-12 opacity-75">
+                            {{ item.kind === 'deal' ? 'Deal du moment' : (item.routeType === 'produits' ? 'Produit boosté' : 'Annonce boostée') }}
+                          </div>
+                          <div class="fw-bold fs-16">{{ item.title }}</div>
+                          <div class="fw-bold fs-20 text-warning">{{ item.price | number:'1.0-0' }} DT</div>
+                        </div>
+                      </div>
+                      @if (item.kind === 'deal' && item.prize) {
+                        <div class="hero-deal-prize">
+                          <i class="ri-gift-fill"></i>
+                          <span>Cadeau bonus : {{ item.prize.title }}</span>
+                        </div>
+                      }
+                      <div class="card-body py-2 d-flex align-items-center justify-content-between">
+                        <span class="text-muted fs-13"><i class="ri-store-2-line me-1"></i>{{ item.seller }}</span>
+                        <button type="button" class="btn btn-sm btn-primary rounded-pill" (click)="goToDealDetail(item)">
+                          Voir l'offre
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+                }
+              </div>
+
+              @if (heroCarouselItems.length > 1) {
+                <div class="hero-deal-controls">
+                  <button type="button" class="hero-deal-arrow" (click)="prevDeal()"><i class="ri-arrow-left-s-line"></i></button>
+                  <div class="hero-deal-dots">
+                    @for (item of heroCarouselItems; track item.kind + '-' + item.id) {
+                      <span class="hero-deal-dot" [class.active]="$index === currentDealIndex" (click)="goToDeal($index)"></span>
+                    }
+                  </div>
+                  <button type="button" class="hero-deal-arrow" (click)="nextDeal()"><i class="ri-arrow-right-s-line"></i></button>
+                </div>
+              }
+            } @else {
+              <!-- Repli si aucun deal ni item boosté n'est disponible côté API -->
+              <div class="card border-0 hero-product-card">
+                <div style="height:220px;background:linear-gradient(135deg,#405189,#0ab39c);position:relative;display:flex;align-items:center;justify-content:center">
+                  <i class="ri-shopping-bag-3-fill" style="font-size:80px;color:rgba(255,255,255,0.2)"></i>
+                  <div class="position-absolute top-0 start-0 m-3">
+                    <span class="badge bg-danger fs-12">-25%</span>
+                  </div>
+                  <div class="position-absolute bottom-0 start-0 m-3 text-white">
+                    <div class="fs-12 opacity-75">Électronique</div>
+                    <div class="fw-bold fs-16">iPhone 14 Pro</div>
+                    <div class="fw-bold fs-20 text-warning">1 200 DT</div>
+                  </div>
+                </div>
+                <div class="card-body">
+                  <div class="d-flex align-items-center gap-2 mb-2">
+                    @for (star of getStars(5); track $index) {
+                      <i class="ri-star-fill text-warning"></i>
+                    }
+                    <span class="text-muted fs-12">(124 avis)</span>
+                  </div>
+                  <div class="d-flex align-items-center justify-content-between">
+                    <div class="d-flex align-items-center gap-2">
+                      <div style="width:28px;height:28px;background:#405189;border-radius:50%;display:flex;align-items:center;justify-content:center">
+                        <i class="ri-store-2-fill text-white" style="font-size:12px"></i>
+                      </div>
+                      <span class="text-muted fs-13">TechTunis</span>
+                    </div>
+                    <span class="badge bg-success-subtle text-success">En stock</span>
+                  </div>
+                </div>
+              </div>
+            }
+
+            <div class="hero-trust-row">
+              <div class="hero-trust-item">
+                <i class="ri-shield-check-fill"></i>
+                <span>Paiement sécurisé</span>
+              </div>
+              <div class="hero-trust-divider"></div>
+              <div class="hero-trust-item">
+                <i class="ri-truck-line"></i>
+                <span>Livraison rapide</span>
+              </div>
+              <div class="hero-trust-divider"></div>
+              <div class="hero-trust-item">
+                <i class="ri-refund-2-line"></i>
+                <span>Retour facile</span>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="position-relative mt-5" style="height:80px;overflow:hidden">
+      <svg viewBox="0 0 1440 80" preserveAspectRatio="none" style="position:absolute;bottom:0;width:100%;height:100%">
+        <path d="M0,40 C360,80 1080,0 1440,40 L1440,80 L0,80 Z" fill="#ffffff"/>
+      </svg>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------
+       SLIDER BOOSTÉ — bande "catalogue" à défilement continu automatique
+       (option "Slider d'accueil" des packs de boost)
+  ------------------------------------------------------------ -->
+  @if (!boostedSliderLoading && boostedSliderItems.length > 0) {
+  <section class="py-5 boost-slider-section">
+    <div class="container">
+      <div class="text-center mb-4">
+        <span class="badge boost-badge-label fw-semibold px-3 py-2 rounded-pill fs-13 mb-2">
+          <i class="ri-rocket-2-fill me-1"></i>Sponsorisé
+        </span>
+        <h2 class="fw-bold fs-28 mt-2 mb-1">Mis en avant par nos vendeurs</h2>
+        <p class="text-muted mb-0">Des offres boostées pour plus de visibilité</p>
+      </div>
+    </div>
+
+    <div class="boost-catalog-viewport">
+      <div class="boost-catalog-track"
+           [class.paused]="boostTrackPaused"
+           (mouseenter)="boostTrackPaused = true"
+           (mouseleave)="boostTrackPaused = false">
+        @for (item of boostedSliderLoopItems; track $index) {
+          <div class="boost-catalog-card" (click)="goToPremiumItem(item)">
+            <div class="boost-catalog-img" [style.background]="item.image ? 'transparent' : (item.bgColor + '22')">
+              @if (item.image) {
+                <img [src]="item.image" [alt]="item.name" (error)="item.image = null">
+              } @else {
+                <i class="ri-shopping-bag-3-line" [style.color]="item.bgColor"></i>
+              }
+              <span class="boosted-tag"><i class="ri-rocket-2-fill me-1"></i>Boosté</span>
+            </div>
+            <div class="p-3">
+              <span class="badge bg-light text-muted fs-11 mb-1">{{ item.category }}</span>
+              <h6 class="fw-semibold fs-15 mb-2 text-truncate">{{ item.name }}</h6>
+              <div class="d-flex align-items-center justify-content-between">
+                <span class="fw-bold fs-17" style="color:#f06548">{{ item.price | number:'1.0-0' }} DT</span>
+                <span class="text-muted fs-12 text-truncate"><i class="ri-store-2-line me-1"></i>{{ item.seller }}</span>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+  }
+
+  <!-- ------------------------------------------------------------
+       BARRE DE CONFIANCE
+  ------------------------------------------------------------ -->
+  <section class="py-4 bg-white border-bottom">
+    <div class="container">
+      <div class="row g-3 text-center">
+        <div class="col-6 col-md-3">
+          <div class="d-flex align-items-center justify-content-center gap-2">
+            <i class="ri-shield-check-line fs-24 text-success"></i>
+            <div class="text-start">
+              <div class="fw-semibold fs-14">Vendeurs vérifiés</div>
+              <div class="text-muted fs-12">Chaque boutique est contrôlée</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="d-flex align-items-center justify-content-center gap-2">
+            <i class="ri-truck-line fs-24 text-primary"></i>
+            <div class="text-start">
+              <div class="fw-semibold fs-14">Livraison nationale</div>
+              <div class="text-muted fs-12">24 gouvernorats couverts</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="d-flex align-items-center justify-content-center gap-2">
+            <i class="ri-customer-service-2-line fs-24 text-warning"></i>
+            <div class="text-start">
+              <div class="fw-semibold fs-14">Support 7j/7</div>
+              <div class="text-muted fs-12">Réponse en moins de 2h</div>
+            </div>
+          </div>
+        </div>
+        <div class="col-6 col-md-3">
+          <div class="d-flex align-items-center justify-content-center gap-2">
+            <i class="ri-refund-2-line fs-24 text-danger"></i>
+            <div class="text-start">
+              <div class="fw-semibold fs-14">Retour facile</div>
+              <div class="text-muted fs-12">Sous 7 jours garanti</div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <!-- ------------------------------------------------------------
+     LIENS BOOSTÉS — option "Links" des packs de boost
+------------------------------------------------------------ -->
+@if (!boostedLinksLoading && boostedLinksItems.length > 0) {
+<section class="py-2 boosted-links-bar">
+  <div class="container d-flex flex-wrap align-items-center justify-content-center gap-3">
+    <span class="fs-12 fw-semibold text-muted text-uppercase">
+      <i class="ri-links-line me-1 text-warning"></i>Liens sponsorisés
+    </span>
+    @for (item of boostedLinksItems; track item.id + '-' + item.type) {
+      <a href="javascript:void(0)" class="boosted-link-item" (click)="goToPremiumItem(item)">
+        {{ item.name }}
+      </a>
+    }
+  </div>
+</section>
+}
+
+  <!-- ------------------------------------------------------------
+       CADEAUX À GAGNER (Prizes)
+  ------------------------------------------------------------ -->
+  @if (!prizesLoading && prizes.length > 0) {
+  <section class="py-5 prizes-section" id="prizes">
+    <div class="container">
+      <div class="text-center mb-5">
+        <span class="badge prizes-badge-label fw-semibold px-3 py-2 rounded-pill fs-13 mb-2">
+          <i class="ri-gift-2-fill me-1"></i>Cadeaux à gagner
+        </span>
+        <h2 class="fw-bold fs-28 mt-2 mb-1">Tentez de gagner un prix</h2>
+        <p class="text-muted mb-0">Profitez de nos deals pour débloquer des cadeaux exclusifs</p>
+      </div>
+      <div class="row g-4">
+        @for (prize of prizes; track prize.id) {
+          <div class="col-6 col-md-4 col-lg-2">
+            <div class="prize-card">
+              <div class="prize-card-img" [style.background]="prize.image ? 'transparent' : (prize.bgColor + '18')">
+                @if (prize.image) {
+                  <img [src]="prize.image" [alt]="prize.title" (error)="prize.image = null">
+                } @else {
+                  <i class="ri-gift-fill" [style.color]="prize.bgColor"></i>
+                }
+              </div>
+              <div class="p-2 text-center">
+                <h6 class="fw-semibold fs-13 mb-0 text-truncate">{{ prize.title }}</h6>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+  }
+
+  <!-- ------------------------------------------------------------
+       ANNONCES PREMIUM
+  ------------------------------------------------------------ -->
+  <section class="py-5 premium-section" id="premium-annonces">
+    <div class="container">
+      <div class="d-flex align-items-end justify-content-between mb-4 flex-wrap gap-3">
+        <div>
+          <span class="badge premium-badge-label fw-semibold px-3 py-2 rounded-pill fs-13 mb-2">
+            <i class="ri-vip-crown-2-fill me-1"></i>Annonces Premium
+          </span>
+          <h2 class="fw-bold fs-28 mt-2 mb-1">Sélectionnées par nos experts</h2>
+          <p class="text-muted mb-0">Les meilleures annonces mises en avant par des particuliers vérifiés</p>
+        </div>
+        <a routerLink="/landing/annonces" class="btn btn-outline-warning rounded-pill px-4 fw-semibold">
+          Toutes les annonces <i class="ri-arrow-right-line ms-1"></i>
+        </a>
+      </div>
+
+      @if (premiumAnnoncesLoading) {
+        <div class="text-center py-4">
+          <div class="spinner-border text-warning spinner-border-sm"></div>
+        </div>
+      } @else {
+        <div class="row g-4">
+          @for (item of premiumAnnonces; track item.id) {
+            <div class="col-md-6 col-lg-3">
+              <div class="premium-card" (click)="goToPremiumItem(item)">
+                <div class="premium-card-crown">
+                  <i class="ri-vip-crown-2-fill"></i>
+                </div>
+                <div class="premium-card-img" [style.background]="item.image ? 'transparent' : (item.bgColor + '18')">
+                  @if (item.image) {
+                    <img [src]="item.image" [alt]="item.name" (error)="item.image = null">
+                  } @else {
+                    <i class="ri-price-tag-3-line" [style.color]="item.bgColor"></i>
+                  }
+                </div>
+                <div class="p-3">
+                  <span class="badge bg-light text-muted fs-11 mb-1">{{ item.category }}</span>
+                  <h6 class="fw-semibold fs-14 mb-2 text-truncate">{{ item.name }}</h6>
+                  <div class="d-flex align-items-center justify-content-between">
+                    <span class="fw-bold fs-16" style="color:#f7b84b">{{ item.price | number:'1.0-0' }} DT</span>
+                    <span class="text-muted fs-11"><i class="ri-user-3-line me-1"></i>{{ item.seller }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------
+       PRODUITS PREMIUM
+  ------------------------------------------------------------ -->
+  <section class="py-5 premium-section premium-section-alt">
+    <div class="container">
+      <div class="d-flex align-items-end justify-content-between mb-4 flex-wrap gap-3">
+        <div>
+          <span class="badge premium-badge-label-alt fw-semibold px-3 py-2 rounded-pill fs-13 mb-2">
+            <i class="ri-medal-2-fill me-1"></i>Produits Premium
+          </span>
+          <h2 class="fw-bold fs-28 mt-2 mb-1">Boutiques certifiées</h2>
+          <p class="text-muted mb-0">Des produits boostés par nos vendeurs professionnels vérifiés</p>
+        </div>
+        <a routerLink="/landing/produits" class="btn btn-outline-primary rounded-pill px-4 fw-semibold">
+          Tous les produits <i class="ri-arrow-right-line ms-1"></i>
+        </a>
+      </div>
+
+      @if (premiumProductsLoading) {
+        <div class="text-center py-4">
+          <div class="spinner-border text-primary spinner-border-sm"></div>
+        </div>
+      } @else {
+        <div class="row g-4">
+          @for (item of premiumProducts; track item.id) {
+            <div class="col-md-6 col-lg-3">
+              <div class="premium-card premium-card-blue" (click)="goToPremiumItem(item)">
+                <div class="premium-card-crown premium-card-crown-blue">
+                  <i class="ri-medal-2-fill"></i>
+                </div>
+                <div class="premium-card-img" [style.background]="item.image ? 'transparent' : (item.bgColor + '18')">
+                  @if (item.image) {
+                    <img [src]="item.image" [alt]="item.name" (error)="item.image = null">
+                  } @else {
+                    <i class="ri-shopping-bag-3-line" [style.color]="item.bgColor"></i>
+                  }
+                </div>
+                <div class="p-3">
+                  <span class="badge bg-light text-muted fs-11 mb-1">{{ item.category }}</span>
+                  <h6 class="fw-semibold fs-14 mb-2 text-truncate">{{ item.name }}</h6>
+                  <div class="d-flex align-items-center justify-content-between">
+                    <span class="fw-bold fs-16" style="color:#405189">{{ item.price | number:'1.0-0' }} DT</span>
+                    <span class="text-muted fs-11"><i class="ri-store-2-line me-1"></i>{{ item.seller }}</span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          }
+        </div>
+      }
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------
+       CATÉGORIES — dynamique (même source que la barre du header)
+  ------------------------------------------------------------ -->
+  <section class="py-5" id="categories">
+    <div class="container">
+      <div class="text-center mb-5">
+        <span class="badge bg-primary-subtle text-primary fw-semibold px-3 py-2 rounded-pill fs-13 mb-2">Explorer par catégorie</span>
+        <h2 class="fw-bold fs-28 mt-2">Toutes les catégories</h2>
+        <p class="text-muted">Parcourez nos catégories et trouvez exactement ce que vous cherchez</p>
+      </div>
+      @if (categoriesLoading) {
+      <div class="text-center py-3">
+        <div class="spinner-border text-primary spinner-border-sm"></div>
+        <span class="text-muted ms-2 fs-13">Chargement…</span>
+      </div>
+      }
+
+      <div class="row g-3">
+        @for (cat of categories; track cat.idCateg) {
+          <div class="col-6 col-md-3">
+            <a href="javascript:void(0)" (click)="goToCategory(cat.idCateg)" class="text-decoration-none">
+              <div class="card border h-100 text-center p-3 category-card">
+                <div class="card-body py-2">
+                  <div class="mx-auto mb-3 d-flex align-items-center justify-content-center"
+                       [style.background]="'var(--vz-' + cat.color + '-bg-subtle, #f0f4ff)'"
+                       style="width:56px;height:56px;border-radius:16px;">
+                    <i class="{{ cat.icon }} fs-26 text-{{ cat.color }}"></i>
+                  </div>
+                  <h6 class="mb-1 text-body fw-semibold fs-14">{{ cat.name }}</h6>
+                  <span class="badge bg-light text-muted fs-11">Voir les annonces</span>
+                </div>
+              </div>
+            </a>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------
+       PRODUITS VEDETTES
+  ------------------------------------------------------------ -->
+  <section class="py-5" style="background:var(--page-bg)" id="products">
+    <div class="container">
+      <div class="d-flex align-items-end justify-content-between mb-5 flex-wrap gap-3">
+        <div>
+          <span class="badge bg-warning-subtle text-warning fw-semibold px-3 py-2 rounded-pill fs-13 mb-2">Sélection du moment</span>
+          <h2 class="fw-bold fs-28 mt-2 mb-1">Produits populaires</h2>
+          <p class="text-muted mb-0">Les meilleures offres du jour sélectionnées pour vous</p>
+        </div>
+        <a routerLink="/landing/annonces" class="btn btn-primary rounded-pill px-4">
+          Voir tout <i class="ri-arrow-right-line ms-1"></i>
+        </a>
+      </div>
+
+      @if (!isLoggedIn) {
+      <div class="d-flex align-items-center gap-2 px-3 py-2 rounded-pill fs-13 text-muted mb-4"
+           style="background:#fff3cd;border:1px solid #ffe08a;width:fit-content">
+        <i class="ri-lock-line text-warning"></i>
+        Parcourez librement — la connexion est requise uniquement pour commander
+      </div>
+      }
+
+      <div class="row g-4">
+        @for (product of featuredProducts; track product.id) {
+          <div class="col-md-6 col-lg-4">
+            <div class="card h-100 border-0 shadow-sm product-card-home">
+              <div class="position-relative" [style.height]="'200px'"
+                   [style.background]="product.image ? 'transparent' : (product.bgColor + '20')">
+                @if (product.image) {
+                  <img [src]="product.image" [alt]="product.name"
+                       style="width:100%;height:200px;object-fit:cover"
+                       (error)="product.image = null">
+                } @else {
+                  <div class="d-flex align-items-center justify-content-center h-100">
+                    <i class="ri-shopping-bag-3-line"
+                       [style.fontSize]="'64px'"
+                       [style.color]="product.bgColor"
+                       style="opacity:0.4"></i>
+                  </div>
+                }
+                @if (product.badge) {
+                  <span class="position-absolute top-0 start-0 m-2 badge"
+                        [style.background]="product.bgColor">{{ product.badge }}</span>
+                }
+                <button class="position-absolute top-0 end-0 m-2 btn btn-sm rounded-circle shadow-sm"
+                        style="width:34px;height:34px;padding:0;border:none;background:white">
+                  <i class="ri-heart-line text-danger"></i>
+                </button>
+              </div>
+
+              <div class="card-body pb-0">
+                <div class="d-flex align-items-center justify-content-between mb-1">
+                  <span class="badge bg-light text-muted fs-11">{{ product.category }}</span>
+                  <div class="d-flex align-items-center gap-1">
+                    <i class="ri-star-fill text-warning fs-12"></i>
+                    <span class="fw-semibold fs-12">{{ product.rating | number:'1.1-1' }}</span>
+                    <span class="text-muted fs-11">({{ product.reviews }})</span>
+                  </div>
+                </div>
+                <h6 class="fw-semibold fs-15 mb-2">{{ product.name }}</h6>
+                <div class="d-flex align-items-center justify-content-between">
+                  <div>
+                    <span class="fw-bold fs-17" [style.color]="product.bgColor">{{ product.price | number:'1.0-0' }} DT</span>
+                    @if (product.oldPrice) {
+                      <span class="text-muted text-decoration-line-through fs-12 ms-2">{{ product.oldPrice | number:'1.0-0' }} DT</span>
+                    }
+                  </div>
+                  <span class="text-muted fs-12"><i class="ri-store-2-line me-1"></i>{{ product.seller }}</span>
+                </div>
+              </div>
+
+              <div class="card-footer bg-transparent border-0 pt-2">
+                <button class="btn btn-primary w-100 rounded-pill btn-sm fw-medium"
+                        (click)="addToCart(product)">
+                  <i class="ri-shopping-cart-2-line me-1"></i>
+                  {{ isLoggedIn ? 'Ajouter au panier' : 'Commander' }}
+                </button>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------
+       COMMENT ÇA MARCHE
+  ------------------------------------------------------------ -->
+  <section class="py-5 bg-white" id="how">
+    <div class="container">
+      <div class="text-center mb-5">
+        <span class="badge bg-info-subtle text-info fw-semibold px-3 py-2 rounded-pill fs-13 mb-2">Simple & Rapide</span>
+        <h2 class="fw-bold fs-28 mt-2">Comment ça marche ?</h2>
+        <p class="text-muted">Achetez ou vendez en 3 étapes simples</p>
+      </div>
+      <div class="row g-4 align-items-center">
+        @for (step of steps; track step.step) {
+          <div class="col-md-4">
+            <div class="text-center position-relative">
+              <div style="font-size:80px;font-weight:900;color:#f0f2f9;line-height:1;margin-bottom:-20px;font-family:'Segoe UI',sans-serif">
+                {{ step.step }}
+              </div>
+              <div class="mx-auto mb-4 d-flex align-items-center justify-content-center"
+                   style="width:72px;height:72px;background:linear-gradient(135deg,#405189,#0ab39c);border-radius:20px;box-shadow:0 8px 24px rgba(64,81,137,0.25)">
+                <i class="{{ step.icon }} text-white fs-28"></i>
+              </div>
+              <h5 class="fw-bold mb-2">{{ step.title }}</h5>
+              <p class="text-muted fs-14 mb-0">{{ step.desc }}</p>
+            </div>
+          </div>
+        }
+      </div>
+      <div class="text-center mt-5">
+        <a routerLink="/auth/register" class="btn btn-primary btn-lg rounded-pill px-5 shadow">
+          <i class="ri-rocket-line me-2"></i>Démarrer maintenant
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------
+       TÉMOIGNAGES
+  ------------------------------------------------------------ -->
+  <section class="py-5" style="background:var(--page-bg)" id="reviews">
+    <div class="container">
+      <div class="text-center mb-5">
+        <span class="badge bg-success-subtle text-success fw-semibold px-3 py-2 rounded-pill fs-13 mb-2">Ils nous font confiance</span>
+        <h2 class="fw-bold fs-28 mt-2">Ce que disent nos membres</h2>
+        <p class="text-muted">Plus de 45 000 Tunisiens utilisent Tijara chaque mois</p>
+      </div>
+      <div class="row g-4">
+        @for (t of testimonials; track t.name) {
+          <div class="col-md-4">
+            <div class="card border-0 h-100" style="border-radius:16px;box-shadow:0 4px 20px rgba(0,0,0,0.06)">
+              <div class="card-body p-4">
+                <div class="mb-3" style="font-size:32px;color:#405189;opacity:0.2;line-height:1">"</div>
+                <div class="d-flex gap-1 mb-3">
+                  @for (star of getStars(t.rating); track $index) {
+                    <i class="ri-star-fill text-warning fs-14"></i>
+                  }
+                </div>
+                <p class="text-muted fs-14 mb-4 lh-base">{{ t.text }}</p>
+                <div class="d-flex align-items-center gap-3 pt-3 border-top">
+                  <div class="d-flex align-items-center justify-content-center fw-bold text-white fs-16"
+                       style="width:44px;height:44px;background:linear-gradient(135deg,#405189,#0ab39c);border-radius:12px">
+                    {{ t.name.charAt(0) }}
+                  </div>
+                  <div>
+                    <div class="fw-semibold fs-14">{{ t.name }}</div>
+                    <div class="text-muted fs-12">{{ t.role }} — Tijara</div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        }
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------
+       CTA — DEVENIR VENDEUR
+  ------------------------------------------------------------ -->
+  <section class="py-5" style="background:linear-gradient(135deg,#405189 0%,#1a2d6e 100%)">
+    <div class="container">
+      <div class="row align-items-center gy-4 justify-content-between">
+        <div class="col-lg-7">
+          <div class="d-inline-flex align-items-center gap-2 rounded-pill px-3 py-1 mb-3"
+               style="background:rgba(255,255,255,0.12);border:1px solid rgba(255,255,255,0.2)">
+            <i class="ri-store-2-fill text-warning"></i>
+            <span class="text-white fs-13 fw-medium">Rejoignez 3 200+ vendeurs actifs</span>
+          </div>
+          <h2 class="text-white fw-bold fs-28 mb-3">
+            Ouvrez votre boutique<br>
+            <span class="text-warning">gratuitement sur Tijara</span>
+          </h2>
+          <p class="mb-0 fs-15" style="color:rgba(255,255,255,0.75)">
+            Publiez vos annonces, gérez vos commandes et développez votre activité partout en Tunisie. Dashboard vendeur inclus.
+          </p>
+          <div class="d-flex gap-3 mt-4 flex-wrap">
+            <div class="d-flex align-items-center gap-2 text-white">
+              <i class="ri-check-line text-success fs-16"></i>
+              <span class="fs-14">Inscription gratuite</span>
+            </div>
+            <div class="d-flex align-items-center gap-2 text-white">
+              <i class="ri-check-line text-success fs-16"></i>
+              <span class="fs-14">Commission minimale</span>
+            </div>
+            <div class="d-flex align-items-center gap-2 text-white">
+              <i class="ri-check-line text-success fs-16"></i>
+              <span class="fs-14">Dashboard analytique</span>
+            </div>
+          </div>
+        </div>
+        <div class="col-lg-4 text-lg-end">
+          <a routerLink="/auth/register"
+             class="btn btn-warning btn-lg fw-bold px-5 py-3 shadow-lg"
+             style="border-radius:14px;font-size:1.05rem">
+            <i class="ri-store-2-line me-2"></i>Ouvrir ma boutique
+          </a>
+          <div class="mt-3 text-center">
+            <span class="fs-13" style="color:rgba(255,255,255,0.5)">Déjà vendeur ?</span>
+            <a routerLink="/auth/login" class="text-warning fs-13 ms-1 fw-medium text-decoration-none">Se connecter</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ------------------------------------------------------------
+       FOOTER
+  ------------------------------------------------------------ -->
+  <footer style="background:#0f1c3f;padding:60px 0 0">
+    <div class="container">
+      <div class="row g-4 pb-5">
+        <div class="col-lg-4">
+          <div class="d-flex align-items-center gap-2 mb-3">
+            <div style="width:38px;height:38px;background:linear-gradient(135deg,#405189,#0ab39c);border-radius:10px;display:flex;align-items:center;justify-content:center">
+              <i class="ri-shopping-bag-3-fill text-white fs-18"></i>
+            </div>
+            <span class="fw-bold fs-20 text-white" style="letter-spacing:0.5px">Tijara</span>
+          </div>
+          <p style="color:rgba(255,255,255,0.5);font-size:14px;line-height:1.7">
+            La marketplace intelligente qui connecte acheteurs et vendeurs tunisiens en toute simplicité et sécurité.
+          </p>
+          <div class="d-flex gap-2 mt-4">
+            <a href="javascript:void(0)" style="width:36px;height:36px;background:rgba(255,255,255,0.08);border-radius:8px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.6);text-decoration:none"
+               onmouseover="this.style.background='#405189';this.style.color='white'"
+               onmouseout="this.style.background='rgba(255,255,255,0.08)';this.style.color='rgba(255,255,255,0.6)'">
+              <i class="ri-facebook-fill"></i>
+            </a>
+            <a href="javascript:void(0)" style="width:36px;height:36px;background:rgba(255,255,255,0.08);border-radius:8px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.6);text-decoration:none"
+               onmouseover="this.style.background='#e1306c';this.style.color='white'"
+               onmouseout="this.style.background='rgba(255,255,255,0.08)';this.style.color='rgba(255,255,255,0.6)'">
+              <i class="ri-instagram-line"></i>
+            </a>
+            <a href="javascript:void(0)" style="width:36px;height:36px;background:rgba(255,255,255,0.08);border-radius:8px;display:flex;align-items:center;justify-content:center;color:rgba(255,255,255,0.6);text-decoration:none"
+               onmouseover="this.style.background='#0077b5';this.style.color='white'"
+               onmouseout="this.style.background='rgba(255,255,255,0.08)';this.style.color='rgba(255,255,255,0.6)'">
+              <i class="ri-linkedin-fill"></i>
+            </a>
+          </div>
+        </div>
+
+        <div class="col-6 col-lg-2">
+          <h6 class="text-white fw-semibold mb-4 fs-14 text-uppercase" style="letter-spacing:1px">Plateforme</h6>
+          <ul class="list-unstyled" style="color:rgba(255,255,255,0.5);font-size:14px">
+            <li class="mb-2"><a routerLink="/landing"          style="color:rgba(255,255,255,0.5);text-decoration:none" onmouseover="this.style.color='#0ab39c'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Accueil</a></li>
+            <li class="mb-2"><a routerLink="/landing/annonces" style="color:rgba(255,255,255,0.5);text-decoration:none" onmouseover="this.style.color='#0ab39c'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Parcourir la boutique</a></li>
+            <li class="mb-2"><a routerLink="/landing/about"    style="color:rgba(255,255,255,0.5);text-decoration:none" onmouseover="this.style.color='#0ab39c'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">À propos</a></li>
+            <li class="mb-2"><a routerLink="/auth/register"    style="color:rgba(255,255,255,0.5);text-decoration:none" onmouseover="this.style.color='#0ab39c'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Devenir vendeur</a></li>
+            <li class="mb-2"><a routerLink="/auth/login"       style="color:rgba(255,255,255,0.5);text-decoration:none" onmouseover="this.style.color='#0ab39c'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Mon compte</a></li>
+          </ul>
+        </div>
+
+        <div class="col-6 col-lg-2">
+          <h6 class="text-white fw-semibold mb-4 fs-14 text-uppercase" style="letter-spacing:1px">Support</h6>
+          <ul class="list-unstyled" style="color:rgba(255,255,255,0.5);font-size:14px">
+            <li class="mb-2"><a routerLink="/landing/faq"     style="color:rgba(255,255,255,0.5);text-decoration:none" onmouseover="this.style.color='#0ab39c'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Centre d'aide</a></li>
+            <li class="mb-2"><a routerLink="/landing/contact" style="color:rgba(255,255,255,0.5);text-decoration:none" onmouseover="this.style.color='#0ab39c'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Contactez-nous</a></li>
+            <li class="mb-2"><a routerLink="/landing/contact" style="color:rgba(255,255,255,0.5);text-decoration:none" onmouseover="this.style.color='#0ab39c'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Signaler un problème</a></li>
+            <li class="mb-2"><a routerLink="/landing/cgu"     style="color:rgba(255,255,255,0.5);text-decoration:none" onmouseover="this.style.color='#0ab39c'" onmouseout="this.style.color='rgba(255,255,255,0.5)'">Politique de retour</a></li>
+          </ul>
+        </div>
+
+        <div class="col-lg-4">
+          <h6 class="text-white fw-semibold mb-4 fs-14 text-uppercase" style="letter-spacing:1px">Restez informé</h6>
+          <p style="color:rgba(255,255,255,0.5);font-size:14px">Recevez les meilleures offres et nouveautés directement dans votre boîte mail.</p>
+          <div class="input-group mt-3" style="background:rgba(255,255,255,0.06);border-radius:12px;overflow:hidden;border:1px solid rgba(255,255,255,0.1)">
+            <input type="email" class="form-control border-0 text-white"
+                   style="background:transparent;color:white"
+                   placeholder="votre@email.com">
+            <button class="btn btn-primary px-3" type="button">
+              <i class="ri-send-plane-2-line"></i>
+            </button>
+          </div>
+          <p class="mt-2" style="color:rgba(255,255,255,0.3);font-size:12px">
+            <i class="ri-lock-line me-1"></i>Pas de spam. Désinscription en un clic.
+          </p>
+        </div>
+      </div>
+
+      <!-- -------- Liens boostés — option "Footer" des packs de boost -------- -->
+      @if (!boostedFooterLoading && boostedFooterItems.length > 0) {
+        <div class="footer-boosted-row pb-4">
+          <h6 class="text-white fw-semibold mb-3 fs-14 text-uppercase" style="letter-spacing:1px">
+            <i class="ri-rocket-2-fill me-1" style="color:#f7b84b"></i>Sponsorisé
+          </h6>
+          <div class="d-flex flex-wrap gap-2">
+            @for (item of boostedFooterItems; track item.id + '-' + item.type) {
+              <a href="javascript:void(0)" class="footer-boosted-link" (click)="goToPremiumItem(item)">
+                {{ item.name }} <span class="footer-boosted-price">{{ item.price | number:'1.0-0' }} DT</span>
+              </a>
+            }
+          </div>
+        </div>
+      }
+
+      <div style="border-top:1px solid rgba(255,255,255,0.08);padding:20px 0">
+        <div class="d-flex align-items-center justify-content-between flex-wrap gap-2">
+          <p class="mb-0" style="color:rgba(255,255,255,0.35);font-size:13px">
+            &copy; {{ year }} Tijara. Tous droits réservés — Marketplace Tunisienne
+          </p>
+          <div class="d-flex gap-3">
+            <a routerLink="/landing/cgu"     style="color:rgba(255,255,255,0.35);font-size:13px;text-decoration:none">Conditions d'utilisation</a>
+            <a routerLink="/landing/privacy" style="color:rgba(255,255,255,0.35);font-size:13px;text-decoration:none">Confidentialité</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <button (click)="topFunction()" class="btn btn-primary btn-icon landing-back-top" id="back-to-top"
+          style="display:none;border-radius:12px;box-shadow:0 4px 16px rgba(64,81,137,0.4)">
+    <i class="ri-arrow-up-line"></i>
+  </button>
+
+</div>
+<!-- ------------------------------------------------------------
+     MODAL FIRSTLOGIN — option "FirstLogin" des packs de boost
+     Ouverte par IndexComponent.maybeShowFirstLoginBox()
+------------------------------------------------------------ -->
+<ng-template #firstLoginModal let-modal>
+  <div class="modal-header border-0 pb-0">
+    <button type="button" class="btn-close" (click)="modal.dismiss()" aria-label="Fermer"></button>
+  </div>
+  <div class="modal-body pt-0 px-4 pb-4 text-center">
+    <span class="badge boost-badge-label fw-semibold px-3 py-2 rounded-pill fs-13 mb-3 d-inline-block">
+      <i class="ri-rocket-2-fill me-1"></i>Bienvenue sur Tijara !
+    </span>
+    <h5 class="fw-bold mb-1">Nos offres sponsorisées du moment</h5>
+    <p class="text-muted fs-13 mb-4">Sélectionnées spécialement pour votre première visite</p>
+    <div class="row g-3 text-start">
+      @for (item of boostedFirstLoginItems; track item.id + '-' + item.type) {
+        <div class="col-6">
+          <div class="boost-slide-card" style="max-width:none" (click)="modal.close(); goToPremiumItem(item)">
+            <div class="boost-slide-img" [style.background]="item.image ? 'transparent' : (item.bgColor + '22')" style="height:120px">
+              @if (item.image) {
+                <img [src]="item.image" [alt]="item.name" (error)="item.image = null">
+              } @else {
+                <i class="ri-shopping-bag-3-line" [style.color]="item.bgColor"></i>
+              }
+            </div>
+            <div class="p-2">
+              <h6 class="fw-semibold fs-13 mb-1 text-truncate">{{ item.name }}</h6>
+              <span class="fw-bold fs-14" style="color:#f06548">{{ item.price | number:'1.0-0' }} DT</span>
+            </div>
+          </div>
+        </div>
+      }
+    </div>
+  </div>
+</ng-template>
+</div>
+
+<style>
+/* ---------- HEADER ---------- */
+.tijara-header {
+  z-index: 1030;
+  transition: box-shadow .25s ease;
+  background: linear-gradient(160deg,
+    #142252 0%,
+    #1a2d6e 22%,
+    #2c4a86 45%,
+    #2f6f7a 72%,
+    #0a7d6e 100%
+  );
+}
+.tijara-header.is-sticky { box-shadow: 0 6px 24px rgba(10, 15, 40, 0.25); }
+.tijara-header .navbar-landing { background: transparent; }
+
+.btn-ghost-light {
+  color: rgba(255,255,255,0.85);
+  border: 1px solid rgba(255,255,255,0.25);
+  background: transparent;
+}
+.btn-ghost-light:hover { background: rgba(255,255,255,0.1); color: var(--surface-color); }
+
+.tj-hero-offset { padding-top: 150px; }
+@media (max-width: 991px) { .tj-hero-offset { padding-top: 130px; } }
+
+.tj-menu-toggle {
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.08);
+  border-radius: 10px;
+  color: var(--surface-color);
+  width: 42px;
+  height: 42px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 22px;
+  cursor: pointer;
+  transition: background .15s ease, transform .2s ease;
+}
+.tj-menu-toggle:hover { background: rgba(255,255,255,0.16); }
+.tj-menu-toggle.is-open { transform: rotate(90deg); }
+
+.tj-nav-panel {
+  position: fixed;
+  inset: 0;
+  z-index: 1060;
+  background: rgba(10,15,40,0.45);
+  opacity: 0;
+  visibility: hidden;
+  transition: opacity .2s ease, visibility .2s ease;
+}
+.tj-nav-panel.show { opacity: 1; visibility: visible; }
+
+.tj-nav-panel-inner {
+  position: absolute;
+  top: 0;
+  right: 0;
+  width: 340px;
+  max-width: 88vw;
+  height: 100%;
+  background: linear-gradient(160deg,#142252 0%,#1a2d6e 35%,#2c4a86 70%,#0a7d6e 100%);
+  box-shadow: -12px 0 44px rgba(0,0,0,0.35);
+  padding: 90px 0 30px;
+  transform: translateX(100%);
+  transition: transform .28s ease;
+  overflow-y: auto;
+}
+.tj-nav-panel.show .tj-nav-panel-inner { transform: translateX(0); }
+
+.tj-nav-panel-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid rgba(255,255,255,0.25);
+  background: rgba(255,255,255,0.08);
+  color: var(--surface-color);
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.tj-nav-panel-close:hover { background: rgba(255,255,255,0.18); }
+
+.tj-nav-panel .navbar-nav { flex-direction: column; gap: 4px; padding: 0 20px; list-style: none; margin: 0; }
+.tj-nav-panel .nav-link {
+  display: flex;
+  align-items: center;
+  padding: 14px 16px;
+  border-radius: 10px;
+  font-size: 15px;
+  color: rgba(255,255,255,0.8) !important;
+  font-weight: 500;
+}
+.tj-nav-panel .nav-link:hover,
+.tj-nav-panel .nav-link.active {
+  background: rgba(255,255,255,0.1);
+  color: var(--surface-color) !important;
+}
+
+.tj-search-row { background: transparent; padding: 10px 0 16px; transition: padding .25s ease; }
+.tijara-header.is-compact .tj-search-row { padding: 6px 0 8px; }
+.tijara-header.is-compact .tj-search-bar { transform: scale(0.94); }
+
+.tj-search-bar {
+  display: flex;
+  align-items: stretch;
+  background: var(--surface-color);
+  border-radius: 10px;
+  overflow: hidden;
+  max-width: 720px;
+  margin: 0 auto;
+  box-shadow: 0 4px 16px rgba(0,0,0,0.18);
+  transition: transform .25s ease, box-shadow .25s ease;
+}
+.tj-search-bar:focus-within { box-shadow: 0 6px 22px rgba(0,0,0,0.24); }
+
+.tj-search-select { border-right: 1px solid #e5e7f0; display: flex; align-items: center; padding: 0 10px; background: var(--page-bg); }
+.tj-select { border: none; background: transparent; font-size: 13px; color: #555; padding: 10px 6px; outline: none; max-width: 170px; }
+.tj-search-input { flex: 1; border: none; outline: none; padding: 10px 14px; font-size: 14px; color: #333; min-width: 0; }
+.tj-search-btn { border: none; background: #f7b84b; color: var(--surface-color); padding: 0 22px; font-size: 18px; transition: background .15s ease; }
+.tj-search-btn:hover { background: #e8a629; }
+
+.category-strip {
+  position: relative;
+  background: rgba(0,0,0,0.12);
+  border-bottom: 2px solid rgba(247, 184, 75, 0.55);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06);
+  transition: box-shadow .25s ease;
+}
+.tijara-header.is-sticky .category-strip {
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 8px 22px rgba(10, 15, 40, 0.3);
+}
+.category-strip-list { display: flex; list-style: none; margin: 0; padding: 0; overflow-x: auto; scrollbar-width: none; }
+.category-strip-list::-webkit-scrollbar { display: none; }
+.category-strip-item { flex-shrink: 0; }
+.category-strip-item a {
+  display: block; padding: 11px 16px; font-size: 13.5px; font-weight: 600;
+  color: rgba(255,255,255,0.82); text-decoration: none; white-space: nowrap;
+  transition: color .15s ease, background .15s ease; border-radius: 20px;
+}
+.category-strip-item:hover a { color: var(--surface-color); background: rgba(255,255,255,0.1); }
+.category-strip-item.active a { color: #1a2d6e; background: #f7b84b; padding: 8px 16px; margin: 6px 4px; font-weight: 700; }
+.tijara-header.is-compact .category-strip-item a { padding: 8px 14px; }
+
+.mega-menu-columns-panel {
+  position: absolute; top: 100%; left: 0; right: 0; background: var(--surface-color);
+  border-top: 3px solid #f7b84b; box-shadow: 0 24px 48px rgba(10, 15, 40, 0.28);
+  z-index: 1031; max-height: 70vh; overflow-y: auto; animation: tjMegaFade .15s ease;
+}
+@keyframes tjMegaFade { from { opacity: 0; transform: translateY(-6px); } to { opacity: 1; transform: translateY(0); } }
+.mega-columns { display: grid; grid-template-columns: repeat(3, 1fr); column-gap: 40px; padding: 28px 0; }
+@media (max-width: 900px) { .mega-columns { grid-template-columns: repeat(2, 1fr); } }
+@media (max-width: 600px) { .mega-columns { grid-template-columns: 1fr; } }
+.mega-group { margin-bottom: 22px; }
+.mega-group-title { font-size: 15px; font-weight: 600; color: #2f5fce; margin-bottom: 12px; }
+.mega-group-title span { padding-bottom: 5px; border-bottom: 1.5px solid #2f5fce; }
+.mega-group-list { list-style: none; margin: 0; padding: 0; }
+.mega-group-list li { margin-bottom: 11px; }
+.mega-group-list a { font-size: 14px; color: #6b7280; text-decoration: none; transition: color .15s ease; }
+.mega-group-list a:hover { color: #f7b84b; font-weight: 600; }
+.mega-menu-overlay { position: fixed; inset: 0; z-index: 1029; background: transparent; }
+
+.user-menu-holder { position: relative; }
+.user-menu-trigger {
+  display: flex; align-items: center; gap: 8px;
+  border: 1px solid rgba(255,255,255,0.25); background: rgba(255,255,255,0.08);
+  border-radius: 30px; padding: 5px 12px 5px 5px; cursor: pointer;
+  transition: background .15s ease, border-color .15s ease;
+}
+.user-menu-trigger:hover { background: rgba(255,255,255,0.16); }
+.user-avatar {
+  width: 30px; height: 30px; min-width: 30px; border-radius: 50%;
+  background: linear-gradient(135deg, #f7b84b, #e8a629); color: #1a2d6e;
+  font-weight: 700; font-size: 12px; display: flex; align-items: center; justify-content: center;
+}
+.user-avatar-lg { width: 42px; height: 42px; min-width: 42px; font-size: 16px; }
+.user-name { font-size: 13px; font-weight: 600; color: var(--surface-color); }
+.user-menu-arrow { font-size: 16px; color: rgba(255,255,255,0.7); transition: transform .2s ease; }
+.user-menu-arrow.open { transform: rotate(180deg); }
+.user-menu-panel {
+  position: absolute; top: calc(100% + 10px); right: 0; width: 260px; background: var(--surface-color);
+  border-radius: 14px; box-shadow: 0 16px 40px rgba(20,25,45,0.16); border: 1px solid rgba(64,81,137,0.06);
+  padding: 14px; z-index: 1040; animation: tjMegaFade .15s ease;
+}
+.user-menu-header { display: flex; align-items: center; gap: 12px; padding: 4px 4px 12px; }
+.user-menu-divider { height: 1px; background: #eee; margin: 6px 0; }
+.user-menu-item {
+  display: flex; align-items: center; gap: 10px; width: 100%; border: none; background: transparent;
+  text-align: left; padding: 10px 8px; border-radius: 10px; font-size: 13.5px; font-weight: 500;
+  color: #333; text-decoration: none; transition: background .15s ease;
+}
+.user-menu-item i { font-size: 17px; color: #888; }
+.user-menu-item:hover { background: #f5f6fb; color: #405189; }
+.user-menu-item:hover i { color: #405189; }
+.user-menu-item-danger { color: #f06548; }
+.user-menu-item-danger i { color: #f06548; }
+.user-menu-item-danger:hover { background: #fff0ee; color: #f06548; }
+.user-menu-item-danger:hover i { color: #f06548; }
+.user-menu-overlay { position: fixed; inset: 0; z-index: 1039; background: transparent; }
+
+/* ---------- HERO ---------- */
+.hero-blob { position: absolute; border-radius: 50%; filter: blur(60px); pointer-events: none; z-index: 0; }
+.hero-blob-1 { width: 380px; height: 380px; top: -120px; right: -80px; background: rgba(10, 179, 156, 0.25); }
+.hero-blob-2 { width: 300px; height: 300px; bottom: -100px; left: -60px; background: rgba(247, 184, 75, 0.15); }
+.hero-blob-3 { width: 220px; height: 220px; top: 40%; right: 20%; background: rgba(64, 81, 137, 0.3); }
+
+.hero-eyebrow { display: inline-flex; align-items: center; gap: 10px; padding: 6px 14px 6px 6px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.16); border-radius: 30px; }
+.hero-eyebrow-badge { background: #0ab39c; color: #04342c; font-size: 11px; font-weight: 700; text-transform: uppercase; letter-spacing: .4px; padding: 4px 10px; border-radius: 20px; }
+.hero-eyebrow-text { font-size: 13px; color: rgba(255,255,255,0.75); font-weight: 500; }
+
+.hero-heading { font-size: 44px; font-weight: 700; letter-spacing: -0.02em; line-height: 1.2; color: var(--surface-color); max-width: 560px; }
+.hero-heading-accent { color: #4fd1b3; }
+.hero-subtext { font-size: 16px; line-height: 1.7; color: rgba(255,255,255,0.72); max-width: 480px; }
+@media (max-width: 767px) { .hero-heading { font-size: 32px; } }
+
+.hero-cta-row { align-items: stretch; }
+.hero-cta-btn { flex: 0 1 auto; white-space: nowrap; transition: transform .18s ease, box-shadow .18s ease; }
+.hero-cta-btn:hover { transform: translateY(-3px); }
+.hero-cta-btn-primary { box-shadow: 0 8px 20px rgba(247, 184, 75, 0.35); }
+.hero-cta-btn-primary:hover { box-shadow: 0 12px 28px rgba(247, 184, 75, 0.45); }
+.hero-cta-btn-ghost { background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.3); color: var(--surface-color); }
+.hero-cta-btn-ghost:hover { background: rgba(255,255,255,0.16); color: var(--surface-color); }
+
+.hero-stats-bar { display: flex; align-items: center; gap: 20px; background: rgba(255,255,255,0.07); border: 1px solid rgba(255,255,255,0.14); border-radius: 16px; padding: 18px 24px; flex-wrap: wrap; }
+.hero-stat-item { display: flex; align-items: center; gap: 10px; }
+.hero-stat-icon { font-size: 20px; color: #f7b84b; }
+.hero-stat-value { font-weight: 700; color: var(--surface-color); font-size: 17px; line-height: 1.2; }
+.hero-stat-label { font-size: 11.5px; color: rgba(255,255,255,0.6); }
+@media (min-width: 576px) {
+  .hero-stat-item:not(:last-child)::after { content: ''; display: inline-block; width: 1px; height: 28px; background: rgba(255,255,255,0.16); margin-left: 20px; }
+}
+
+.hero-product-wrapper { padding: 10px; }
+.hero-product-card { border-radius: 20px; overflow: hidden; box-shadow: 0 20px 50px rgba(10, 15, 40, 0.35); }
+.hero-trust-row { display: flex; align-items: center; justify-content: center; gap: 10px; background: rgba(255,255,255,0.08); border: 1px solid rgba(255,255,255,0.14); border-radius: 14px; padding: 12px 16px; margin-top: 14px; }
+.hero-trust-item { display: flex; align-items: center; gap: 6px; font-size: 12.5px; font-weight: 500; color: var(--surface-color); white-space: nowrap; }
+.hero-trust-item i { color: #0ab39c; font-size: 15px; }
+.hero-trust-divider { width: 1px; height: 14px; background: rgba(255,255,255,0.2); }
+@media (max-width: 991px) { .hero-trust-row { flex-wrap: wrap; } }
+
+.hero-deal-carousel { position: relative; min-height: 340px; }
+.hero-deal-slide {
+  position: absolute; inset: 0; opacity: 0; visibility: hidden;
+  transform: translateX(16px); transition: opacity .4s ease, transform .4s ease, visibility .4s;
+}
+.hero-deal-slide.active { position: relative; opacity: 1; visibility: visible; transform: translateX(0); }
+.hero-deal-media { height: 220px; position: relative; display: flex; align-items: center; justify-content: center; font-size: 64px; overflow: hidden; }
+.hero-deal-media img { width: 100%; height: 100%; object-fit: cover; }
+.hero-deal-badge { position: absolute; top: 12px; left: 12px; background: #f06548; color: var(--surface-color); font-weight: 700; font-size: 12px; padding: 5px 10px; border-radius: 20px; }
+.hero-product-card.is-urgent { animation: hero-deal-urgent-pulse 1.4s ease-in-out infinite; }
+.hero-product-card.is-expired { filter: grayscale(0.6); opacity: 0.75; }
+.hero-deal-urgent-badge { position: absolute; top: 12px; right: 12px; background: linear-gradient(135deg, #7a1f14, #b8341f); color: #fff; font-weight: 700; font-size: 11.5px; padding: 5px 10px; border-radius: 20px; }
+.hero-deal-expired-badge { position: absolute; top: 12px; right: 12px; background: #74788d; color: #fff; font-weight: 600; font-size: 11.5px; padding: 5px 10px; border-radius: 20px; }
+@keyframes hero-deal-urgent-pulse { 0%, 100% { box-shadow: 0 20px 50px rgba(184, 52, 31, 0.35); } 50% { box-shadow: 0 20px 60px rgba(184, 52, 31, 0.65); } }
+.hero-deal-caption { position: absolute; bottom: 0; left: 0; right: 0; padding: 14px; color: var(--surface-color); background: linear-gradient(to top, rgba(0,0,0,0.55), transparent); }
+.hero-deal-prize { display: flex; align-items: center; gap: 8px; background: #fff8ec; color: #a9720a; padding: 8px 14px; font-size: 12.5px; font-weight: 600; border-top: 1px dashed #f7b84b; }
+.hero-deal-controls { display: flex; align-items: center; justify-content: center; gap: 14px; margin-top: 14px; }
+.hero-deal-arrow { width: 34px; height: 34px; border-radius: 50%; border: 1px solid rgba(255,255,255,0.3); background: rgba(255,255,255,0.08); color: var(--surface-color); display: flex; align-items: center; justify-content: center; cursor: pointer; }
+.hero-deal-arrow:hover { background: rgba(255,255,255,0.18); }
+.hero-deal-dots { display: flex; gap: 6px; }
+.hero-deal-dot { width: 8px; height: 8px; border-radius: 50%; background: rgba(255,255,255,0.3); cursor: pointer; transition: background .2s ease, width .2s ease; }
+.hero-deal-dot.active { background: #f7b84b; width: 20px; border-radius: 4px; }
+
+/* ---------- SLIDER BOOSTÉ — bande catalogue à défilement continu ---------- */
+.boost-slider-section { background: linear-gradient(180deg, #fff4f0 0%, #ffffff 100%); }
+.boost-badge-label { background: linear-gradient(135deg, #f06548, #f7b84b); color: var(--surface-color); }
+
+.boost-catalog-viewport {
+  overflow: hidden;
+  width: 100%;
+  padding: 6px 0 34px;
+  -webkit-mask-image: linear-gradient(to right, transparent 0, #000 60px, #000 calc(100% - 60px), transparent 100%);
+  mask-image: linear-gradient(to right, transparent 0, #000 60px, #000 calc(100% - 60px), transparent 100%);
+}
+.boost-catalog-track {
+  display: flex;
+  gap: 22px;
+  width: max-content;
+  padding: 0 20px;
+  animation: boost-catalog-scroll 32s linear infinite;
+}
+.boost-catalog-track.paused { animation-play-state: paused; }
+
+.boost-catalog-card {
+  flex: 0 0 260px;
+  background: var(--surface-color);
+  border-radius: 16px;
+  overflow: hidden;
+  cursor: pointer;
+  box-shadow: 0 10px 26px rgba(240,101,72,0.12);
+  border: 1.5px solid #ffd9d0;
+  transition: transform .2s ease, box-shadow .2s ease;
+}
+.boost-catalog-card:hover { transform: translateY(-6px); box-shadow: 0 16px 36px rgba(240,101,72,0.22); }
+
+.boost-catalog-img { height: 170px; position: relative; display: flex; align-items: center; justify-content: center; font-size: 48px; overflow: hidden; }
+.boost-catalog-img img { width: 100%; height: 100%; object-fit: cover; }
+
+.boosted-tag {
+  position: absolute; top: 10px; right: 10px; display: inline-flex; align-items: center;
+  background: linear-gradient(135deg, #f7b84b, #f06548); color: #fff; font-size: 0.7rem; font-weight: 700;
+  padding: 0.25rem 0.6rem; border-radius: 20px; box-shadow: 0 3px 10px rgba(240,101,72,0.35);
+}
+
+@keyframes boost-catalog-scroll {
+  from { transform: translateX(0); }
+  to   { transform: translateX(-50%); }
+}
+
+@media (max-width: 767px) {
+  .boost-catalog-card { flex-basis: 210px; }
+  .boost-catalog-img { height: 140px; }
+}
+
+/* Ancien style "une carte + fade", conservé pour la modal FirstLogin */
+.boost-slide-card {
+  background: var(--surface-color); border-radius: 16px; overflow: hidden; cursor: pointer;
+  box-shadow: 0 10px 30px rgba(240,101,72,0.12); border: 1.5px solid #ffd9d0;
+  max-width: 420px; margin: 0 auto; transition: transform .2s ease, box-shadow .2s ease;
+}
+.boost-slide-card:hover { transform: translateY(-4px); box-shadow: 0 16px 36px rgba(240,101,72,0.2); }
+.boost-slide-img { height: 220px; position: relative; display: flex; align-items: center; justify-content: center; font-size: 56px; overflow: hidden; }
+.boost-slide-img img { width: 100%; height: 100%; object-fit: cover; }
+
+/* ---------- PRIZES ---------- */
+.prizes-section { background: linear-gradient(180deg,#fff5f5 0%,#ffffff 100%); }
+.prizes-badge-label { background: linear-gradient(135deg,#f06548,#e8543b); color:var(--surface-color); }
+.prize-card { background:var(--surface-color); border-radius:14px; border:1.5px solid #ffd9d0; overflow:hidden; text-align:center; transition: transform .2s ease, box-shadow .2s ease; cursor: default; }
+.prize-card:hover { transform: translateY(-4px); box-shadow: 0 12px 26px rgba(240,101,72,0.2); }
+.prize-card-img { height:100px; display:flex; align-items:center; justify-content:center; font-size:38px; }
+.prize-card-img img { width:100%; height:100%; object-fit:cover; }
+
+/* ---------- PREMIUM ---------- */
+.premium-section { background: linear-gradient(180deg, #fffaf0 0%, #ffffff 100%); }
+.premium-section-alt { background: linear-gradient(180deg, #f4f7ff 0%, #ffffff 100%); }
+.premium-badge-label { background: linear-gradient(135deg, #f7b84b, #e8a629); color: var(--surface-color); }
+.premium-badge-label-alt { background: linear-gradient(135deg, #405189, #2f3d6b); color: var(--surface-color); }
+.premium-card { background: var(--surface-color); border-radius: 16px; border: 1.5px solid #f7e3b8; overflow: hidden; cursor: pointer; position: relative; transition: transform .2s ease, box-shadow .2s ease, border-color .2s ease; }
+.premium-card:hover { transform: translateY(-4px); box-shadow: 0 14px 32px rgba(247,184,75,0.25); border-color: #f7b84b; }
+.premium-card-blue { border-color: #cdd7f5; }
+.premium-card-blue:hover { box-shadow: 0 14px 32px rgba(64,81,137,0.2); border-color: #405189; }
+.premium-card-crown { position: absolute; top: 10px; right: 10px; width: 30px; height: 30px; border-radius: 50%; background: linear-gradient(135deg, #f7b84b, #e8a629); display: flex; align-items: center; justify-content: center; color: var(--surface-color); font-size: 14px; z-index: 2; box-shadow: 0 4px 10px rgba(232,166,41,0.4); }
+.premium-card-crown-blue { background: linear-gradient(135deg, #405189, #2f3d6b); box-shadow: 0 4px 10px rgba(64,81,137,0.4); }
+.premium-card-img { height: 160px; display: flex; align-items: center; justify-content: center; font-size: 48px; overflow: hidden; }
+.premium-card-img img { width: 100%; height: 100%; object-fit: cover; display: block; }
+
+.category-card { border-radius: 16px; transition: transform .2s ease, box-shadow .2s ease; }
+.category-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(64,81,137,0.15); }
+.product-card-home { border-radius: 16px; overflow: hidden; transition: transform .2s ease, box-shadow .2s ease; }
+.product-card-home:hover { transform: translateY(-4px); box-shadow: 0 12px 28px rgba(0,0,0,0.1); }
+
+/* ---------- FOOTER — liens boostés ---------- */
+.footer-boosted-row { border-top: 1px solid rgba(255,255,255,0.08); padding-top: 24px; }
+.footer-boosted-link {
+  display: inline-flex; align-items: center; gap: 6px;
+  background: rgba(247,184,75,0.1); border: 1px solid rgba(247,184,75,0.3);
+  color: rgba(255,255,255,0.8); text-decoration: none; font-size: 13px;
+  padding: 6px 12px; border-radius: 20px; transition: background .15s ease, border-color .15s ease;
+
+}
+/* ---------- LIENS BOOSTÉS ---------- */
+.boosted-links-bar { background: #fff8ec; border-bottom: 1px solid #ffe6ba; }
+.boosted-link-item {
+  font-size: 13px; font-weight: 600; color: #a9720a; text-decoration: none;
+  padding: 4px 12px; border-radius: 20px; background: rgba(247,184,75,0.15);
+  transition: background .15s ease, color .15s ease;
+}
+.boosted-link-item:hover { background: #f7b84b; color: #fff; }
+.footer-boosted-link:hover { background: rgba(247,184,75,0.2); border-color: #f7b84b; color: #fff; }
+.footer-boosted-price { color: #f7b84b; font-weight: 700; }
+</style>

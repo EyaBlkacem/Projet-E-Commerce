@@ -1,0 +1,9 @@
+:host ::ng-deep {
+  #page-topbar {
+    // La topbar reste fixe en haut (comportement du thème), mais on la
+    // laisse grandir librement pour accueillir la rangée de recherche —
+    // c'est HorizontalUsersComponent qui recalcule ensuite les décalages
+    // du menu et du contenu en fonction de sa hauteur réelle.
+    height: auto !important;
+  }
+}
